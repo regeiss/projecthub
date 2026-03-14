@@ -1,0 +1,29 @@
+# =============================================================================
+# ProjectHub — requirements/development.txt
+# Inclui base + ferramentas de desenvolvimento
+# =============================================================================
+
+-r base.txt
+
+# Servidor de desenvolvimento
+werkzeug==3.1.3                         # Debug server com reloader
+django-debug-toolbar==4.4.6            # Painel de debug no browser
+
+# Testes
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-asyncio==0.24.0                  # Testes assíncronos (Channels)
+pytest-cov==6.0.0                       # Cobertura de código
+factory-boy==3.3.1                      # Fixtures com factories
+faker==33.1.0                           # Dados falsos para testes
+model-bakery==1.20.0                    # Criação rápida de objetos Django
+
+# Qualidade de código
+ruff==0.8.4                             # Linter + formatter (substitui flake8/black)
+mypy==1.13.0                            # Type checking
+django-stubs==5.1.1                     # Stubs para mypy no Django
+djangorestframework-stubs==3.15.1      # Stubs para mypy no DRF
+
+# Utilitários
+ipython==8.30.0                         # Shell interativo melhorado
+django-extensions==3.2.3               # shell_plus, graph_models etc.

@@ -1,0 +1,62 @@
+<h2>Dark Mode — Implementation Approaches</h2>
+<p class="subtitle">Three ways to add dark mode to a Tailwind + React app. Pick the one that fits best.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Tailwind <code>dark:</code> variant + <code>class</code> strategy</h3>
+      <p>Add <code>darkMode: 'class'</code> to Tailwind config. Toggle a <code>dark</code> class on <code>&lt;html&gt;</code>. Every component uses <code>dark:bg-gray-900</code> style utilities. Store preference in <code>localStorage</code> + a small React context.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Native Tailwind — no extra libs</li>
+          <li>Full control over each token</li>
+          <li>No runtime style injection</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Every component needs <code>dark:</code> variants added</li>
+          <li>More lines of code across the codebase</li>
+        </ul></div>
+      </div>
+      <p class="label" style="color:#6366f1">★ Recommended</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>CSS custom properties (variables)</h3>
+      <p>Define a design token layer in CSS (<code>--color-bg</code>, <code>--color-text</code>, etc.) with <code>:root</code> and <code>[data-theme="dark"]</code> blocks. Components use <code>bg-[var(--color-bg)]</code> or a custom Tailwind theme. One class flip on <code>&lt;html&gt;</code> switches everything.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Single source of truth for color tokens</li>
+          <li>Easy to add more themes later</li>
+          <li>Clean component code</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Requires refactoring all color classes to variables</li>
+          <li>Higher upfront investment</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>External library (next-themes / use-dark-mode)</h3>
+      <p>Use a library like <code>next-themes</code> (works without Next.js) or <code>use-dark-mode</code> to manage theme state, system preference detection, and <code>localStorage</code> persistence automatically.</p>
+      <div class="pros-cons">
+        <div class="pros"><h4>Pros</h4><ul>
+          <li>Handles edge cases (SSR flash, system preference)</li>
+          <li>Minimal boilerplate</li>
+        </ul></div>
+        <div class="cons"><h4>Cons</h4><ul>
+          <li>Adds a dependency</li>
+          <li>Still need Tailwind <code>dark:</code> variants on components</li>
+          <li>Overkill for a pure Vite/React app</li>
+        </ul></div>
+      </div>
+    </div>
+  </div>
+</div>

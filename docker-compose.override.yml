@@ -1,0 +1,26 @@
+# =============================================================================
+# docker-compose.override.yml — Overrides para desenvolvimento local
+# Este arquivo é carregado automaticamente pelo docker compose.
+# NÃO commitar valores secretos reais aqui.
+# =============================================================================
+# version: "3.9"
+services:
+
+  # Troca para settings de desenvolvimento (sem SECURE_SSL_REDIRECT, etc.)
+  api:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      # E-mails vão para o console em vez de SMTP real
+      EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
+
+  celery_worker:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+    healthcheck:
+      disable: true
+
+  celery_beat:
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+    healthcheck:
+      disable: true

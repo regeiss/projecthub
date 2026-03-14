@@ -1,0 +1,73 @@
+# =============================================================================
+# ProjectHub — requirements/base.txt
+# Dependências comuns a todos os ambientes
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Django core
+# -----------------------------------------------------------------------------
+Django==5.1.4
+djangorestframework==3.15.2
+django-cors-headers==4.6.0
+djangorestframework-simplejwt==5.3.1     # JWT — usado em conjunto com Keycloak
+django-filter==24.3
+drf-spectacular==0.27.2                  # OpenAPI / Swagger automático
+
+# -----------------------------------------------------------------------------
+# ASGI + WebSocket (colaboração em tempo real na Wiki)
+# -----------------------------------------------------------------------------
+daphne==4.1.2                            # Servidor ASGI
+channels==4.1.0                          # Django Channels
+channels-redis==4.2.0                    # Channel layer via Redis
+# Yjs CRDT sync é feito no frontend; o backend apenas faz relay via WebSocket
+
+# -----------------------------------------------------------------------------
+# Banco de dados
+# -----------------------------------------------------------------------------
+psycopg2==2.9.10                         # Driver PostgreSQL (compilado)
+django-db-geventpool==4.0.1              # Pool de conexões para produção
+
+# -----------------------------------------------------------------------------
+# Cache e filas
+# -----------------------------------------------------------------------------
+redis==5.2.0                             # Cliente Redis
+celery==5.4.0                            # Worker assíncrono
+flower==2.0.1                           # Monitoramento web do Celery
+django-celery-beat==2.7.0               # Agendador periódico (DatabaseScheduler)
+django-celery-results==2.5.1            # Resultados das tasks no banco
+kombu==5.3.7                             # Mensageria (dependência do Celery)
+
+# -----------------------------------------------------------------------------
+# Autenticação — Keycloak OIDC
+# -----------------------------------------------------------------------------
+mozilla-django-oidc==4.0.1              # Integração OIDC com Keycloak
+cryptography==43.0.3                    # Verificação de tokens JWT
+
+# -----------------------------------------------------------------------------
+# Storage — OCI Object Storage (S3-compatible)
+# -----------------------------------------------------------------------------
+django-storages==1.14.4                 # Backend S3 para mídia e estáticos
+boto3==1.35.80                          # SDK AWS/S3-compatible
+
+# -----------------------------------------------------------------------------
+# CPM — Caminho Crítico (Fase 2)
+# -----------------------------------------------------------------------------
+networkx==3.4.2                         # Algoritmo CPM / grafos dirigidos
+
+# -----------------------------------------------------------------------------
+# Utilitários gerais
+# -----------------------------------------------------------------------------
+Pillow==11.0.0                          # Processamento de imagens (avatares, uploads)
+python-decouple==3.8                    # Leitura de variáveis de ambiente (.env)
+django-extensions==3.2.3               # Extras de desenvolvimento (shell_plus etc.)
+dj-database-url==2.3.0                  # Parse de DATABASE_URL
+pytz==2024.2                            # Timezones
+python-slugify==8.0.4                   # Geração de slugs
+bleach==6.2.0                           # Sanitização de HTML (conteúdo wiki)
+markdown==3.7                           # Conversão Markdown → HTML
+
+# -----------------------------------------------------------------------------
+# Monitoramento e logging
+# -----------------------------------------------------------------------------
+sentry-sdk==2.19.2                      # Rastreamento de erros (Sentry)
+django-health-check==3.18.3            # Endpoint /api/health/
