@@ -1,27 +1,32 @@
-import { useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useState, useRef } from 'react'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, Edit2, Trash2, MessageSquare, Flag } from 'lucide-react'
 import { useIssue, useUpdateIssue, useDeleteIssue, useIssueComments, useAddComment } from '@/hooks/useIssues'
 import { useProjectStates, useProjectMembers, useProjectLabels } from '@/hooks/useProjects'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
-import { Textarea } from '@/components/ui/Input'
 import { PageSpinner } from '@/components/ui/Spinner'
+import { MiniEditor, type MiniEditorHandle } from '@/components/editor/MiniEditor'
 import { IssueActivity } from './IssueActivity'
 import { IssueForm } from './IssueForm'
 import { formatDate, priorityColor, priorityLabel, relativeTime } from '@/lib/utils'
+import { tiptapToHtml } from '@/lib/editor'
 
 export function IssueDetailPage() {
   const { projectId = '', issueId = '' } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const backTo: string = (location.state as { from?: string } | null)?.from ?? `/projects/${projectId}/backlog`
   const { data: issue, isLoading } = useIssue(projectId, issueId)
   const { data: states = [] } = useProjectStates(projectId)
   const { data: comments = [] } = useIssueComments(projectId, issueId)
   const deleteIssue = useDeleteIssue()
   const addComment = useAddComment()
   const [editing, setEditing] = useState(false)
-  const [comment, setComment] = useState('')
+  const [commentJson, setCommentJson] = useState<Record<string, unknown>>({})
+  const [commentEmpty, setCommentEmpty] = useState(true)
+  const commentEditorRef = useRef<MiniEditorHandle>(null)
 
   if (isLoading) return <PageSpinner />
   if (!issue) return <p className="p-6 text-sm text-gray-500 dark:text-gray-400">Issue não encontrada</p>
@@ -32,16 +37,22 @@ export function IssueDetailPage() {
     if (!issue || !confirm('Deletar esta issue?')) return
     deleteIssue.mutate(
       { projectId, issueId: issue.id },
-      { onSuccess: () => navigate(-1) },
+      { onSuccess: () => navigate(backTo) },
     )
   }
 
   function handleComment(e: React.FormEvent) {
     e.preventDefault()
-    if (!issue || !comment.trim()) return
+    if (!issue || commentEmpty) return
     addComment.mutate(
-      { projectId, issueId: issue.id, body: comment },
-      { onSuccess: () => setComment('') },
+      { projectId, issueId: issue.id, content: commentJson },
+      {
+        onSuccess: () => {
+          setCommentJson({})
+          setCommentEmpty(true)
+          commentEditorRef.current?.clear()
+        },
+      },
     )
   }
 
@@ -49,7 +60,7 @@ export function IssueDetailPage() {
     <div className="mx-auto max-w-4xl p-6">
       {/* Back */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate(backTo)}
         className="mb-4 flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
       >
         <ArrowLeft className="h-4 w-4" />
@@ -85,9 +96,10 @@ export function IssueDetailPage() {
           </div>
 
           {issue.description ? (
-            <div className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300">
-              <p>{issue.description}</p>
-            </div>
+            <div
+              className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300"
+              dangerouslySetInnerHTML={{ __html: tiptapToHtml(issue.description) }}
+            />
           ) : (
             <p className="mb-6 text-sm text-gray-400 dark:text-gray-500 italic">
               Sem descrição
@@ -104,38 +116,43 @@ export function IssueDetailPage() {
             {comments.map((c) => (
               <div key={c.id} className="mb-3 flex gap-2.5">
                 <Avatar
-                  src={c.author?.avatarUrl}
-                  name={c.author?.name ?? '?'}
+                  src={c.authorAvatar}
+                  name={c.authorName || '?'}
                   size="sm"
                   className="shrink-0"
                 />
                 <div className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2">
                   <div className="mb-1 flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                      {c.author?.name}
+                      {c.authorName}
                     </span>
                     <span className="text-xs text-gray-400 dark:text-gray-500">
                       {relativeTime(c.createdAt)}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">{c.body}</p>
+                  <div
+                    className="prose prose-sm max-w-none text-sm text-gray-700 dark:text-gray-300 dark:prose-invert"
+                    dangerouslySetInnerHTML={{ __html: tiptapToHtml(c.content) }}
+                  />
                 </div>
               </div>
             ))}
 
             <form onSubmit={handleComment} className="mt-3">
-              <Textarea
+              <MiniEditor
+                ref={commentEditorRef}
                 placeholder="Escreva um comentário…"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                rows={3}
+                onChange={(html, isEmpty, json) => {
+                  setCommentJson(json)
+                  setCommentEmpty(isEmpty)
+                }}
               />
               <div className="mt-2 flex justify-end">
                 <Button
                   size="sm"
                   type="submit"
                   loading={addComment.isPending}
-                  disabled={!comment.trim()}
+                  disabled={commentEmpty}
                 >
                   Comentar
                 </Button>

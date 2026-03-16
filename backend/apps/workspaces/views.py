@@ -10,6 +10,7 @@ from core.permissions import IsWorkspaceAdmin
 from .filters import WorkspaceMemberFilter
 from .models import Workspace, WorkspaceMember
 from .serializers import (
+    WorkspaceCreateSerializer,
     WorkspaceMemberRoleSerializer,
     WorkspaceMemberSerializer,
     WorkspaceSerializer,
@@ -23,14 +24,29 @@ def _get_workspace(slug):
         raise NotFound(f"Workspace '{slug}' não encontrado.")
 
 
-class WorkspaceListView(generics.ListAPIView):
-    """GET /workspaces/ — lista workspaces do usuário autenticado."""
-    serializer_class = WorkspaceSerializer
+class WorkspaceListView(generics.ListCreateAPIView):
+    """GET/POST /workspaces/ — lista e cria workspaces."""
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return WorkspaceCreateSerializer
+        return WorkspaceSerializer
+
     def get_queryset(self):
+        return Workspace.objects.filter(members__keycloak_sub=self.request.user.keycloak_sub)
+
+    def perform_create(self, serializer):
+        workspace = serializer.save()
         user = self.request.user
-        return Workspace.objects.filter(members__id=user.id)
+        WorkspaceMember.objects.create(
+            workspace=workspace,
+            keycloak_sub=user.keycloak_sub,
+            email=user.email,
+            name=user.name,
+            avatar_url=user.avatar_url,
+            role=WorkspaceMember.Role.ADMIN,
+        )
 
 
 class WorkspaceDetailView(generics.RetrieveAPIView):

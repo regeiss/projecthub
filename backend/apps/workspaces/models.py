@@ -29,7 +29,7 @@ class WorkspaceMember(models.Model):
     workspace = models.ForeignKey(
         Workspace, on_delete=models.CASCADE, related_name="members"
     )
-    keycloak_sub = models.CharField(max_length=255, unique=True)
+    keycloak_sub = models.CharField(max_length=255)
     email = models.EmailField(max_length=255)
     name = models.CharField(max_length=255)
     avatar_url = models.TextField(blank=True, null=True)
@@ -46,6 +46,7 @@ class WorkspaceMember(models.Model):
     class Meta:
         managed = True
         db_table = "workspace_members"
+        unique_together = [("workspace", "keycloak_sub")]
 
     def __str__(self):
         return f"{self.name} ({self.email})"

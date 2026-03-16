@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { projectService } from '@/services/project.service'
 import type { Project } from '@/types'
 
-export function useProjects(_workspaceId?: string) {
+export function useProjects(workspaceId?: string) {
   return useQuery({
-    queryKey: ['projects'],
+    queryKey: ['projects', workspaceId],
     queryFn: () => projectService.list(),
+    enabled: !!workspaceId,
   })
 }
 

@@ -1,20 +1,26 @@
+import { useState } from 'react'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import {
   LayoutDashboard,
   FolderKanban,
   BarChart3,
   Settings,
+  Plus,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useWorkspaces } from '@/hooks/useWorkspace'
+import { useWorkspaces, useCreateWorkspace } from '@/hooks/useWorkspace'
 import { useProjects } from '@/hooks/useProjects'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { Modal, ModalFooter } from '@/components/ui/Modal'
+import { Input } from '@/components/ui/Input'
+import { Button } from '@/components/ui/Button'
 import {
   Dropdown,
   DropdownTrigger,
   DropdownContent,
   DropdownItem,
+  DropdownSeparator,
 } from '@/components/ui/Dropdown'
 
 function NavItem({
@@ -44,18 +50,71 @@ function NavItem({
   )
 }
 
+function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [name, setName] = useState('')
+  const [error, setError] = useState('')
+  const create = useCreateWorkspace()
+  const { setWorkspace } = useWorkspaceStore()
+  const navigate = useNavigate()
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    create.mutate(
+      { name },
+      {
+        onSuccess: (ws) => {
+          setWorkspace(ws)
+          navigate('/')
+          onClose()
+          setName('')
+        },
+        onError: () => setError('Erro ao criar workspace. Tente novamente.'),
+      },
+    )
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title="Novo workspace" size="sm">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          label="Nome"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ex: Minha Empresa"
+          required
+          autoFocus
+        />
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <ModalFooter>
+          <Button variant="ghost" type="button" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" loading={create.isPending}>Criar</Button>
+        </ModalFooter>
+      </form>
+    </Modal>
+  )
+}
+
 export function Sidebar() {
   const { workspace, setWorkspace } = useWorkspaceStore()
   const navigate = useNavigate()
   const { projectId } = useParams()
   const { data: workspaces = [] } = useWorkspaces()
   const { data: projects = [] } = useProjects(workspace?.id ?? '')
+  const [creatingWorkspace, setCreatingWorkspace] = useState(false)
+  const [wsDropdownOpen, setWsDropdownOpen] = useState(false)
+
+  function selectWorkspace(ws: (typeof workspaces)[0]) {
+    setWsDropdownOpen(false)
+    setWorkspace(ws)
+    navigate('/')
+  }
 
   return (
     <aside className="flex h-full w-14 flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-3">
       {/* Workspace selector */}
       <div className="flex justify-center px-2 pb-3">
-        <Dropdown>
+        <Dropdown open={wsDropdownOpen} onOpenChange={setWsDropdownOpen}>
           <DropdownTrigger asChild>
             <button
               className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700"
@@ -66,16 +125,20 @@ export function Sidebar() {
           </DropdownTrigger>
           <DropdownContent align="start" className="ml-2">
             {workspaces.map((ws) => (
-              <DropdownItem
+              <button
                 key={ws.id}
-                onSelect={() => {
-                  setWorkspace(ws)
-                  navigate('/')
-                }}
+                type="button"
+                className="flex w-full cursor-pointer select-none items-center px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 outline-none"
+                onClick={() => selectWorkspace(ws)}
               >
                 {ws.name}
-              </DropdownItem>
+              </button>
             ))}
+            <DropdownSeparator />
+            <DropdownItem onSelect={() => { setWsDropdownOpen(false); setCreatingWorkspace(true) }}>
+              <Plus className="mr-2 h-3.5 w-3.5" />
+              Novo workspace
+            </DropdownItem>
           </DropdownContent>
         </Dropdown>
       </div>
@@ -119,6 +182,11 @@ export function Sidebar() {
       <div className="flex flex-col items-center px-2">
         <NavItem to="/workspace/settings" icon={Settings} label="Configurações" />
       </div>
+
+      <CreateWorkspaceModal
+        open={creatingWorkspace}
+        onClose={() => setCreatingWorkspace(false)}
+      />
     </aside>
   )
 }

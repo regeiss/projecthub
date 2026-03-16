@@ -46,7 +46,10 @@ export const cycleService = {
     api.delete(`/projects/${projectId}/cycles/${cycleId}/`),
 
   progress: (projectId: string, cycleId: string) =>
-    api.get(`/projects/${projectId}/cycles/${cycleId}/progress/`).then((r) => r.data),
+    api.get(`/projects/${projectId}/cycles/${cycleId}/progress/`).then((r) => ({
+      totalIssues: r.data.total_issues ?? r.data.totalIssues ?? 0,
+      completedIssues: r.data.completed_issues ?? r.data.completedIssues ?? 0,
+    })),
 
   addIssue: (cycleId: string, issueId: string) =>
     api.post(`/cycles/${cycleId}/issues/`, { issue_id: issueId }).then((r) => r.data),

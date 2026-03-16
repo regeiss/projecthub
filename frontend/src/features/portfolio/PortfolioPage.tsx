@@ -7,6 +7,7 @@ import {
   useDeletePortfolio,
 } from '@/hooks/usePortfolio'
 import { useAuthStore } from '@/stores/authStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Button } from '@/components/ui/Button'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
@@ -118,7 +119,8 @@ const viewTabs = [
 ]
 
 export function PortfolioPage() {
-  const { data: portfolios = [], isLoading } = usePortfolios()
+  const { workspace } = useWorkspaceStore()
+  const { data: portfolios = [], isLoading } = usePortfolios(workspace?.id)
   const { user } = useAuthStore()
   const isAdmin = user?.role === 'admin'
   const [selectedId, setSelectedId] = useState<string>('')

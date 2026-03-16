@@ -18,6 +18,7 @@ function CreateIssueModal({
   const [title, setTitle] = useState('')
   const { data: states = [] } = useProjectStates(projectId)
   const [stateId, setStateId] = useState('')
+  const [continueAdding, setContinueAdding] = useState(false)
   const create = useCreateIssue()
 
   const defaultState = states.find((s) => s.category === 'backlog') ?? states[0]
@@ -33,7 +34,15 @@ function CreateIssueModal({
           priority: 'none',
         },
       },
-      { onSuccess: onClose },
+      {
+        onSuccess: () => {
+          if (continueAdding) {
+            setTitle('')
+          } else {
+            onClose()
+          }
+        },
+      },
     )
   }
 
@@ -65,6 +74,15 @@ function CreateIssueModal({
           </div>
         )}
         <ModalFooter>
+          <label className="mr-auto flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+            <input
+              type="checkbox"
+              checked={continueAdding}
+              onChange={(e) => setContinueAdding(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+            />
+            Continuar adicionando
+          </label>
           <Button variant="ghost" type="button" onClick={onClose}>
             Cancelar
           </Button>

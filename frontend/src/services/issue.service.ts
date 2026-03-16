@@ -55,6 +55,19 @@ function mapIssue(raw: any): Issue {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapComment(raw: any): IssueComment {
+  return {
+    id: raw.id,
+    authorName: raw.author_name ?? '',
+    authorAvatar: raw.author_avatar ?? null,
+    content: raw.content ?? {},
+    isEdited: raw.is_edited ?? false,
+    createdAt: raw.created_at,
+    updatedAt: raw.updated_at,
+  }
+}
+
 export const issueService = {
   list: (filters: IssueFilters & { projectId?: string }) => {
     const { projectId, ...rest } = filters as IssueFilters & { projectId?: string }
@@ -82,13 +95,13 @@ export const issueService = {
 
   // Comments
   comments: (issueId: string) =>
-    api.get<PaginatedResponse<IssueComment>>(`/issues/${issueId}/comments/`).then((r) => r.data.results),
+    api.get<PaginatedResponse<unknown>>(`/issues/${issueId}/comments/`).then((r) => (r.data.results as unknown[]).map(mapComment)),
 
-  addComment: (issueId: string, body: string) =>
-    api.post<IssueComment>(`/issues/${issueId}/comments/`, { body }).then((r) => r.data),
+  addComment: (issueId: string, content: Record<string, unknown>) =>
+    api.post<unknown>(`/issues/${issueId}/comments/`, { content }).then((r) => mapComment(r.data)),
 
-  updateComment: (issueId: string, commentId: string, body: string) =>
-    api.patch<IssueComment>(`/issues/${issueId}/comments/${commentId}/`, { body }).then((r) => r.data),
+  updateComment: (issueId: string, commentId: string, content: Record<string, unknown>) =>
+    api.patch<unknown>(`/issues/${issueId}/comments/${commentId}/`, { content }).then((r) => mapComment(r.data)),
 
   deleteComment: (issueId: string, commentId: string) =>
     api.delete(`/issues/${issueId}/comments/${commentId}/`),

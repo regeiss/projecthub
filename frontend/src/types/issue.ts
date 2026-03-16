@@ -8,7 +8,7 @@ export interface Issue {
   sequenceId: number
   projectId: string
   title: string
-  description: string | null
+  description: Record<string, unknown> | null
   stateId: string
   stateName?: string
   stateColor?: string
@@ -40,9 +40,9 @@ export interface Issue {
 
 export interface IssueComment {
   id: string
-  issueId: string
-  author: { id: string; name: string; avatarUrl: string | null }
-  body: string
+  authorName: string
+  authorAvatar: string | null
+  content: Record<string, unknown>
   isEdited: boolean
   createdAt: string
   updatedAt: string

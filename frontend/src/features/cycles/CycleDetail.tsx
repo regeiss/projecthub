@@ -15,9 +15,11 @@ export function CycleDetail() {
   if (isLoading) return <PageSpinner />
   if (!cycle) return null
 
-  const pct = progress
-    ? Math.round((progress.completedIssues / Math.max(progress.totalIssues, 1)) * 100)
-    : 0
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p = progress as any
+  const completedIssues = Number(p?.completedIssues ?? p?.completed_issues ?? p?.completed ?? 0)
+  const totalIssues = Number(p?.totalIssues ?? p?.total_issues ?? p?.total ?? 0)
+  const pct = totalIssues > 0 ? Math.round((completedIssues / totalIssues) * 100) : 0
 
   return (
     <div className="mx-auto max-w-3xl p-6">

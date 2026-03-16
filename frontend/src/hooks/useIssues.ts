@@ -95,6 +95,8 @@ export function useUpdateIssue() {
       if (data.assigneeId !== undefined) payload.assignee = data.assigneeId
       if (data.sortOrder !== undefined) payload.sort_order = data.sortOrder
       if (data.estimatePoints !== undefined) payload.estimate_points = data.estimatePoints
+      if (data.size !== undefined) payload.size = data.size
+      if (data.estimateDays !== undefined) payload.estimate_days = data.estimateDays
       if (data.startDate !== undefined) payload.start_date = data.startDate
       if (data.dueDate !== undefined) payload.due_date = data.dueDate
       if (Array.isArray(data.labelIds)) payload.label_ids = data.labelIds
@@ -130,12 +132,12 @@ export function useAddComment() {
     mutationFn: ({
       projectId: _projectId,
       issueId,
-      body,
+      content,
     }: {
       projectId: string
       issueId: string
-      body: string
-    }) => issueService.addComment(issueId, body),
+      content: Record<string, unknown>
+    }) => issueService.addComment(issueId, content),
     onSuccess: (_, { issueId }) => {
       qc.invalidateQueries({ queryKey: ['issue-comments', issueId] })
     },

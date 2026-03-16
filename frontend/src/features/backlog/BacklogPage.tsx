@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Avatar } from '@/components/ui/Avatar'
 import { PageSpinner } from '@/components/ui/Spinner'
-import { priorityColor, truncate } from '@/lib/utils'
+import { PriorityCapsule, SizeCapsule } from '@/components/ui/IssueCapsules'
+import { truncate } from '@/lib/utils'
 
 function IssueRow({ issue }: { issue: Issue }) {
   const navigate = useNavigate()
@@ -17,15 +18,18 @@ function IssueRow({ issue }: { issue: Issue }) {
   return (
     <div
       className="flex cursor-pointer items-center divide-x divide-gray-300 dark:divide-gray-600 border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800"
-      onClick={() => navigate(`/projects/${projectId}/issues/${issue.id}`)}
+      onClick={() => navigate(`/projects/${projectId}/issues/${issue.id}`, { state: { from: `/projects/${projectId}/backlog` } })}
     >
       <span className="w-20 shrink-0 px-4 py-2 text-xs text-gray-400 dark:text-gray-500">
         {issue.sequenceId}
       </span>
       <p className="flex-1 truncate px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{issue.title}</p>
-      <span className={`w-24 shrink-0 px-4 py-2 text-xs font-medium ${priorityColor(issue.priority)}`}>
-        {issue.priority}
-      </span>
+      <div className="flex w-20 shrink-0 items-center justify-center px-3 py-2">
+        <PriorityCapsule priority={issue.priority} />
+      </div>
+      <div className="flex w-14 shrink-0 items-center justify-center px-3 py-2">
+        <SizeCapsule size={issue.size} />
+      </div>
       <div className="flex w-12 shrink-0 items-center justify-center px-4 py-2">
         {issue.assignee ? (
           <Avatar src={issue.assignee.avatarUrl} name={issue.assignee.name} size="xs" />
