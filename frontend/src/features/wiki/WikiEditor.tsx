@@ -133,7 +133,7 @@ export function WikiEditor({ pageId, readOnly = false, className }: WikiEditorPr
 
   return (
     <div className={cn('flex flex-col bg-white dark:bg-gray-900', className ?? 'overflow-hidden rounded-md border border-gray-200 dark:border-gray-700')}>
-      {editor && !readOnly && <EditorToolbar editor={editor} />}
+      {editor && !readOnly && <EditorToolbar editor={editor} onSetLink={handleSetLink} />}
 
       {editor && !readOnly && (
         <BubbleMenu

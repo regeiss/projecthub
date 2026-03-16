@@ -4,6 +4,7 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useProjects } from '@/hooks/useProjects'
 import { useWorkspaceMembers } from '@/hooks/useWorkspace'
+import { usePortfolios } from '@/hooks/usePortfolio'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
@@ -37,6 +38,7 @@ export function WorkspacePage() {
   const navigate = useNavigate()
   const { data: projects = [] } = useProjects(workspace?.id ?? '')
   const { data: members = [] } = useWorkspaceMembers(workspace?.slug ?? '')
+  const { data: portfolios = [] } = usePortfolios(workspace?.id)
 
   if (!workspace) return null
 
@@ -65,9 +67,35 @@ export function WorkspacePage() {
         <StatCard
           icon={BarChart3}
           label="Portfolios"
-          value={0}
+          value={portfolios.length}
         />
       </div>
+
+      {/* Portfolios */}
+      {portfolios.length > 0 && (
+        <div className="mb-8">
+          <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Portfolios</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {portfolios.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => navigate('/portfolio')}
+                className="flex items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-left transition-shadow hover:shadow-sm"
+              >
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded bg-indigo-600 text-xs font-bold text-white">
+                  <BarChart3 className="h-4 w-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{p.name}</p>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {p.projectCount} projeto{p.projectCount !== 1 ? 's' : ''}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent projects */}
       <div>

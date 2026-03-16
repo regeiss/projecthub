@@ -30,7 +30,7 @@ export function Modal({
   className,
 }: ModalProps) {
   return (
-    <Dialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog.Root open={open} onOpenChange={(v: boolean) => !v && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 animate-in fade-in-0" />
         <Dialog.Content
@@ -38,6 +38,7 @@ export function Modal({
             'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2',
             'rounded-lg bg-white dark:bg-gray-900 p-6 shadow-xl dark:shadow-black/40',
             'animate-in fade-in-0 zoom-in-95',
+            'max-h-[90vh] overflow-y-auto',
             sizeClasses[size],
             className,
           )}

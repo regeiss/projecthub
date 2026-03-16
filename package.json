@@ -3,6 +3,11 @@
     "@types/react-router-dom": "^5.3.3"
   },
   "dependencies": {
+    "@radix-ui/react-dialog": "^1.1.15",
     "react-router-dom": "^7.13.1"
+  },
+  "overrides": {
+    "@types/react": "^18.3.14",
+    "@types/react-dom": "^18.3.5"
   }
 }

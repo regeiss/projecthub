@@ -33,7 +33,7 @@ class KeycloakJWTAuthentication(BaseAuthentication):
         token = auth_header.split(" ", 1)[1]
         print(f"[AUTH] Token received, prefix={token[:30]!r}", flush=True)
         try:
-            member = self._decode_and_get_member(token)
+            member = self._decode_and_get_member(token, request)
             print(f"[AUTH] Success for member: {member}", flush=True)
             return (member, token)
         except Exception as exc:
@@ -43,7 +43,7 @@ class KeycloakJWTAuthentication(BaseAuthentication):
     def authenticate_header(self, request):
         return 'Bearer realm="projecthub"'
 
-    def _decode_and_get_member(self, token):
+    def _decode_and_get_member(self, token, request=None):
         """Decodifica o token e retorna o WorkspaceMember. Usado também pelo middleware WS."""
         try:
             payload = self._decode_token(token)
@@ -52,7 +52,7 @@ class KeycloakJWTAuthentication(BaseAuthentication):
         except jwt.InvalidTokenError as exc:
             raise AuthenticationFailed(f"Token inválido: {exc}")
 
-        return self._get_or_create_member(payload)
+        return self._get_or_create_member(payload, request)
 
     def _get_jwks(self):
         jwks = cache.get(JWKS_CACHE_KEY)
@@ -98,27 +98,46 @@ class KeycloakJWTAuthentication(BaseAuthentication):
             decode_kwargs["audience"] = settings.OIDC_RP_CLIENT_ID
         return jwt.decode(token, public_key, **decode_kwargs)
 
-    def _get_or_create_member(self, payload):
+    def _get_or_create_member(self, payload, request=None):
         from apps.workspaces.models import Workspace, WorkspaceMember
 
         sub = payload.get("sub")
         if not sub:
             raise AuthenticationFailed("Token sem sub.")
 
-        workspace = Workspace.objects.first()
+        email = payload.get("email", "")
+        name = payload.get("name") or payload.get("preferred_username", "")
+
+        # Resolve the target workspace: prefer header, fall back to any existing
+        # membership, then fall back to the first workspace in the DB.
+        workspace = None
+        workspace_id = request.headers.get("X-Workspace-ID") if request else None
+        if workspace_id:
+            try:
+                workspace = Workspace.objects.get(pk=workspace_id)
+            except (Workspace.DoesNotExist, Exception):
+                workspace = None
+
+        if workspace is None:
+            # Use an existing membership if one exists (preserves previous behaviour)
+            existing = (
+                WorkspaceMember.objects
+                .filter(keycloak_sub=sub)
+                .select_related("workspace")
+                .first()
+            )
+            if existing:
+                workspace = existing.workspace
+            else:
+                workspace = Workspace.objects.first()
+
         if not workspace:
             raise AuthenticationFailed("Nenhum workspace configurado.")
 
         member, created = WorkspaceMember.objects.get_or_create(
             keycloak_sub=sub,
-            defaults={
-                "workspace": workspace,
-                "email": payload.get("email", ""),
-                "name": (
-                    payload.get("name")
-                    or payload.get("preferred_username", "")
-                ),
-            },
+            workspace=workspace,
+            defaults={"email": email, "name": name},
         )
 
         if not member.is_active:
@@ -127,17 +146,12 @@ class KeycloakJWTAuthentication(BaseAuthentication):
         if not created:
             # Sincroniza dados que podem ter mudado no Keycloak
             update_fields = []
-            new_email = payload.get("email", "")
-            new_name = payload.get("name") or payload.get("preferred_username", "")
-
-            if member.email != new_email:
-                member.email = new_email
+            if member.email != email:
+                member.email = email
                 update_fields.append("email")
-
-            if member.name != new_name:
-                member.name = new_name
+            if member.name != name:
+                member.name = name
                 update_fields.append("name")
-
             if update_fields:
                 update_fields.append("updated_at")
                 member.save(update_fields=update_fields)

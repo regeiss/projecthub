@@ -1,12 +1,15 @@
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useProjectStates, useProjectLabels, useProjectMembers } from '@/hooks/useProjects'
 import { useCreateIssue, useUpdateIssue } from '@/hooks/useIssues'
 import { useCycles } from '@/hooks/useCycles'
 import { useMilestones } from '@/hooks/useMilestones'
+import { cycleService } from '@/services/cycle.service'
 import type { Issue, IssueSize, Priority } from '@/types'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
-import { Input, Textarea } from '@/components/ui/Input'
+import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import { MiniEditor } from '@/components/editor/MiniEditor'
 
 const PRIORITIES: { value: Priority; label: string }[] = [
   { value: 'urgent', label: 'Urgente' },
@@ -29,10 +32,12 @@ interface IssueFormProps {
   open: boolean
   onClose: () => void
   issue?: Issue
+  defaultStateId?: string
 }
 
-export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
+export function IssueForm({ projectId, open, onClose, issue, defaultStateId }: IssueFormProps) {
   const isEdit = !!issue
+  const qc = useQueryClient()
   const { data: states = [] } = useProjectStates(projectId)
   const { data: labels = [] } = useProjectLabels(projectId)
   const { data: members = [] } = useProjectMembers(projectId)
@@ -42,8 +47,8 @@ export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
   const update = useUpdateIssue()
 
   const [title, setTitle] = useState(issue?.title ?? '')
-  const [description, setDescription] = useState(issue?.description ?? '')
-  const [stateId, setStateId] = useState(issue?.stateId ?? states[0]?.id ?? '')
+  const [description, setDescription] = useState<Record<string, unknown> | null>(issue?.description ?? null)
+  const [stateId, setStateId] = useState(issue?.stateId ?? defaultStateId ?? states[0]?.id ?? '')
   const [priority, setPriority] = useState<Priority>(issue?.priority ?? 'none')
   const [assigneeId, setAssigneeId] = useState(issue?.assigneeId ?? '')
   const [size, setSize] = useState<IssueSize | ''>(issue?.size ?? '')
@@ -54,6 +59,8 @@ export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
     issue?.labels?.map((l) => l.id) ?? [],
   )
   const [milestoneId, setMilestoneId] = useState(issue?.milestoneId ?? '')
+  const [cycleId, setCycleId] = useState(issue?.cycleId ?? '')
+  const [continueAdding, setContinueAdding] = useState(false)
 
   const defaultState =
     states.find((s) => s.category === 'backlog') ?? states[0]
@@ -72,9 +79,43 @@ export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
       milestoneId: milestoneId || undefined,
     }
     if (isEdit && issue) {
-      update.mutate({ projectId, issueId: issue.id, data }, { onSuccess: onClose })
+      const snapshotOldCycleId = issue.cycleId ?? ''
+      const snapshotNewCycleId = cycleId
+      update.mutate({ projectId, issueId: issue.id, data }, {
+        onSuccess: () => {
+          onClose()
+          if (snapshotNewCycleId !== snapshotOldCycleId) {
+            const run = async () => {
+              try {
+                if (snapshotOldCycleId) await cycleService.removeIssue(snapshotOldCycleId, issue.id)
+                if (snapshotNewCycleId) await cycleService.addIssue(snapshotNewCycleId, issue.id)
+              } finally {
+                qc.invalidateQueries({ queryKey: ['cycles', projectId] })
+                qc.invalidateQueries({ queryKey: ['issue', issue.id] })
+              }
+            }
+            run()
+          }
+        },
+      })
     } else {
-      create.mutate({ projectId, data }, { onSuccess: onClose })
+      create.mutate({ projectId, data }, {
+        onSuccess: () => {
+          if (continueAdding) {
+            setTitle('')
+            setDescription(null)
+            setPriority('none')
+            setAssigneeId('')
+            setSize('')
+            setEstimateDays('')
+            setSelectedLabels([])
+            setMilestoneId('')
+            setCycleId('')
+          } else {
+            onClose()
+          }
+        },
+      })
     }
   }
 
@@ -91,7 +132,7 @@ export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
       open={open}
       onClose={onClose}
       title={isEdit ? 'Editar issue' : 'Nova issue'}
-      size="lg"
+      size="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input
@@ -103,13 +144,16 @@ export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
           autoFocus
         />
 
-        <Textarea
-          label="Descrição"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Detalhes opcionais…"
-          rows={4}
-        />
+        <div className="flex flex-col gap-1">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Descrição
+          </label>
+          <MiniEditor
+            initialContent={description ?? undefined}
+            placeholder="Detalhes opcionais…"
+            onChange={(html, isEmpty, json) => setDescription(isEmpty ? null : json)}
+          />
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           {/* State */}
@@ -211,14 +255,23 @@ export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
         {/* Cycle */}
         {cycles.length > 0 && (
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ciclo atual</label>
-            <input
-              type="text"
-              readOnly
-              value={issue?.cycleName ?? '— nenhum —'}
-              className="h-8 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 px-3 text-sm text-gray-500 dark:text-gray-400"
-            />
-            <p className="text-xs text-gray-400 dark:text-gray-500">Para mover entre ciclos, use a tela de Ciclos do projeto.</p>
+            <label
+              htmlFor="issue-cycle-select"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Ciclo
+            </label>
+            <select
+              id="issue-cycle-select"
+              value={cycleId}
+              onChange={(e) => setCycleId(e.target.value)}
+              className="h-8 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">— sem ciclo —</option>
+              {cycles.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
           </div>
         )}
 
@@ -248,6 +301,17 @@ export function IssueForm({ projectId, open, onClose, issue }: IssueFormProps) {
         )}
 
         <ModalFooter>
+          {!isEdit && (
+            <label className="mr-auto flex cursor-pointer items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <input
+                type="checkbox"
+                checked={continueAdding}
+                onChange={(e) => setContinueAdding(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+              />
+              Continuar adicionando
+            </label>
+          )}
           <Button variant="ghost" type="button" onClick={onClose}>
             Cancelar
           </Button>

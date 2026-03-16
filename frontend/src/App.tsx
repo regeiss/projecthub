@@ -1,4 +1,5 @@
 import { Route, Routes, Navigate } from 'react-router-dom'
+import { TooltipProvider } from './components/ui/Tooltip'
 import { AuthProvider } from './features/auth/AuthProvider'
 import { ProtectedRoute } from './features/auth/ProtectedRoute'
 import { AppLayout } from './components/layout/AppLayout'
@@ -22,6 +23,7 @@ import { ModulesPage } from './features/modules/ModulesPage'
 
 export default function App() {
   return (
+    <TooltipProvider>
     <AuthProvider>
       <Routes>
         <Route element={<ProtectedRoute />}>
@@ -54,5 +56,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthProvider>
+    </TooltipProvider>
   )
 }

@@ -23,6 +23,14 @@ export function useMe() {
   })
 }
 
+export function useCreateWorkspace() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { name: string; slug?: string }) => workspaceService.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['workspaces'] }),
+  })
+}
+
 export function useUpdateMemberRole() {
   const qc = useQueryClient()
   return useMutation({

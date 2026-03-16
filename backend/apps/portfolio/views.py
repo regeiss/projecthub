@@ -14,6 +14,8 @@ Endpoints:
   CRUD   /portfolio/{id}/deps/                 — dependências entre projetos
 """
 
+from django.db import IntegrityError
+
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
@@ -125,7 +127,10 @@ class PortfolioProjectListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         _require_admin(self.request.user)
         portfolio = self._get_portfolio()
-        serializer.save(portfolio=portfolio)
+        try:
+            serializer.save(portfolio=portfolio)
+        except IntegrityError:
+            raise ValidationError({"project": "Este projeto já está no portfolio."})
 
 
 class PortfolioProjectDetailView(generics.RetrieveUpdateDestroyAPIView):

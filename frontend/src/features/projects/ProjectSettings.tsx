@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
-import { useProject, useProjectMembers, useProjectStates, useProjectLabels, useAddProjectMember, useRemoveProjectMember } from '@/hooks/useProjects'
+import { useProject, useProjectMembers, useProjectStates, useProjectLabels, useAddProjectMember, useRemoveProjectMember, useUpdateProject } from '@/hooks/useProjects'
 import { useWorkspaceMembers } from '@/hooks/useWorkspace'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { PageSpinner } from '@/components/ui/Spinner'
 
 export function ProjectSettings() {
@@ -19,8 +20,18 @@ export function ProjectSettings() {
   const addMember = useAddProjectMember(projectId)
   const removeMember = useRemoveProjectMember(projectId)
 
+  const updateProject = useUpdateProject()
+  const [name, setName] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [selectedMemberId, setSelectedMemberId] = useState('')
   const [selectedRole, setSelectedRole] = useState('member')
+
+  useEffect(() => {
+    if (project) {
+      setName(project.name)
+      setIdentifier(project.identifier)
+    }
+  }, [project])
 
   const memberIds = new Set(members.map((m) => m.memberId))
   const availableMembers = wsMembers.filter((wm) => !memberIds.has(wm.id))
@@ -33,6 +44,59 @@ export function ProjectSettings() {
       <h1 className="mb-6 text-lg font-semibold text-gray-900 dark:text-gray-100">
         Configurações — {project.name}
       </h1>
+
+      {/* General */}
+      <section className="mb-8">
+        <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Geral</h2>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (!name.trim() || !identifier.trim()) return
+            updateProject.mutate({ id: projectId, data: { name: name.trim(), identifier: identifier.trim().toUpperCase() } })
+          }}
+          className="space-y-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
+        >
+          <Input
+            label="Nome"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+          <div>
+            <Input
+              label="Identificador"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
+              required
+              aria-describedby="identifier-hint"
+            />
+            <p id="identifier-hint" className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              Máx. 10 caracteres, letras maiúsculas e números. Prefixo dos IDs das issues (ex.: PROJ-1).
+            </p>
+          </div>
+          <div className="flex items-center justify-between pt-1">
+            {updateProject.isError && (
+              <p className="text-xs text-red-500" role="alert">
+                Erro ao salvar. O identificador pode já estar em uso.
+              </p>
+            )}
+            {updateProject.isSuccess && (
+              <p className="text-xs text-green-600 dark:text-green-400" role="status">
+                Salvo com sucesso.
+              </p>
+            )}
+            {!updateProject.isError && !updateProject.isSuccess && <span />}
+            <Button
+              type="submit"
+              size="sm"
+              loading={updateProject.isPending}
+              disabled={!name.trim() || !identifier.trim() || (name === project.name && identifier === project.identifier)}
+            >
+              Salvar
+            </Button>
+          </div>
+        </form>
+      </section>
 
       {/* States */}
       <section className="mb-8">

@@ -11,6 +11,9 @@ export const workspaceService = {
   members: (slug: string) =>
     api.get<PaginatedResponse<WorkspaceMember>>(`/workspaces/${slug}/members/`).then((r) => r.data.results),
 
+  create: (data: { name: string; slug?: string }) =>
+    api.post<Workspace>('/workspaces/', data).then((r) => r.data),
+
   updateMemberRole: (slug: string, memberId: string, role: string) =>
     api.patch<WorkspaceMember>(`/workspaces/${slug}/members/${memberId}/`, { role }).then((r) => r.data),
 

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import keycloak from './keycloak'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -8,6 +9,10 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   if (keycloak.token) {
     config.headers.Authorization = `Bearer ${keycloak.token}`
+  }
+  const workspaceId = useWorkspaceStore.getState().workspace?.id
+  if (workspaceId) {
+    config.headers['X-Workspace-ID'] = workspaceId
   }
   return config
 })

@@ -2,10 +2,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { portfolioService } from '@/services/portfolio.service'
 import type { Portfolio, PortfolioObjective, PortfolioProject } from '@/types'
 
-export function usePortfolios() {
+export function usePortfolios(workspaceId?: string) {
   return useQuery({
-    queryKey: ['portfolios'],
+    queryKey: ['portfolios', workspaceId],
     queryFn: () => portfolioService.list(),
+    enabled: !!workspaceId,
   })
 }
 
