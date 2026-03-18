@@ -61,7 +61,7 @@ class WorkspaceKeycloakUsersViewTest(TestCase):
     self.admin = make_member(self.workspace, role="admin", sub="admin-sub")
     self.client = APIClient()
     self.client.force_authenticate(user=self.admin)
-    self.url = f"/api/workspaces/{self.workspace.slug}/keycloak-users/"
+    self.url = f"/api/v1/workspaces/{self.workspace.slug}/keycloak-users/"
 
   @patch("apps.workspaces.views.search_users")
   def test_returns_filtered_list(self, mock_search):
@@ -104,7 +104,7 @@ class WorkspaceMemberCreateViewTest(TestCase):
     self.admin = make_member(self.workspace, role="admin", sub="admin-sub")
     self.client = APIClient()
     self.client.force_authenticate(user=self.admin)
-    self.url = f"/api/workspaces/{self.workspace.slug}/members/create/"
+    self.url = f"/api/v1/workspaces/{self.workspace.slug}/members/create/"
 
   def test_creates_member_and_returns_201(self):
     payload = {"keycloak_sub": "new-sub", "email": "new@test.com", "name": "New", "role": "member"}
