@@ -1,5 +1,5 @@
 import api from '@/lib/axios'
-import type { PaginatedResponse, Workspace, WorkspaceMember } from '@/types'
+import type { KeycloakUser, PaginatedResponse, Workspace, WorkspaceMember } from '@/types'
 
 export const workspaceService = {
   list: () =>
@@ -19,4 +19,22 @@ export const workspaceService = {
 
   me: () =>
     api.get<WorkspaceMember>('/auth/me/').then((r) => r.data),
+
+  keycloakUsers: (slug: string, search: string): Promise<KeycloakUser[]> =>
+    api
+      .get<KeycloakUser[]>(`/workspaces/${slug}/keycloak-users/`, { params: { search } })
+      .then((r) => r.data),
+
+  addMember: (
+    slug: string,
+    data: { keycloakSub: string; email: string; name: string; role: string },
+  ): Promise<WorkspaceMember> =>
+    api
+      .post<WorkspaceMember>(`/workspaces/${slug}/members/create/`, {
+        keycloak_sub: data.keycloakSub,
+        email: data.email,
+        name: data.name,
+        role: data.role,
+      })
+      .then((r) => r.data),
 }

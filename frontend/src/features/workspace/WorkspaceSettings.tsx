@@ -1,13 +1,16 @@
 import { useState } from 'react'
+import { UserPlus } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useWorkspaceMembers } from '@/hooks/useWorkspace'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { AddMemberModal } from './AddMemberModal'
 
 export function WorkspaceSettings() {
   const { workspace } = useWorkspaceStore()
   const { data: members = [] } = useWorkspaceMembers(workspace?.slug ?? '')
+  const [addOpen, setAddOpen] = useState(false)
 
   if (!workspace) return null
 
@@ -26,9 +29,20 @@ export function WorkspaceSettings() {
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
-          Membros ({members.length})
-        </h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+            Membros ({members.length})
+          </h2>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setAddOpen(true)}
+            aria-label="Adicionar membro ao workspace"
+          >
+            <UserPlus className="h-4 w-4" />
+            Adicionar membro
+          </Button>
+        </div>
         <div className="divide-y divide-gray-100 dark:divide-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
           {members.map((m) => (
             <div key={m.id} className="flex items-center gap-3 px-4 py-3">
@@ -46,6 +60,12 @@ export function WorkspaceSettings() {
           ))}
         </div>
       </section>
+
+      <AddMemberModal
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        workspaceSlug={workspace.slug}
+      />
     </div>
   )
 }
