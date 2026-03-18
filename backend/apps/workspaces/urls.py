@@ -2,7 +2,9 @@ from django.urls import path
 
 from .views import (
     WorkspaceDetailView,
+    WorkspaceKeycloakUsersView,
     WorkspaceListView,
+    WorkspaceMemberCreateView,
     WorkspaceMemberListView,
     WorkspaceMemberUpdateView,
 )
@@ -19,5 +21,15 @@ urlpatterns = [
         "<slug:slug>/members/<uuid:pk>/",
         WorkspaceMemberUpdateView.as_view(),
         name="workspace-member-update",
+    ),
+    path(
+        "<slug:slug>/keycloak-users/",
+        WorkspaceKeycloakUsersView.as_view(),
+        name="workspace-keycloak-users",
+    ),
+    path(
+        "<slug:slug>/members/create/",
+        WorkspaceMemberCreateView.as_view(),
+        name="workspace-member-create",
     ),
 ]
