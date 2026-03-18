@@ -163,6 +163,7 @@ KEYCLOAK_SERVER_URL = config("KEYCLOAK_SERVER_URL", default="http://localhost:80
 KEYCLOAK_REALM = config("KEYCLOAK_REALM", default="projecthub")
 KEYCLOAK_ADMIN = config("KEYCLOAK_ADMIN", default="")
 KEYCLOAK_ADMIN_PASSWORD = config("KEYCLOAK_ADMIN_PASSWORD", default="")
+KEYCLOAK_ADMIN_REALM = config("KEYCLOAK_ADMIN_REALM", default="master")
 
 _KC_REALM_URL = KEYCLOAK_SERVER_URL + "/realms/" + KEYCLOAK_REALM
 OIDC_OP_JWKS_ENDPOINT = _KC_REALM_URL + "/protocol/openid-connect/certs"

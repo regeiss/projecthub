@@ -27,6 +27,7 @@ x-django-env: &django-env
     KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-change-me}
     KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
     KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    KEYCLOAK_ADMIN_REALM: ${KEYCLOAK_ADMIN_REALM:-master}
 
     # OCI Object Storage (S3-compatible)
     AWS_ACCESS_KEY_ID: ${OCI_ACCESS_KEY:-}
