@@ -1,4 +1,4 @@
-from django.urls import re_path
+from django.urls import re_path # type: ignore
 
 from apps.issues.consumers import IssueBoardConsumer
 from apps.notifications.consumers import NotificationConsumer
