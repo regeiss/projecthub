@@ -157,30 +157,18 @@ AUTHENTICATION_BACKENDS = [
 
 OIDC_RP_CLIENT_ID = config("KEYCLOAK_CLIENT_ID", default="projecthub-backend")
 OIDC_RP_CLIENT_SECRET = config("KEYCLOAK_CLIENT_SECRET", default="")
-OIDC_OP_JWKS_ENDPOINT = (
-    config("KEYCLOAK_SERVER_URL", default="http://localhost:8080")
-    + "/realms/"
-    + config("KEYCLOAK_REALM", default="projecthub")
-    + "/protocol/openid-connect/certs"
-)
-OIDC_OP_AUTHORIZATION_ENDPOINT = (
-    config("KEYCLOAK_SERVER_URL")
-    + "/realms/"
-    + config("KEYCLOAK_REALM")
-    + "/protocol/openid-connect/auth"
-)
-OIDC_OP_TOKEN_ENDPOINT = (
-    config("KEYCLOAK_SERVER_URL")
-    + "/realms/"
-    + config("KEYCLOAK_REALM")
-    + "/protocol/openid-connect/token"
-)
-OIDC_OP_USER_ENDPOINT = (
-    config("KEYCLOAK_SERVER_URL")
-    + "/realms/"
-    + config("KEYCLOAK_REALM")
-    + "/protocol/openid-connect/userinfo"
-)
+
+# Stored as individual settings so other modules (keycloak_admin) can reference them
+KEYCLOAK_SERVER_URL = config("KEYCLOAK_SERVER_URL", default="http://localhost:8080")
+KEYCLOAK_REALM = config("KEYCLOAK_REALM", default="projecthub")
+KEYCLOAK_ADMIN = config("KEYCLOAK_ADMIN", default="")
+KEYCLOAK_ADMIN_PASSWORD = config("KEYCLOAK_ADMIN_PASSWORD", default="")
+
+_KC_REALM_URL = KEYCLOAK_SERVER_URL + "/realms/" + KEYCLOAK_REALM
+OIDC_OP_JWKS_ENDPOINT = _KC_REALM_URL + "/protocol/openid-connect/certs"
+OIDC_OP_AUTHORIZATION_ENDPOINT = _KC_REALM_URL + "/protocol/openid-connect/auth"
+OIDC_OP_TOKEN_ENDPOINT = _KC_REALM_URL + "/protocol/openid-connect/token"
+OIDC_OP_USER_ENDPOINT = _KC_REALM_URL + "/protocol/openid-connect/userinfo"
 OIDC_RP_SIGN_ALGO = "RS256"
 OIDC_STORE_ACCESS_TOKEN = True
 OIDC_STORE_ID_TOKEN = True
