@@ -17,7 +17,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, MoreHorizontal, EyeOff, Eye, Trash2, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Plus, MoreHorizontal, EyeOff, Eye, Trash2, ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useProjectStates } from '@/hooks/useProjects'
 import { useIssues, useUpdateIssue } from '@/hooks/useIssues'
@@ -31,6 +31,14 @@ import { BoardFilters } from './BoardFilters'
 import { IssueForm } from '../issues/IssueForm'
 import { useNavigate } from 'react-router-dom'
 import { projectService } from '@/services/project.service'
+
+const PRIORITY_LEFT_COLOR: Record<string, string> = {
+  urgent: '#ef4444',
+  high:   '#f97316',
+  medium: '#eab308',
+  low:    '#60a5fa',
+  none:   '#e5e7eb',
+}
 
 // ---------------------------------------------------------------------------
 // IssueCard
@@ -60,7 +68,8 @@ function IssueCard({ issue }: { issue: Issue }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="cursor-grab rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3 shadow-sm hover:shadow-md active:cursor-grabbing"
+      className="cursor-grab rounded-md border border-gray-200 dark:border-gray-700 border-l-4 bg-white dark:bg-gray-900 p-3 shadow-sm hover:shadow-md active:cursor-grabbing"
+      style={{ ...style, borderLeftColor: PRIORITY_LEFT_COLOR[issue.priority] ?? PRIORITY_LEFT_COLOR.none }}
       onClick={() => navigate(`/projects/${projectId}/issues/${issue.id}`, { state: { from: `/projects/${projectId}/board` } })}
     >
       <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{issue.sequenceId}</p>
@@ -80,6 +89,15 @@ function IssueCard({ issue }: { issue: Issue }) {
               {l.name}
             </span>
           ))}
+          {issue.cycleName && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-violet-400/40 bg-violet-500/10 px-1.5 py-0.5 text-[10px] font-medium text-violet-500"
+              aria-label={`Ciclo: ${issue.cycleName}`}
+            >
+              <RotateCcw className="h-2.5 w-2.5" />
+              {truncate(issue.cycleName, 16)}
+            </span>
+          )}
         </div>
         {issue.assignee && (
           <Avatar src={issue.assignee.avatarUrl} name={issue.assignee.name} size="xs" className="shrink-0" />
