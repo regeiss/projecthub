@@ -65,8 +65,8 @@ export const wikiService = {
   spaces: () =>
     api.get<PaginatedResponse<unknown>>('/wiki/spaces/').then((r) => (r.data.results as unknown[]).map(mapSpace)),
 
-  createSpace: (data: Partial<WikiSpace>) =>
-    api.post<unknown>('/wiki/spaces/', data).then((r) => mapSpace(r.data)),
+  createSpace: (projectId: string, name: string) =>
+    api.post<unknown>('/wiki/spaces/', { project: projectId, name }).then((r) => mapSpace(r.data)),
 
   updateSpace: (spaceId: string, data: Partial<WikiSpace>) =>
     api.patch<unknown>(`/wiki/spaces/${spaceId}/`, data).then((r) => mapSpace(r.data)),

@@ -1,23 +1,53 @@
 import { useParams, Outlet } from 'react-router-dom'
-import { useWikiSpaces, useCreateWikiPage } from '@/hooks/useWiki'
+import { BookOpen } from 'lucide-react'
+import { useWikiSpaces, useCreateWikiSpace } from '@/hooks/useWiki'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { Button } from '@/components/ui/Button'
 import { PageTree } from './PageTree'
 import { PageSpinner } from '@/components/ui/Spinner'
 
 export function WikiLayout() {
   const { projectId = '' } = useParams()
-  const { workspace } = useWorkspaceStore()
+  const { currentProject } = useWorkspaceStore()
   const { data: spaces = [], isLoading } = useWikiSpaces()
+  const createSpace = useCreateWikiSpace()
 
-  // Find the space associated with this project (or first space)
-  const space = spaces.find((s) => s.projectId === projectId) ?? spaces[0]
+  const space = spaces.find((s) => s.projectId === projectId)
 
   if (isLoading) return <PageSpinner />
 
   if (!space) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-gray-400 dark:text-gray-500">
-        Nenhum espaço wiki criado para este projeto
+      <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30">
+          <BookOpen className="h-6 w-6 text-indigo-500" />
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            Nenhuma wiki ainda
+          </p>
+          <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+            Crie uma wiki para documentar este projeto
+          </p>
+        </div>
+        {createSpace.isError && (
+          <p className="text-xs text-red-500" role="alert">
+            Erro ao criar wiki. Tente novamente.
+          </p>
+        )}
+        <Button
+          loading={createSpace.isPending}
+          onClick={() =>
+            createSpace.mutate({
+              projectId,
+              name: currentProject?.name ?? 'Wiki',
+            })
+          }
+          aria-label="Criar wiki para este projeto"
+        >
+          <BookOpen className="h-3.5 w-3.5" />
+          Criar wiki
+        </Button>
       </div>
     )
   }
