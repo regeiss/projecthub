@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useCallback } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -20,12 +20,13 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EditorToolbar } from './EditorToolbar'
-import { wikiService } from '@/services/wiki.service'
 
 interface WikiEditorProps {
   pageId: string
+  initialContent?: object | null
   readOnly?: boolean
   className?: string
+  onContentChange?: (content: object) => void
 }
 
 function BubbleButton({
@@ -54,8 +55,20 @@ function BubbleButton({
   )
 }
 
-export function WikiEditor({ pageId, readOnly = false, className }: WikiEditorProps) {
+export function WikiEditor({ pageId, initialContent, readOnly = false, className, onContentChange }: WikiEditorProps) {
   const ydoc = useMemo(() => new Y.Doc(), [pageId])
+
+  // Keep a stable ref so the onUpdate closure always calls the latest callback
+  // (useEditor only captures the initial render's onContentChange)
+  const onContentChangeRef = useRef(onContentChange)
+  onContentChangeRef.current = onContentChange
+
+  // Track whether we've seeded the editor with saved content yet.
+  // We cannot use useEditor's `content` option because it only applies at
+  // mount time, but initialContent may arrive asynchronously (stale cache →
+  // background refetch). Once seeded, we never overwrite the editor again so
+  // in-progress edits are not clobbered.
+  const contentSeeded = useRef(false)
 
   useEffect(() => {
     const wsUrl = import.meta.env.VITE_WS_URL ?? 'ws://localhost/ws'
@@ -70,22 +83,6 @@ export function WikiEditor({ pageId, readOnly = false, className }: WikiEditorPr
       ydoc.destroy()
     }
   }, [pageId, ydoc])
-
-  // Autosave: debounce 2s após cada mudança
-  const saveContent = useCallback(
-    (() => {
-      let timer: ReturnType<typeof setTimeout>
-      return (content: object) => {
-        clearTimeout(timer)
-        timer = setTimeout(() => {
-          wikiService.updatePage(pageId, { content }).catch(() => {
-            // falha silenciosa — Yjs garante o estado via WS
-          })
-        }, 2000)
-      }
-    })(),
-    [pageId],
-  )
 
   const editor = useEditor({
     extensions: [
@@ -104,7 +101,7 @@ export function WikiEditor({ pageId, readOnly = false, className }: WikiEditorPr
     ],
     editable: !readOnly,
     onUpdate: ({ editor }) => {
-      if (!readOnly) saveContent(editor.getJSON())
+      if (!readOnly) onContentChangeRef.current?.(editor.getJSON())
     },
     editorProps: {
       attributes: {
@@ -118,6 +115,14 @@ export function WikiEditor({ pageId, readOnly = false, className }: WikiEditorPr
       },
     },
   })
+
+  useEffect(() => {
+    if (!editor || contentSeeded.current) return
+    if (initialContent) {
+      editor.commands.setContent(initialContent)
+      contentSeeded.current = true
+    }
+  }, [editor, initialContent])
 
   function handleSetLink() {
     if (!editor) return
