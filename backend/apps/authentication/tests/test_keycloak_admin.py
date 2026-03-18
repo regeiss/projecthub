@@ -32,7 +32,21 @@ class SearchUsersTest(TestCase):
         self.assertEqual(result[0]["name"], "botuser")
 
     @patch("apps.authentication.keycloak_admin.KeycloakAdmin")
-    def test_raises_unavailable_on_exception(self, MockAdmin):
+    def test_raises_unavailable_on_constructor_exception(self, MockAdmin):
         MockAdmin.side_effect = Exception("connection refused")
         with self.assertRaises(KeycloakAdminUnavailable):
             search_users("alice")
+
+    @patch("apps.authentication.keycloak_admin.KeycloakAdmin")
+    def test_raises_unavailable_when_get_users_raises(self, MockAdmin):
+        instance = MockAdmin.return_value
+        instance.get_users.side_effect = Exception("timeout")
+        with self.assertRaises(KeycloakAdminUnavailable):
+            search_users("alice")
+
+    @patch("apps.authentication.keycloak_admin.KeycloakAdmin")
+    def test_empty_results_returns_empty_list(self, MockAdmin):
+        instance = MockAdmin.return_value
+        instance.get_users.return_value = []
+        result = search_users("nobody")
+        self.assertEqual(result, [])
