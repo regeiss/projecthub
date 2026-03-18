@@ -25,6 +25,8 @@ x-django-env: &django-env
     KEYCLOAK_REALM: ${KEYCLOAK_REALM:-projecthub}
     KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-projecthub-backend}
     KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-change-me}
+    KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+    KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
 
     # OCI Object Storage (S3-compatible)
     AWS_ACCESS_KEY_ID: ${OCI_ACCESS_KEY:-}
