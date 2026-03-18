@@ -1,4 +1,4 @@
-export * from './workspace'
+export type { Workspace, WorkspaceMember, KeycloakUser } from './workspace'
 export * from './project'
 export * from './issue'
 export * from './wiki'

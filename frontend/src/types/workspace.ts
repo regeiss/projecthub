@@ -18,3 +18,9 @@ export interface WorkspaceMember {
   createdAt: string
   updatedAt: string
 }
+
+export interface KeycloakUser {
+  sub: string
+  email: string
+  name: string
+}
