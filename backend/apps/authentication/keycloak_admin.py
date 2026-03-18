@@ -18,6 +18,7 @@ def search_users(query: str) -> list[dict]:
       realm_name=settings.KEYCLOAK_REALM,
       username=getattr(settings, "KEYCLOAK_ADMIN", ""),
       password=getattr(settings, "KEYCLOAK_ADMIN_PASSWORD", ""),
+      user_realm_name="master",
       verify=True,
     )
     results = admin.get_users({"search": query, "max": 20})
