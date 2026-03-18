@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { workspaceService } from '@/services/workspace.service'
+import type { KeycloakUser } from '@/types'
 
 export function useWorkspaces() {
   return useQuery({
@@ -36,6 +37,36 @@ export function useUpdateMemberRole() {
   return useMutation({
     mutationFn: ({ slug, memberId, role }: { slug: string; memberId: string; role: string }) =>
       workspaceService.updateMemberRole(slug, memberId, role),
+    onSuccess: (_, { slug }) => {
+      qc.invalidateQueries({ queryKey: ['workspace-members', slug] })
+    },
+  })
+}
+
+export function useKeycloakUsers(slug: string, search: string) {
+  return useQuery({
+    queryKey: ['keycloak-users', slug, search],
+    queryFn: () => workspaceService.keycloakUsers(slug, search),
+    enabled: !!slug && search.length >= 2,
+  })
+}
+
+export function useAddWorkspaceMember() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      slug,
+      keycloakSub,
+      email,
+      name,
+      role,
+    }: {
+      slug: string
+      keycloakSub: string
+      email: string
+      name: string
+      role: string
+    }) => workspaceService.addMember(slug, { keycloakSub, email, name, role }),
     onSuccess: (_, { slug }) => {
       qc.invalidateQueries({ queryKey: ['workspace-members', slug] })
     },
