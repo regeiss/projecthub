@@ -58,3 +58,10 @@ class WorkspaceMemberRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = WorkspaceMember
         fields = ["role"]
+
+
+class WorkspaceMemberCreateSerializer(serializers.Serializer):
+    keycloak_sub = serializers.CharField(max_length=255)
+    email = serializers.EmailField(max_length=255)
+    name = serializers.CharField(max_length=255)
+    role = serializers.ChoiceField(choices=WorkspaceMember.Role.choices)
