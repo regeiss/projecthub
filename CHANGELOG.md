@@ -7,6 +7,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Workspace admins can search Keycloak users and pre-add them as workspace members before their first login
+- `GET /api/v1/workspaces/{slug}/keycloak-users/?search=` — searches Keycloak, filters existing members
+- `POST /api/v1/workspaces/{slug}/members/create/` — creates a WorkspaceMember record
+- `AddMemberModal` component in WorkspaceSettings with debounced search, role selector, and error feedback
+
 ### Corrigido
 - **TypeScript — conflito de `@types/react` v18 vs v19 em Modal/Radix (2026-03-16)**: O `node_modules` raiz do workspace continha `@types/react@19` (puxado por `@radix-ui/react-dialog@^1.1.15`), enquanto o frontend usava v18. O TypeScript resolvia dois `ReactNode` incompatíveis, causando erros TS2786 em todos os componentes Radix. Adicionado `overrides` nos `package.json` raiz e do frontend para forçar `@types/react@^18.3.14` em toda a árvore de dependências.
 - **Sidebar — tooltips não fechavam ao tirar o hover (2026-03-16)**: O `Tooltip` usava `RadixTooltip.Root` sem estado controlado, o que causava tooltips presos quando o mouse saía rapidamente. Adicionado estado `open` controlado com `onOpenChange` e `onMouseLeave` explícito no trigger para forçar fechamento imediato.

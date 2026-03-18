@@ -139,6 +139,8 @@ Todas em `.env.example`. As mais críticas:
 | `KEYCLOAK_SERVER_URL` | JWKS endpoint |
 | `KEYCLOAK_REALM` | OIDC realm |
 | `KEYCLOAK_CLIENT_SECRET` | Verificação de token (confidential client) |
+| `KEYCLOAK_ADMIN`          | Backend — Keycloak Admin API username (service account with `view-users` role) |
+| `KEYCLOAK_ADMIN_PASSWORD` | Backend — Keycloak Admin API password |
 | `OCI_S3_ENDPOINT` | Upload de arquivos |
 
 ---
