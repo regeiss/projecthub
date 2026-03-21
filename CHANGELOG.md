@@ -8,6 +8,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Subtasks (backend)**: `SubtaskSerializer` for slim subtask list responses; `subtask_count` and `completed_subtask_count` fields added to `IssueSerializer` (annotated on list, computed on demand for detail); `GET/POST /api/issues/{issue_pk}/subtasks/` endpoint via `IssueSubtaskListCreateView`; max 1 level of nesting enforced (returns 400 when trying to create a subtask of a subtask).
 - Workspace admins can search Keycloak users and pre-add them as workspace members before their first login
 - `GET /api/v1/workspaces/{slug}/keycloak-users/?search=` — searches Keycloak, filters existing members
 - `POST /api/v1/workspaces/{slug}/members/create/` — creates a WorkspaceMember record
