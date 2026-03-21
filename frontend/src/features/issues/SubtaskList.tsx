@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useSubtasks, useCreateSubtask } from '@/hooks/useIssues'
+import { useSubtasks } from '@/hooks/useIssues'
 import { IssueForm } from './IssueForm'
 
 interface SubtaskListProps {
@@ -10,7 +10,6 @@ interface SubtaskListProps {
 
 export function SubtaskList({ projectId, issueId }: SubtaskListProps) {
   const { data: subtasks = [], isLoading, isError } = useSubtasks(issueId)
-  useCreateSubtask()
   const [showForm, setShowForm] = useState(false)
 
   if (isLoading) {
