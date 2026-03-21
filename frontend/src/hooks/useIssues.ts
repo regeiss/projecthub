@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { issueService } from '@/services/issue.service'
-import type { IssueFilters } from '@/types'
+import type { CreateSubtaskDto, IssueFilters } from '@/types'
 
 export function useIssues(projectId: string, filters: IssueFilters = {}) {
   return useQuery({
@@ -158,6 +158,37 @@ export function useUploadAttachment() {
     }) => issueService.uploadAttachment(issueId, file),
     onSuccess: (_, { issueId }) => {
       qc.invalidateQueries({ queryKey: ['issue-attachments', issueId] })
+    },
+  })
+}
+
+export function useSubtasks(issueId: string) {
+  return useQuery({
+    queryKey: ['subtasks', issueId],
+    queryFn: () => issueService.subtasks(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useCreateSubtask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ issueId, data }: { issueId: string; data: CreateSubtaskDto }) => {
+      const payload: Record<string, unknown> = {
+        title: data.title,
+        priority: data.priority ?? 'none',
+      }
+      if (data.stateId) payload.state = data.stateId
+      if (data.assigneeId) payload.assignee = data.assigneeId
+      if (data.description) payload.description = data.description
+      if (Array.isArray(data.labelIds) && data.labelIds.length > 0) {
+        payload.label_ids = data.labelIds
+      }
+      return issueService.createSubtask(issueId, payload)
+    },
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['subtasks', issueId] })
+      qc.invalidateQueries({ queryKey: ['issue', issueId] })
     },
   })
 }
