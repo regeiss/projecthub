@@ -49,7 +49,11 @@ def make_state(project, category="backlog"):
   )
 
 
+_issue_seq = 0
+
 def make_issue(project, state, member, title="Issue", parent=None):
+  global _issue_seq
+  _issue_seq += 1
   return Issue.objects.create(
     project=project,
     title=title,
@@ -59,6 +63,7 @@ def make_issue(project, state, member, title="Issue", parent=None):
     reporter=member,
     created_by=member,
     parent=parent,
+    sequence_id=_issue_seq,
   )
 
 
