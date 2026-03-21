@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest'
 import { mapIssue } from './issue.service'
 
 describe('mapIssue', () => {

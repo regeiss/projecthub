@@ -77,7 +77,7 @@ describe('SubtaskList', () => {
       data: [],
       isLoading: false,
       isError: false,
-    } as ReturnType<typeof useSubtasks>)
+    } as unknown as ReturnType<typeof useSubtasks>)
 
     renderComponent()
     expect(screen.getByText('Sem subtarefas.')).toBeInTheDocument()
@@ -139,7 +139,7 @@ describe('SubtaskList', () => {
       data: [],
       isLoading: false,
       isError: false,
-    } as ReturnType<typeof useSubtasks>)
+    } as unknown as ReturnType<typeof useSubtasks>)
 
     renderComponent({ projectId: 'proj-1', issueId: 'issue-1' })
 

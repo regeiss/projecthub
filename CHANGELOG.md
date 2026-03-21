@@ -9,6 +9,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ### Added
 - **Subtasks (backend)**: `SubtaskSerializer` for slim subtask list responses; `subtask_count` and `completed_subtask_count` fields added to `IssueSerializer` (annotated on list, computed on demand for detail); `GET/POST /api/issues/{issue_pk}/subtasks/` endpoint via `IssueSubtaskListCreateView`; max 1 level of nesting enforced (returns 400 when trying to create a subtask of a subtask).
+- **Subtasks (frontend)**: end-to-end subtask support in the React SPA:
+  - `Issue` type extended with `subtaskCount` and `completedSubtaskCount` fields; new `CreateSubtaskDto` type added to `types/issue.ts`.
+  - `mapIssue` in `issue.service.ts` maps `subtask_count` / `completed_subtask_count` from the API; new `issueService.subtasks(issueId)` and `issueService.createSubtask(issueId, data)` methods call `GET/POST /api/issues/{id}/subtasks/`.
+  - `useSubtasks(issueId)` and `useCreateSubtask()` hooks added to `useIssues.ts`; `useCreateSubtask` invalidates both the subtask list and the parent issue on success.
+  - `IssueForm` accepts optional `parentIssueId` and `typeOverride` props; when present, the form sends `parent_id` and forces `type` to the override value, enabling in-context subtask creation.
+  - `SubtaskList` component (`SubtaskList.tsx`) displays the subtask panel inside `IssueDetailPage`: loading/error/empty states, a row per subtask with state-colour dot (aria-label), priority badge, sequence ID and title as a link, and a "+ Adicionar" button that opens `IssueForm` pre-wired for subtask creation. Full Vitest suite in `SubtaskList.test.tsx` (5 tests covering all states).
+  - `IssueDetailPage` renders `<SubtaskList projectId issueId />` below the description section.
+  - `IssueCard` (Kanban board) shows a grey subtask-count badge (`✓ completed/total`) when `subtaskCount > 0`; tested in `IssueCard.test.tsx`.
 - Workspace admins can search Keycloak users and pre-add them as workspace members before their first login
 - `GET /api/v1/workspaces/{slug}/keycloak-users/?search=` — searches Keycloak, filters existing members
 - `POST /api/v1/workspaces/{slug}/members/create/` — creates a WorkspaceMember record
