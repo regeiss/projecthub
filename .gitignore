@@ -71,4 +71,5 @@ desktop.ini
 *.log
 logs/
 
-CLAUDE.md .worktrees/
+CLAUDE.md
+.worktrees/
