@@ -93,7 +93,7 @@ class SubtaskListCreateTests(TestCase):
     child2 = make_issue(self.project, self.state, self.member, "Child 2", parent=self.parent)
     other = make_issue(self.project, self.state, self.member, "Other")
 
-    resp = self.client.get(f"/api/issues/{self.parent.id}/subtasks/")
+    resp = self.client.get(f"/api/v1/issues/{self.parent.id}/subtasks/")
 
     # The subtasks endpoint has pagination_class = None so resp.data is a plain list
     self.assertEqual(resp.status_code, 200)
@@ -103,7 +103,7 @@ class SubtaskListCreateTests(TestCase):
     self.assertNotIn(str(other.id), ids)
 
   def test_create_subtask_sets_parent_and_type(self):
-    resp = self.client.post(f"/api/issues/{self.parent.id}/subtasks/", {
+    resp = self.client.post(f"/api/v1/issues/{self.parent.id}/subtasks/", {
       "title": "Sub 1",
       "state": str(self.state.id),
       "priority": "none",
@@ -116,7 +116,7 @@ class SubtaskListCreateTests(TestCase):
 
   def test_create_subtask_ignores_client_type(self):
     """Server must force type=subtask regardless of what client sends."""
-    resp = self.client.post(f"/api/issues/{self.parent.id}/subtasks/", {
+    resp = self.client.post(f"/api/v1/issues/{self.parent.id}/subtasks/", {
       "title": "Sub 2",
       "state": str(self.state.id),
       "priority": "none",
@@ -131,7 +131,7 @@ class SubtaskListCreateTests(TestCase):
     """Max 1 level of nesting."""
     child = make_issue(self.project, self.state, self.member, "Child", parent=self.parent)
 
-    resp = self.client.post(f"/api/issues/{child.id}/subtasks/", {
+    resp = self.client.post(f"/api/v1/issues/{child.id}/subtasks/", {
       "title": "Grandchild",
       "state": str(self.state.id),
       "priority": "none",
@@ -153,7 +153,7 @@ class SubtaskCountAnnotationTests(TestCase):
     parent = make_issue(self.project, self.state, self.member, "Parent")
     no_children = make_issue(self.project, self.state, self.member, "Leaf")
 
-    resp = self.client.get(f"/api/issues/?project_id={self.project.id}")
+    resp = self.client.get(f"/api/v1/issues/?project_id={self.project.id}")
 
     self.assertEqual(resp.status_code, 200)
     results = {r["id"]: r for r in resp.data["results"]}
@@ -166,7 +166,7 @@ class SubtaskCountAnnotationTests(TestCase):
     make_issue(self.project, self.state, self.member, "Open sub", parent=parent)
     make_issue(self.project, self.done_state, self.member, "Done sub", parent=parent)
 
-    resp = self.client.get(f"/api/issues/?project_id={self.project.id}")
+    resp = self.client.get(f"/api/v1/issues/?project_id={self.project.id}")
 
     self.assertEqual(resp.status_code, 200)
     results = {r["id"]: r for r in resp.data["results"]}
