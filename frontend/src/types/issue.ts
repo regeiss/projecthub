@@ -36,6 +36,8 @@ export interface Issue {
   isCritical: boolean
   milestoneId: string | null
   milestoneName: string | null
+  subtaskCount: number
+  completedSubtaskCount: number
 }
 
 export interface IssueComment {
@@ -98,6 +100,15 @@ export interface CreateIssueDto {
   dueDate?: string | null
   sortOrder?: number
   milestoneId?: string | null
+}
+
+export interface CreateSubtaskDto {
+  title: string
+  stateId?: string
+  priority?: Priority
+  assigneeId?: string | null
+  description?: object | null
+  labelIds?: string[]
 }
 
 export interface UpdateIssueDto {
