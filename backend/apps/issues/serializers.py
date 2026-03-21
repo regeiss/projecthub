@@ -14,6 +14,28 @@ from .models import (
 )
 
 
+class SubtaskSerializer(serializers.ModelSerializer):
+  """Slim read-only serializer for subtask list responses."""
+  state_color = serializers.CharField(source="state.color", read_only=True)
+  state_category = serializers.CharField(source="state.category", read_only=True)
+  assignee_name = serializers.CharField(
+    source="assignee.name", read_only=True, default=None
+  )
+  assignee_avatar = serializers.CharField(
+    source="assignee.avatar_url", read_only=True, default=None
+  )
+
+  class Meta:
+    model = Issue
+    fields = [
+      "id", "sequence_id", "title",
+      "state", "state_color", "state_category",
+      "assignee", "assignee_name", "assignee_avatar",
+      "priority", "type", "completed_at",
+    ]
+    read_only_fields = fields
+
+
 class IssueSerializer(serializers.ModelSerializer):
     # Campos de leitura expandidos (flat, alinhado com FRONTEND.md)
     state_name = serializers.CharField(source="state.name", read_only=True)
@@ -34,6 +56,8 @@ class IssueSerializer(serializers.ModelSerializer):
     cycle_name = serializers.SerializerMethodField()
 
     milestone_name = serializers.SerializerMethodField()
+    subtask_count = serializers.SerializerMethodField()
+    completed_subtask_count = serializers.SerializerMethodField()
 
     def get_cycle_id(self, obj):
         from apps.cycles.models import CycleIssue
@@ -47,6 +71,16 @@ class IssueSerializer(serializers.ModelSerializer):
 
     def get_milestone_name(self, obj) -> str | None:
         return obj.milestone.name if obj.milestone_id else None
+
+    def get_subtask_count(self, obj):
+        if hasattr(obj, 'subtask_count'):
+            return obj.subtask_count
+        return obj.sub_issues.count()
+
+    def get_completed_subtask_count(self, obj):
+        if hasattr(obj, 'completed_subtask_count'):
+            return obj.completed_subtask_count
+        return obj.sub_issues.filter(state__category='completed').count()
 
     # Labels: leitura como objetos, escrita como lista de IDs
     labels = LabelSerializer(many=True, read_only=True)
@@ -96,6 +130,8 @@ class IssueSerializer(serializers.ModelSerializer):
             "created_by",
             "created_at",
             "updated_at",
+            "subtask_count",
+            "completed_subtask_count",
         ]
         read_only_fields = [
             "id", "sequence_id", "project", "project_identifier",
@@ -104,6 +140,7 @@ class IssueSerializer(serializers.ModelSerializer):
             "labels", "completed_at", "cycle_id", "cycle_name",
             "milestone_name",
             "created_by", "created_at", "updated_at",
+            "subtask_count", "completed_subtask_count",
         ]
 
     @staticmethod

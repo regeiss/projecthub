@@ -25,6 +25,7 @@ from .serializers import (
     IssueRelationSerializer,
     IssueSerializer,
     IssueStateUpdateSerializer,
+    SubtaskSerializer,
 )
 
 logger = logging.getLogger(__name__)
