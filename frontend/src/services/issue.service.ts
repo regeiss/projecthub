@@ -12,7 +12,7 @@ import type {
 } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapIssue(raw: any): Issue {
+export function mapIssue(raw: any): Issue {
   return {
     id: raw.id,
     sequenceId: raw.sequence_id,
@@ -52,6 +52,8 @@ function mapIssue(raw: any): Issue {
     isCritical: raw.is_critical ?? false,
     milestoneId: raw.milestone ?? null,
     milestoneName: raw.milestone_name ?? null,
+    subtaskCount: raw.subtask_count ?? 0,
+    completedSubtaskCount: raw.completed_subtask_count ?? 0,
   }
 }
 
@@ -152,4 +154,11 @@ export const issueService = {
 
   deleteRelation: (issueId: string, relationId: string) =>
     api.delete(`/issues/${issueId}/relations/${relationId}/`),
+
+  // Subtasks
+  subtasks: (issueId: string) =>
+    api.get<unknown[]>(`/issues/${issueId}/subtasks/`).then((r) => (r.data as unknown[]).map(mapIssue)),
+
+  createSubtask: (issueId: string, data: Record<string, unknown>) =>
+    api.post<unknown>(`/issues/${issueId}/subtasks/`, data).then((r) => mapIssue(r.data)),
 }
