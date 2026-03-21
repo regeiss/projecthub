@@ -1,5 +1,6 @@
 import logging
 
+from django.db.models import Count, Q
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.core.files.storage import default_storage
@@ -99,7 +100,15 @@ class IssueViewSet(ModelViewSet):
             if user.role != "admin" and not project.members.filter(member=user).exists():
                 return Issue.objects.none()
 
-            return qs.filter(project_id=project_id)
+            qs = qs.filter(project_id=project_id).annotate(
+                subtask_count=Count('sub_issues', distinct=True),
+                completed_subtask_count=Count(
+                    'sub_issues',
+                    filter=Q(sub_issues__state__category='completed'),
+                    distinct=True,
+                ),
+            )
+            return qs
 
         # Para retrieve/update/delete, filtrar pelo acesso do usuário
         if user.role == "admin":
