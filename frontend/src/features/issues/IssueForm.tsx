@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProjectStates, useProjectLabels, useProjectMembers } from '@/hooks/useProjects'
-import { useCreateIssue, useUpdateIssue } from '@/hooks/useIssues'
+import { useCreateIssue, useUpdateIssue, useCreateSubtask } from '@/hooks/useIssues'
 import { useCycles } from '@/hooks/useCycles'
 import { useMilestones } from '@/hooks/useMilestones'
 import { cycleService } from '@/services/cycle.service'
-import type { Issue, IssueSize, Priority } from '@/types'
+import type { Issue, IssueSize, IssueType, Priority } from '@/types'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -33,9 +33,13 @@ interface IssueFormProps {
   onClose: () => void
   issue?: Issue
   defaultStateId?: string
+  parentIssueId?: string
+  typeOverride?: IssueType
 }
 
-export function IssueForm({ projectId, open, onClose, issue, defaultStateId }: IssueFormProps) {
+export function IssueForm({ projectId, open, onClose, issue, defaultStateId, parentIssueId, typeOverride }: IssueFormProps) {
+  // typeOverride is accepted (passed by SubtaskList) but currently unused
+  // because IssueForm has no type selector field — kept for API compatibility
   const isEdit = !!issue
   const qc = useQueryClient()
   const { data: states = [] } = useProjectStates(projectId)
@@ -44,6 +48,7 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId }: I
   const { data: cycles = [] } = useCycles(projectId)
   const { data: milestones = [] } = useMilestones(projectId)
   const create = useCreateIssue()
+  const createSubtask = useCreateSubtask()
   const update = useUpdateIssue()
 
   const [title, setTitle] = useState(issue?.title ?? '')
@@ -98,6 +103,24 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId }: I
           }
         },
       })
+    } else if (parentIssueId) {
+      createSubtask.mutate({ issueId: parentIssueId, data }, {
+        onSuccess: () => {
+          if (continueAdding) {
+            setTitle('')
+            setDescription(null)
+            setPriority('none')
+            setAssigneeId('')
+            setSize('')
+            setEstimateDays('')
+            setSelectedLabels([])
+            setMilestoneId('')
+            setCycleId('')
+          } else {
+            onClose()
+          }
+        },
+      })
     } else {
       create.mutate({ projectId, data }, {
         onSuccess: () => {
@@ -125,7 +148,7 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId }: I
     )
   }
 
-  const isPending = create.isPending || update.isPending
+  const isPending = create.isPending || createSubtask.isPending || update.isPending
 
   return (
     <Modal
