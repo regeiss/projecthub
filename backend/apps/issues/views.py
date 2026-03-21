@@ -324,3 +324,38 @@ class IssueRelationDestroyView(generics.DestroyAPIView):
             return IssueRelation.objects.get(pk=self.kwargs["pk"], issue=issue)
         except IssueRelation.DoesNotExist:
             raise NotFound("Relação não encontrada.")
+
+
+# ---------------------------------------------------------------------------
+# Subtasks
+# ---------------------------------------------------------------------------
+
+
+class IssueSubtaskListCreateView(generics.ListCreateAPIView):
+    """GET/POST /issues/{issue_pk}/subtasks/"""
+    permission_classes = [IsAuthenticated]
+    pagination_class = None  # subtasks are bounded per parent; no pagination needed
+
+    def _get_issue(self):
+        return _get_issue(self.kwargs["issue_pk"], self.request.user)
+
+    def get_serializer_class(self):
+        # IssueSerializer and SubtaskSerializer are imported at module level
+        if self.request.method == "POST":
+            return IssueSerializer
+        return SubtaskSerializer
+
+    def get_queryset(self):
+        return self._get_issue().sub_issues.select_related(
+            "state", "assignee"
+        ).order_by("sort_order")
+
+    def perform_create(self, serializer):
+        parent = self._get_issue()
+        if parent.parent_id is not None:
+            raise ValidationError("Subtarefas não podem ter filhos.")
+        serializer.save(
+            project=parent.project,
+            parent=parent,
+            type=Issue.Type.SUBTASK,
+        )

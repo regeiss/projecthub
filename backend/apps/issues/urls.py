@@ -9,6 +9,7 @@ from .views import (
     IssueCommentListCreateView,
     IssueRelationDestroyView,
     IssueRelationListCreateView,
+    IssueSubtaskListCreateView,
     IssueViewSet,
 )
 
@@ -51,6 +52,11 @@ urlpatterns = [
         "<uuid:issue_pk>/relations/<uuid:pk>/",
         IssueRelationDestroyView.as_view(),
         name="issue-relation-detail",
+    ),
+    path(
+        "<uuid:issue_pk>/subtasks/",
+        IssueSubtaskListCreateView.as_view(),
+        name="issue-subtask-list",
     ),
     # Router do IssueViewSet (deve vir por último para não capturar os nested)
     path("", include(router.urls)),
