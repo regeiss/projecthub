@@ -98,6 +98,14 @@ function IssueCard({ issue }: { issue: Issue }) {
               {truncate(issue.cycleName, 16)}
             </span>
           )}
+          {issue.subtaskCount > 0 && (
+            <span
+              className="text-xs text-gray-400"
+              aria-label={`${issue.completedSubtaskCount} de ${issue.subtaskCount} subtarefas concluídas`}
+            >
+              {issue.completedSubtaskCount}/{issue.subtaskCount}
+            </span>
+          )}
         </div>
         {issue.assignee && (
           <Avatar src={issue.assignee.avatarUrl} name={issue.assignee.name} size="xs" className="shrink-0" />
