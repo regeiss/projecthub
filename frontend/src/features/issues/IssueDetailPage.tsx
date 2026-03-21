@@ -10,6 +10,7 @@ import { PageSpinner } from '@/components/ui/Spinner'
 import { MiniEditor, type MiniEditorHandle } from '@/components/editor/MiniEditor'
 import { IssueActivity } from './IssueActivity'
 import { IssueForm } from './IssueForm'
+import { SubtaskList } from './SubtaskList'
 import { formatDate, priorityColor, priorityLabel, relativeTime } from '@/lib/utils'
 import { tiptapToHtml } from '@/lib/editor'
 
@@ -105,6 +106,9 @@ export function IssueDetailPage() {
               Sem descrição
             </p>
           )}
+
+          {/* Subtasks */}
+          <SubtaskList projectId={projectId} issueId={issueId} />
 
           {/* Comments */}
           <div>
