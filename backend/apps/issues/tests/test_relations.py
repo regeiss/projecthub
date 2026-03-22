@@ -77,9 +77,10 @@ class IssueRelationSerializerTests(TestCase):
       'relation_type': 'relates_to',
       'lag_days': 0,
     }
-    self.client.post(
+    first = self.client.post(
       f'/api/v1/issues/{self.issue.id}/relations/', data, format='json'
     )
+    self.assertEqual(first.status_code, 201)
     resp = self.client.post(
       f'/api/v1/issues/{self.issue.id}/relations/', data, format='json'
     )
