@@ -192,3 +192,51 @@ export function useCreateSubtask() {
     },
   })
 }
+
+export function useRelations(issueId: string) {
+  return useQuery({
+    queryKey: ['relations', issueId],
+    queryFn: () => issueService.relations(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useAddRelation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      issueId,
+      relatedIssueId,
+      relationType,
+      lagDays,
+    }: {
+      issueId: string
+      relatedIssueId: string
+      relationType: string
+      lagDays: number
+    }) => issueService.addRelation(issueId, relatedIssueId, relationType, lagDays),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['relations', issueId] })
+    },
+  })
+}
+
+export function useDeleteRelation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ issueId, relationId }: { issueId: string; relationId: string }) =>
+      issueService.deleteRelation(issueId, relationId),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['relations', issueId] })
+    },
+  })
+}
+
+export function useIssueSearch(query: string) {
+  return useQuery({
+    queryKey: ['issue-search', query],
+    queryFn: () => issueService.search(query),
+    enabled: query.length >= 2,
+    staleTime: 30_000,
+  })
+}
