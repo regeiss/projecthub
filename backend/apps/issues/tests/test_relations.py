@@ -53,7 +53,7 @@ class IssueRelationSerializerTests(TestCase):
     )
     resp = self.client.get(f'/api/v1/issues/{self.issue.id}/relations/')
     self.assertEqual(resp.status_code, 200)
-    r = resp.data['results'][0]
+    r = resp.data[0]
     self.assertEqual(r['related_issue_title'], 'Issue B')
     self.assertEqual(r['related_issue_sequence_id'], self.other.sequence_id)
     self.assertEqual(str(r['related_issue_project_id']), str(self.project.id))

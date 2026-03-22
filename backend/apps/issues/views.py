@@ -311,6 +311,7 @@ class IssueRelationListCreateView(generics.ListCreateAPIView):
     """GET/POST /issues/{issue_pk}/relations/"""
     serializer_class = IssueRelationSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None  # relations are bounded per issue; frontend expects a flat array
 
     def _get_issue(self):
         return _get_issue(self.kwargs["issue_pk"], self.request.user)
