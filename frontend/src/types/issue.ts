@@ -36,6 +36,7 @@ export interface Issue {
   isCritical: boolean
   milestoneId: string | null
   milestoneName: string | null
+  projectName: string
   subtaskCount: number
   completedSubtaskCount: number
 }
@@ -79,6 +80,8 @@ export interface IssueRelation {
   relatedIssueId: string
   relatedIssueTitle: string
   relatedIssueSequenceId: number
+  relatedIssueProjectId: string
+  relatedIssueProjectName: string
   relationType: string
   lagDays: number
 }
