@@ -106,6 +106,8 @@ if self.action == "list":
 
 The existing `SearchFilter` on `search_fields = ["title"]` handles `?search=` automatically. `StandardPagination` still applies. `IssueSerializer` already returns `project` (project UUID) — no additional serializer changes needed for search results.
 
+**Important:** Both branches (project-scoped and workspace-wide) must share the same base `qs` that already has `select_related("project", "state", "assignee", "reporter", "created_by").prefetch_related("labels")` applied at the top of `get_queryset()`. Do not rebuild the queryset from scratch in the workspace-wide branch — only append `.filter(...)` and `.annotate(...)` to the existing `qs`.
+
 #### 3. Fix POST field name bug in `issue.service.ts`
 
 The existing `addRelation` service method sends `related_issue_id` but the serializer field is `related_issue`. Fix the payload key:
@@ -194,23 +196,18 @@ relations: (issueId: string) =>
     .then((r) => (r.data as unknown[]).map(mapRelation)),
 ```
 
-Update `addRelation()` response mapping:
-```ts
-addRelation: (...) =>
-  api.post<unknown>(`/issues/${issueId}/relations/`, { ... })
-    .then((r) => mapRelation(r.data)),
-```
+The canonical `addRelation` definition is the one in the "Fix `addRelation`" block above — do not use the old `.then((r) => r.data)` form.
 
 ### Service (`services/issue.service.ts`)
 
-**Fix POST payload** (bug fix):
+**Fix `addRelation` — POST field name and response mapping:**
 ```ts
-addRelation: (issueId: string, relatedIssueId: string, relationType: string, lagDays = 0) =>
-  api.post<IssueRelation>(`/issues/${issueId}/relations/`, {
-    related_issue: relatedIssueId,   // was: related_issue_id
+addRelation: (issueId: string, relatedIssueId: string, relationType: string, lagDays = 0): Promise<IssueRelation> =>
+  api.post<unknown>(`/issues/${issueId}/relations/`, {
+    related_issue: relatedIssueId,   // was: related_issue_id (bug fix)
     relation_type: relationType,
     lag_days: lagDays,
-  }).then((r) => r.data),
+  }).then((r) => mapRelation(r.data)),  // was: r.data (bug fix — must call mapRelation)
 ```
 
 **Add search method** (no `project_id` → workspace-wide), returns `Issue[]`:
@@ -411,7 +408,7 @@ User clicks × on a row
 - `test_list_issues_workspace_admin` — admin sees all workspace issues
 - `test_list_issues_workspace_member` — member sees only their project issues
 - `test_search_issues_workspace_wide` — `?search=texto` filters by title across workspace
-- `test_relation_serializer_includes_derived_fields` — GET returns `related_issue_title`, `related_issue_sequence_id`, `related_issue_project_id`
+- `test_relation_serializer_includes_derived_fields` — GET returns `related_issue_title`, `related_issue_sequence_id`, `related_issue_project_id`, `related_issue_project_name` (verifies `select_related('related_issue__project')` is applied)
 - `test_self_relation_returns_400` — POST with `related_issue == issue` returns 400
 - `test_duplicate_relation_returns_400` — POST same pair+type twice returns 400
 
