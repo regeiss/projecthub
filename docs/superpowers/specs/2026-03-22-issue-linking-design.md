@@ -94,6 +94,7 @@ if self.action == "list":
                 member=user
             ).values_list("project_id", flat=True)
             qs = qs.filter(project_id__in=accessible_ids)
+        # annotate runs for BOTH admin and member — must be outside the role if/else
         qs = qs.annotate(
             subtask_count=Count('sub_issues', distinct=True),
             completed_subtask_count=Count(
@@ -104,7 +105,21 @@ if self.action == "list":
         )
 ```
 
-The existing `SearchFilter` on `search_fields = ["title"]` handles `?search=` automatically. `StandardPagination` still applies. `IssueSerializer` already returns `project` (project UUID) — no additional serializer changes needed for search results.
+The existing `SearchFilter` on `search_fields = ["title"]` handles `?search=` automatically. `StandardPagination` still applies.
+
+**Add `project_name` to `IssueSerializer`** — it currently returns `project` (UUID) and `project_identifier` but not the human-readable name. The search dropdown renders the project name on each result row, so add:
+
+```python
+project_name = serializers.CharField(source='project.name', read_only=True)
+```
+
+Add `"project_name"` to `IssueSerializer.Meta.fields` and `Meta.read_only_fields`. Update `mapIssue` in `issue.service.ts` to map it:
+
+```ts
+projectName: raw.project_name ?? '',
+```
+
+Add `projectName: string` to the `Issue` TypeScript interface. The search dropdown renders: `#seq title` on line 1 and `issue.projectName` on line 2.
 
 **Important:** Both branches (project-scoped and workspace-wide) must share the same base `qs` that already has `select_related("project", "state", "assignee", "reporter", "created_by").prefetch_related("labels")` applied at the top of `get_queryset()`. Do not rebuild the queryset from scratch in the workspace-wide branch — only append `.filter(...)` and `.annotate(...)` to the existing `qs`.
 
