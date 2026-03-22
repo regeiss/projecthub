@@ -87,20 +87,28 @@ class IssueViewSet(ModelViewSet):
 
         if self.action == "list":
             project_id = self.request.query_params.get("project_id")
-            if not project_id:
-                raise ValidationError({"project_id": "Este filtro é obrigatório."})
-            # Verificar acesso ao projeto
-            from apps.projects.models import Project
-
-            try:
-                project = Project.objects.get(pk=project_id)
-            except Project.DoesNotExist:
-                return Issue.objects.none()
-
-            if user.role != "admin" and not project.members.filter(member=user).exists():
-                return Issue.objects.none()
-
-            qs = qs.filter(project_id=project_id).annotate(
+            if project_id:
+                # single-project path
+                from apps.projects.models import Project
+                try:
+                    project = Project.objects.get(pk=project_id)
+                except Project.DoesNotExist:
+                    return Issue.objects.none()
+                if user.role != "admin" and not project.members.filter(member=user).exists():
+                    return Issue.objects.none()
+                qs = qs.filter(project_id=project_id)
+            else:
+                # workspace-wide: all accessible projects
+                from apps.projects.models import ProjectMember
+                if user.role == "admin":
+                    qs = qs.filter(project__workspace=user.workspace)
+                else:
+                    accessible_ids = ProjectMember.objects.filter(
+                        member=user
+                    ).values_list("project_id", flat=True)
+                    qs = qs.filter(project_id__in=accessible_ids)
+            # annotate runs for BOTH branches
+            qs = qs.annotate(
                 subtask_count=Count('sub_issues', distinct=True),
                 completed_subtask_count=Count(
                     'sub_issues',

@@ -44,6 +44,9 @@ class IssueSerializer(serializers.ModelSerializer):
     project_identifier = serializers.CharField(
         source="project.identifier", read_only=True
     )
+    project_name = serializers.CharField(
+        source="project.name", read_only=True
+    )
     assignee_name = serializers.CharField(
         source="assignee.name", read_only=True, default=None
     )
@@ -99,6 +102,7 @@ class IssueSerializer(serializers.ModelSerializer):
             "sequence_id",
             "project",
             "project_identifier",
+            "project_name",
             "title",
             "description",
             "state",
@@ -134,7 +138,7 @@ class IssueSerializer(serializers.ModelSerializer):
             "completed_subtask_count",
         ]
         read_only_fields = [
-            "id", "sequence_id", "project", "project_identifier",
+            "id", "sequence_id", "project", "project_identifier", "project_name",
             "state_name", "state_color", "state_category",
             "assignee_name", "assignee_avatar", "reporter", "reporter_name",
             "labels", "completed_at", "cycle_id", "cycle_name",

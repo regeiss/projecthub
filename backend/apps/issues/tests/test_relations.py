@@ -85,3 +85,81 @@ class IssueRelationSerializerTests(TestCase):
       f'/api/v1/issues/{self.issue.id}/relations/', data, format='json'
     )
     self.assertEqual(resp.status_code, 400)
+
+
+class IssueWorkspaceSearchTests(TestCase):
+  def setUp(self):
+    self.client = APIClient()
+    self.workspace = Workspace.objects.create(name='WS2', slug='ws2-search')
+
+    self.member = WorkspaceMember.objects.create(
+      workspace=self.workspace,
+      keycloak_sub='member-ws2-sub',
+      email='member_ws@test.com',
+      name='Member WS',
+      role='member',
+    )
+    self.admin = WorkspaceMember.objects.create(
+      workspace=self.workspace,
+      keycloak_sub='admin-ws2-sub',
+      email='admin_ws@test.com',
+      name='Admin WS',
+      role='admin',
+    )
+
+    # project1: member has access
+    self.project1 = Project.objects.create(
+      workspace=self.workspace,
+      name='Project Alpha',
+      identifier='PA2',
+      created_by=self.member,
+    )
+    ProjectMember.objects.create(
+      project=self.project1, member=self.member, role='member'
+    )
+
+    # project2: member does NOT have access
+    self.project2 = Project.objects.create(
+      workspace=self.workspace,
+      name='Project Beta',
+      identifier='PB2',
+      created_by=self.admin,
+    )
+
+    state1 = IssueState.objects.create(
+      project=self.project1, name='B', color='#aaa', category='backlog', sequence=1
+    )
+    state2 = IssueState.objects.create(
+      project=self.project2, name='B', color='#aaa', category='backlog', sequence=1
+    )
+    self.issue1 = make_issue(self.project1, state1, self.member, 'Alpha Task')
+    self.issue2 = make_issue(self.project2, state2, self.admin, 'Beta Task')
+
+  def test_member_sees_only_accessible_issues(self):
+    self.client.force_authenticate(user=self.member)
+    resp = self.client.get('/api/v1/issues/')
+    self.assertEqual(resp.status_code, 200)
+    ids = [r['id'] for r in resp.data['results']]
+    self.assertIn(str(self.issue1.id), ids)
+    self.assertNotIn(str(self.issue2.id), ids)
+
+  def test_admin_sees_all_workspace_issues(self):
+    self.client.force_authenticate(user=self.admin)
+    resp = self.client.get('/api/v1/issues/')
+    self.assertEqual(resp.status_code, 200)
+    ids = [r['id'] for r in resp.data['results']]
+    self.assertIn(str(self.issue1.id), ids)
+    self.assertIn(str(self.issue2.id), ids)
+
+  def test_search_filters_by_title(self):
+    self.client.force_authenticate(user=self.member)
+    resp = self.client.get('/api/v1/issues/?search=Alpha')
+    self.assertEqual(resp.status_code, 200)
+    self.assertEqual(len(resp.data['results']), 1)
+    self.assertEqual(resp.data['results'][0]['title'], 'Alpha Task')
+
+  def test_project_name_in_issue_response(self):
+    self.client.force_authenticate(user=self.member)
+    resp = self.client.get('/api/v1/issues/')
+    self.assertEqual(resp.status_code, 200)
+    self.assertEqual(resp.data['results'][0]['project_name'], 'Project Alpha')

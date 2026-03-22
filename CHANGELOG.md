@@ -8,6 +8,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Issue list — workspace-wide (backend)**: `IssueViewSet.get_queryset` now makes `project_id` optional. When omitted, admins see all issues in the workspace; members see only issues from projects they belong to. `project_name` read-only field added to `IssueSerializer` (sourced from `project.name`). New `IssueWorkspaceSearchTests` class (4 tests) validates member scoping, admin access, title search, and `project_name` in the response.
+- **Issue Relations (backend)**: `IssueRelationSerializer` extended with 4 derived read-only fields (`related_issue_title`, `related_issue_sequence_id`, `related_issue_project_id`, `related_issue_project_name`); self-relation validation returns 400 with a descriptive message; duplicate relation validation prevents DB-level `IntegrityError` and returns 400 instead; `IssueRelationListCreateView.get_queryset` now uses `select_related('related_issue', 'related_issue__project')` to avoid N+1 queries. Full test suite in `apps/issues/tests/test_relations.py` (3 tests).
 - **Subtasks (backend)**: `SubtaskSerializer` for slim subtask list responses; `subtask_count` and `completed_subtask_count` fields added to `IssueSerializer` (annotated on list, computed on demand for detail); `GET/POST /api/issues/{issue_pk}/subtasks/` endpoint via `IssueSubtaskListCreateView`; max 1 level of nesting enforced (returns 400 when trying to create a subtask of a subtask).
 - **Subtasks (frontend)**: end-to-end subtask support in the React SPA:
   - `Issue` type extended with `subtaskCount` and `completedSubtaskCount` fields; new `CreateSubtaskDto` type added to `types/issue.ts`.
