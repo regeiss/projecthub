@@ -52,6 +52,7 @@ export function mapIssue(raw: any): Issue {
     isCritical: raw.is_critical ?? false,
     milestoneId: raw.milestone ?? null,
     milestoneName: raw.milestone_name ?? null,
+    projectName: raw.project_name ?? '',
     subtaskCount: raw.subtask_count ?? 0,
     completedSubtaskCount: raw.completed_subtask_count ?? 0,
   }
@@ -67,6 +68,21 @@ function mapComment(raw: any): IssueComment {
     isEdited: raw.is_edited ?? false,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRelation(raw: any): IssueRelation {
+  return {
+    id: raw.id,
+    issueId: raw.issue,
+    relatedIssueId: raw.related_issue,
+    relatedIssueTitle: raw.related_issue_title ?? '',
+    relatedIssueSequenceId: raw.related_issue_sequence_id ?? 0,
+    relatedIssueProjectId: raw.related_issue_project_id ?? '',
+    relatedIssueProjectName: raw.related_issue_project_name ?? '',
+    relationType: raw.relation_type,
+    lagDays: raw.lag_days ?? 0,
   }
 }
 
@@ -142,18 +158,23 @@ export const issueService = {
     api.delete(`/issues/${issueId}/attachments/${attachmentId}/`),
 
   // Relations
-  relations: (issueId: string) =>
-    api.get<IssueRelation[]>(`/issues/${issueId}/relations/`).then((r) => r.data),
+  relations: (issueId: string): Promise<IssueRelation[]> =>
+    api.get<unknown[]>(`/issues/${issueId}/relations/`)
+      .then((r) => (r.data as unknown[]).map(mapRelation)),
 
-  addRelation: (issueId: string, relatedIssueId: string, relationType: string, lagDays = 0) =>
-    api.post<IssueRelation>(`/issues/${issueId}/relations/`, {
-      related_issue_id: relatedIssueId,
+  addRelation: (issueId: string, relatedIssueId: string, relationType: string, lagDays = 0): Promise<IssueRelation> =>
+    api.post<unknown>(`/issues/${issueId}/relations/`, {
+      related_issue: relatedIssueId,
       relation_type: relationType,
       lag_days: lagDays,
-    }).then((r) => r.data),
+    }).then((r) => mapRelation(r.data)),
 
   deleteRelation: (issueId: string, relationId: string) =>
     api.delete(`/issues/${issueId}/relations/${relationId}/`),
+
+  search: (query: string): Promise<Issue[]> =>
+    api.get<PaginatedResponse<unknown>>('/issues/', { params: { search: query } })
+      .then((r) => (r.data.results as unknown[]).map(mapIssue)),
 
   // Subtasks
   subtasks: (issueId: string) =>

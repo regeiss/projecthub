@@ -37,3 +37,40 @@ describe('mapIssue', () => {
     expect(issue.completedSubtaskCount).toBe(0)
   })
 })
+
+describe('mapIssue projectName', () => {
+  it('maps project_name to camelCase', () => {
+    const raw = {
+      id: 'abc', title: 'T', priority: 'none', type: 'task',
+      sequence_id: 1, sort_order: 0, estimate_days: null,
+      state: null, state_color: null, state_category: null,
+      assignee: null, assignee_name: null, assignee_avatar: null,
+      reporter: null, created_by: null, labels: [],
+      parent_id: null, milestone: null, milestone_name: null,
+      subtask_count: 0, completed_subtask_count: 0,
+      project_name: 'My Project',
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+      completed_at: null,
+    }
+    const issue = mapIssue(raw)
+    expect(issue.projectName).toBe('My Project')
+  })
+
+  it('defaults projectName to empty string when absent', () => {
+    const raw = {
+      id: 'abc', title: 'T', priority: 'none', type: 'task',
+      sequence_id: 1, sort_order: 0, estimate_days: null,
+      state: null, state_color: null, state_category: null,
+      assignee: null, assignee_name: null, assignee_avatar: null,
+      reporter: null, created_by: null, labels: [],
+      parent_id: null, milestone: null, milestone_name: null,
+      subtask_count: 0, completed_subtask_count: 0,
+      created_at: '2024-01-01T00:00:00Z',
+      updated_at: '2024-01-01T00:00:00Z',
+      completed_at: null,
+    }
+    const issue = mapIssue(raw)
+    expect(issue.projectName).toBe('')
+  })
+})
