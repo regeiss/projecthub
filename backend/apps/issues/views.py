@@ -308,7 +308,9 @@ class IssueRelationListCreateView(generics.ListCreateAPIView):
         return _get_issue(self.kwargs["issue_pk"], self.request.user)
 
     def get_queryset(self):
-        return IssueRelation.objects.filter(issue=self._get_issue())
+      return IssueRelation.objects.select_related(
+        'related_issue', 'related_issue__project'
+      ).filter(issue=self._get_issue())
 
     def perform_create(self, serializer):
         serializer.save(issue=self._get_issue())

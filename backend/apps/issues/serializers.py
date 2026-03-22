@@ -242,13 +242,52 @@ class IssueAttachmentSerializer(serializers.ModelSerializer):
 
 
 class IssueRelationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = IssueRelation
-        fields = [
-            "id", "issue", "related_issue", "relation_type",
-            "lag_days", "created_at",
-        ]
-        read_only_fields = ["id", "issue", "created_at"]
+  related_issue_title = serializers.CharField(
+    source='related_issue.title', read_only=True
+  )
+  related_issue_sequence_id = serializers.IntegerField(
+    source='related_issue.sequence_id', read_only=True
+  )
+  related_issue_project_id = serializers.UUIDField(
+    source='related_issue.project_id', read_only=True
+  )
+  related_issue_project_name = serializers.CharField(
+    source='related_issue.project.name', read_only=True
+  )
 
-    def create(self, validated_data):
-        return super().create(validated_data)
+  class Meta:
+    model = IssueRelation
+    fields = [
+      'id', 'issue', 'related_issue',
+      'related_issue_title', 'related_issue_sequence_id',
+      'related_issue_project_id', 'related_issue_project_name',
+      'relation_type', 'lag_days', 'created_at',
+    ]
+    read_only_fields = [
+      'id', 'issue', 'created_at',
+      'related_issue_title', 'related_issue_sequence_id',
+      'related_issue_project_id', 'related_issue_project_name',
+    ]
+
+  def validate(self, attrs):
+    issue_pk = self.context['view'].kwargs.get('issue_pk')
+    related = attrs.get('related_issue')
+    relation_type = attrs.get('relation_type')
+    if related and str(related.pk) == str(issue_pk):
+      raise serializers.ValidationError(
+        'Uma issue não pode se relacionar consigo mesma.'
+      )
+    if related and relation_type and issue_pk:
+      exists = IssueRelation.objects.filter(
+        issue_id=issue_pk,
+        related_issue=related,
+        relation_type=relation_type,
+      ).exists()
+      if exists:
+        raise serializers.ValidationError(
+          'Esta relação já existe.'
+        )
+    return attrs
+
+  def create(self, validated_data):
+    return super().create(validated_data)
