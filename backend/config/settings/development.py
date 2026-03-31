@@ -11,3 +11,10 @@ KEYCLOAK_VERIFY_ISSUER = False   # issuer differs: browser uses 127.0.0.1, Docke
 KEYCLOAK_VERIFY_AUDIENCE = False  # aud is projecthub-frontend; backend client is projecthub-backend
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Use in-memory channel layer for tests (no Redis required)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
