@@ -2,6 +2,7 @@ import uuid
 
 from django.test import TestCase
 
+from apps.projects.models import Project
 from apps.wiki.models import WikiIssueLink, WikiPage, WikiPageVersion, WikiSpace
 from apps.workspaces.models import Workspace, WorkspaceMember
 
@@ -27,6 +28,22 @@ class WikiSpaceModelTests(TestCase):
             workspace=self.ws, name="Global", created_by=self.member
         )
         self.assertIsNone(space.project)
+
+    def test_project_scoped_space_has_project(self):
+        project = Project.objects.create(
+            workspace=self.ws,
+            name="Project Wiki",
+            identifier="PWK",
+            created_by=self.member,
+        )
+        space = WikiSpace.objects.create(
+            workspace=self.ws,
+            name="Project Wiki",
+            project=project,
+            created_by=self.member,
+        )
+        self.assertIsNotNone(space.project)
+        self.assertEqual(space.project, project)
 
     def test_str_returns_name(self):
         space = WikiSpace.objects.create(
@@ -74,6 +91,29 @@ class WikiPageModelTests(TestCase):
         page.save(update_fields=["content"])
         page.refresh_from_db()
         self.assertEqual(page.content["type"], "doc")
+
+    def test_sort_order_midpoint(self):
+        page_a = WikiPage.objects.create(
+            space=self.space,
+            title="Page A",
+            sort_order=1.0,
+            created_by=self.member,
+        )
+        page_b = WikiPage.objects.create(
+            space=self.space,
+            title="Page B",
+            sort_order=3.0,
+            created_by=self.member,
+        )
+        # A page inserted between A and B should use the midpoint
+        midpoint = (page_a.sort_order + page_b.sort_order) / 2
+        page_mid = WikiPage.objects.create(
+            space=self.space,
+            title="Page Mid",
+            sort_order=midpoint,
+            created_by=self.member,
+        )
+        self.assertAlmostEqual(page_mid.sort_order, 2.0)
 
 
 class WikiPageVersionModelTests(TestCase):
