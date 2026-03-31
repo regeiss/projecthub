@@ -14,6 +14,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - Bare `except Exception: return None` blocks replaced with proper error logging (`logger.exception`) so unexpected errors are no longer silently swallowed.
 
 ### Added
+- **Wiki Phase 1 — view tests (2026-03-31)**:
+  - `backend/apps/wiki/tests/test_views.py`: 18 tests covering `WikiSpaceViewTests` (list, create, delete by creator), `WikiPageViewTests` (list, create, update, delete, publish, public access without auth, locked page block for non-admin, private space access block), `WikiVersionViewTests` (list, restore), and `WikiCommentViewTests` (create, resolve, delete by author).
+  - Ancestor field assertions validate both empty ancestors for root pages and correct root-first ordering for nested pages.
 - **Wiki Phase 1 — WebSocket consumer tests (2026-03-31)**:
   - `backend/apps/wiki/tests/test_consumers.py`: 5 `TransactionTestCase` async tests for `WikiPageConsumer` covering unauthenticated rejection (4001), archived-page rejection (4003), JSON init message on connect, Yjs binary delivery when `yjs_state` exists, and group relay (broadcast to peers, no echo to sender).
   - `config/settings/development.py`: overrides `CHANNEL_LAYERS` with `InMemoryChannelLayer` so consumer tests run without a Redis dependency.
