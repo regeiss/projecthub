@@ -55,6 +55,7 @@ class WikiPageDetailSerializer(serializers.ModelSerializer):
     created_by_detail = WorkspaceMemberSerializer(source="created_by", read_only=True)
     updated_by_detail = WorkspaceMemberSerializer(source="updated_by", read_only=True)
     children = serializers.SerializerMethodField()
+    ancestors = serializers.SerializerMethodField()
 
     class Meta:
         model = WikiPage
@@ -64,11 +65,19 @@ class WikiPageDetailSerializer(serializers.ModelSerializer):
             "published_token", "word_count",
             "created_by", "created_by_detail",
             "updated_by", "updated_by_detail",
-            "children", "created_at", "updated_at",
+            "ancestors", "children", "created_at", "updated_at",
         ]
         read_only_fields = [
-            "id", "space", "published_token", "created_by", "updated_by", "created_at", "updated_at",
+            "id", "space", "published_token", "created_by", "updated_by",
+            "created_at", "updated_at",
         ]
+
+    def get_ancestors(self, obj):
+        chain, page = [], obj.parent
+        while page:
+            chain.append({"id": str(page.id), "title": page.title})
+            page = page.parent
+        return list(reversed(chain))
 
     def get_children(self, obj):
         children = obj.children.filter(is_archived=False).order_by("sort_order")
