@@ -61,6 +61,8 @@ Add matching `yjs_state = models.BinaryField(null=True, blank=True)` so version 
 1. Add `yjs_state` to both models (nullable).
 2. Data migration: for existing `WikiPage` rows where `content == {"_yjs": hex}`, move the hex value to `yjs_state` and set `content = {}`.
 
+**Note:** Pages in this format will have an empty TipTap document after migration. This is acceptable — the Yjs state is preserved in `yjs_state` and the editor will reconstruct content from it on next open. If any rows exist in a pre-Yjs format with real TipTap JSON already in `content`, they are unaffected (the migration only targets `{"_yjs": …}` keys).
+
 ---
 
 ## Backend Changes
@@ -130,7 +132,7 @@ The right TOC column is hidden (`display: none`) below 1280px viewport width (Ta
 - Receives the TipTap `editor` instance as a prop.
 - Extracts heading nodes (H1, H2, H3) from the editor's JSON state on every `editor.on('update')` event.
 - Renders as a sticky list; H2 is indented 8px, H3 indented 16px under their parent H1/H2.
-- Active heading is highlighted using `IntersectionObserver` watching each heading's DOM element.
+- Active heading is highlighted using `IntersectionObserver` watching each heading's DOM element. TipTap headings must carry auto-generated `id` attributes (e.g. `id="heading-overview"` slugified from text) so TOC entries can resolve their target DOM node. Add a custom `addAttributes` override to the heading extension to inject the `id`.
 - Clicking a TOC entry calls `scrollIntoView({ behavior: 'smooth' })` on the target heading element.
 - Component renders `null` when fewer than 3 headings are present.
 - Accessibility: `<nav aria-label="Table of contents">` wrapper, headings as `<a>` links.
@@ -143,7 +145,7 @@ The right TOC column is hidden (`display: none`) below 1280px viewport width (Ta
 
 ### WikiEditor.tsx
 
-- On receiving the `init` JSON message from the consumer, seed the TipTap document with `content` before the Yjs provider connects (prevents blank flash).
+- On receiving the `init` JSON message from the consumer, seed the TipTap document with `content` before the Yjs provider connects (prevents blank flash). Sequencing: initialize the TipTap editor with the TipTap JSON as `content` prop; connect the `WebsocketProvider` only after the editor is mounted. The Yjs binary received subsequently will reconcile any peer edits on top of the seeded state.
 - On receiving the Yjs binary message, apply it to the `Y.Doc` as before.
 
 ---
