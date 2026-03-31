@@ -7,6 +7,12 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Wiki consumer — quality fixes (2026-03-31)**:
+  - Merged `_check_page_access`, `_get_doc_state`, and `_get_tiptap_content` into a single `_get_page()` DB query stored on `self._page`, eliminating two redundant `WikiPage.objects.get()` calls per connection.
+  - `_build_init_message()` is now synchronous (no DB access); returns `None` when `page.content` is falsy, preventing a pointless `{"type": "init", "content": {}}` frame from being sent to clients with empty pages.
+  - Bare `except Exception: return None` blocks replaced with proper error logging (`logger.exception`) so unexpected errors are no longer silently swallowed.
+
 ### Added
 - **Wiki Phase 1 — yjs_state field (2026-03-31)**:
   - `WikiPage` model: added `yjs_state = BinaryField(null=True, blank=True)` after `content` to store raw Yjs CRDT binary separately from TipTap JSON.

@@ -1,5 +1,9 @@
+import logging
+
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+
+logger = logging.getLogger(__name__)
 
 
 class WikiPageConsumer(AsyncJsonWebsocketConsumer):
@@ -21,8 +25,8 @@ class WikiPageConsumer(AsyncJsonWebsocketConsumer):
         self.page_id = self.scope["url_route"]["kwargs"]["page_id"]
         self.group_name = f"page_{self.page_id}"
 
-        has_access = await self._check_page_access()
-        if not has_access:
+        self._page = await self._get_page()
+        if self._page is None:
             await self.close(code=4003)
             return
 
@@ -30,14 +34,13 @@ class WikiPageConsumer(AsyncJsonWebsocketConsumer):
         await self.accept()
 
         # Send TipTap JSON for immediate editor seeding
-        init_msg = await self._get_tiptap_content()
+        init_msg = self._build_init_message()
         if init_msg:
             await self.send(text_data=init_msg)
 
         # Send Yjs binary state for CRDT reconciliation
-        doc_state = await self._get_doc_state()
-        if doc_state:
-            await self.send(bytes_data=doc_state)
+        if self._page.yjs_state:
+            await self.send(bytes_data=bytes(self._page.yjs_state))
 
     async def disconnect(self, close_code):
         if hasattr(self, "group_name"):
@@ -61,41 +64,28 @@ class WikiPageConsumer(AsyncJsonWebsocketConsumer):
             await self.send(bytes_data=bytes.fromhex(event["data"]))
 
     @sync_to_async(thread_sensitive=False)
-    def _check_page_access(self):
+    def _get_page(self):
+        """Fetches the page and validates access. Returns page or None."""
         try:
             from apps.wiki.models import WikiPage
 
             page = WikiPage.objects.select_related("space").get(pk=self.page_id)
             if page.is_archived:
-                return False
+                return None
             if page.space.is_private:
-                return self.scope["user"].is_authenticated
-            return True
-        except Exception:
-            return False
-
-    @sync_to_async(thread_sensitive=False)
-    def _get_doc_state(self):
-        """Returns raw Yjs binary state for initial sync, or None."""
-        try:
-            from apps.wiki.models import WikiPage
-            page = WikiPage.objects.get(pk=self.page_id)
-            if page.yjs_state:
-                return bytes(page.yjs_state)
-            return None
+                return page if self.scope["user"].is_authenticated else None
+            return page
         except Exception:
             return None
 
-    @sync_to_async(thread_sensitive=False)
-    def _get_tiptap_content(self):
-        """Returns TipTap JSON content dict for the init message, or None."""
-        try:
-            import json
-            from apps.wiki.models import WikiPage
-            page = WikiPage.objects.get(pk=self.page_id)
-            return json.dumps({"type": "init", "content": page.content or {}})
-        except Exception:
+    def _build_init_message(self):
+        """Returns JSON init message string, or None if content is empty."""
+        import json
+
+        content = getattr(self._page, "content", None)
+        if not content:
             return None
+        return json.dumps({"type": "init", "content": content})
 
     async def _schedule_save(self, bytes_data):
         """
