@@ -29,7 +29,12 @@ class WikiPageConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        # Envia estado atual do doc Yjs para sincronização inicial
+        # Send TipTap JSON for immediate editor seeding
+        init_msg = await self._get_tiptap_content()
+        if init_msg:
+            await self.send(text_data=init_msg)
+
+        # Send Yjs binary state for CRDT reconciliation
         doc_state = await self._get_doc_state()
         if doc_state:
             await self.send(bytes_data=doc_state)
@@ -71,16 +76,24 @@ class WikiPageConsumer(AsyncJsonWebsocketConsumer):
 
     @sync_to_async(thread_sensitive=False)
     def _get_doc_state(self):
-        """Retorna o conteúdo atual da página como bytes para sync inicial."""
+        """Returns raw Yjs binary state for initial sync, or None."""
+        try:
+            from apps.wiki.models import WikiPage
+            page = WikiPage.objects.get(pk=self.page_id)
+            if page.yjs_state:
+                return bytes(page.yjs_state)
+            return None
+        except Exception:
+            return None
+
+    @sync_to_async(thread_sensitive=False)
+    def _get_tiptap_content(self):
+        """Returns TipTap JSON content dict for the init message, or None."""
         try:
             import json
-
             from apps.wiki.models import WikiPage
-
             page = WikiPage.objects.get(pk=self.page_id)
-            if page.content:
-                return json.dumps(page.content).encode()
-            return None
+            return json.dumps({"type": "init", "content": page.content or {}})
         except Exception:
             return None
 
