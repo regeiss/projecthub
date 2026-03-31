@@ -29,6 +29,8 @@ async def make_communicator(page_id, user):
 
 
 class WikiPageConsumerConnectTests(TransactionTestCase):
+    """TransactionTestCase required: channel layer group operations need committed DB transactions."""
+
     def setUp(self):
         self.ws = Workspace.objects.create(name="WS", slug="ws-cons")
         self.member = make_member(self.ws)
@@ -78,6 +80,7 @@ class WikiPageConsumerConnectTests(TransactionTestCase):
         connected, code = await communicator.connect()
         self.assertFalse(connected)
         self.assertEqual(code, 4003)
+        await communicator.disconnect()
 
     async def test_unauthenticated_connect_rejected(self):
         from django.contrib.auth.models import AnonymousUser
@@ -89,25 +92,32 @@ class WikiPageConsumerConnectTests(TransactionTestCase):
         connected, code = await communicator.connect()
         self.assertFalse(connected)
         self.assertEqual(code, 4001)
+        await communicator.disconnect()
 
     async def test_binary_message_relayed_to_group_not_sender(self):
         """Binary Yjs updates must be broadcast to peers but NOT echoed back to sender."""
         page = await WikiPage.objects.acreate(
             space=self.space, title="Relay",
-            content={}, created_by=self.member,
+            # Non-empty content so _build_init_message() sends an init JSON frame
+            # that we can reliably drain with receive_from() on each connect.
+            content={"type": "doc", "content": [{"type": "paragraph"}]},
+            created_by=self.member,
         )
         member2 = await sync_to_async(make_member)(self.ws)
         sender = await make_communicator(page.pk, self.member)
         receiver = await make_communicator(page.pk, member2)
 
-        await sender.connect()
-        await receiver.connect()
-        # drain init messages
-        await sender.receive_nothing()
-        await receiver.receive_nothing()
+        connected, _ = await sender.connect()
+        self.assertTrue(connected)
+        # Drain init JSON frame (consumer sends this on every connect)
+        await sender.receive_from()  # consume the init message
+
+        connected, _ = await receiver.connect()
+        self.assertTrue(connected)
+        await receiver.receive_from()  # consume the init message
 
         payload = b"\x01\x02\x03"
-        await sender.send(bytes_data=payload)
+        await sender.send_to(bytes_data=payload)
 
         # receiver should get the message
         received = await receiver.receive_from()
