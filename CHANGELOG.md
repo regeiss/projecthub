@@ -8,6 +8,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Wiki Phase 1 — yjs_state field (2026-03-31)**:
+  - `WikiPage` model: added `yjs_state = BinaryField(null=True, blank=True)` after `content` to store raw Yjs CRDT binary separately from TipTap JSON.
+  - `WikiPageVersion` model: same `yjs_state` field added for version history snapshots.
+  - Migration `0002_add_yjs_state`: schema migration adding both fields.
+  - Migration `0003_migrate_content_to_yjs_state`: data migration that moves any existing `{"_yjs": "<hex>"}` values from `content` into `yjs_state` (fully reversible).
 - **Issue Linking — complete feature (2026-03-22)**:
   - **Backend — `IssueRelationSerializer` derived fields**: added 4 read-only computed fields (`related_issue_title`, `related_issue_sequence_id`, `related_issue_project_id`, `related_issue_project_name`) sourced via `select_related('related_issue', 'related_issue__project')` to avoid N+1 queries.
   - **Backend — relation validation**: self-relation guard returns 400 with message "An issue cannot be related to itself"; duplicate relation guard prevents DB-level `IntegrityError` and returns 400 with "This relation already exists."
