@@ -14,6 +14,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - Bare `except Exception: return None` blocks replaced with proper error logging (`logger.exception`) so unexpected errors are no longer silently swallowed.
 
 ### Added
+- **Wiki Phase 1 — view tests strengthened (2026-03-31)**:
+  - `backend/apps/wiki/tests/test_views.py`: expanded from 18 to 21 tests.
+  - Added `test_update_space`: PATCH to `/wiki/spaces/{pk}/` verifies name update persists in DB.
+  - Added `test_move_page`: PATCH to `/wiki/pages/{pk}/move/` with `{"parent": new_parent_id}` verifies parent reassignment.
+  - Added `test_unpublish_page`: PATCH to `/wiki/pages/{pk}/` with `{"is_published": False}` verifies `is_published` is cleared.
+  - Tightened `test_locked_page_edit_blocked_for_non_admin`: assertion changed from `assertIn([403, 400])` to `assertEqual(403)` to match `PermissionDenied` raised by `_get_page`.
+  - Tightened `test_private_space_blocks_non_member`: assertion changed from `assertIn([403, 404])` to `assertEqual(404)` to match `NotFound` raised by `_get_page` (private space path intentionally obscures existence).
 - **Wiki Phase 1 — view tests (2026-03-31)**:
   - `backend/apps/wiki/tests/test_views.py`: 18 tests covering `WikiSpaceViewTests` (list, create, delete by creator), `WikiPageViewTests` (list, create, update, delete, publish, public access without auth, locked page block for non-admin, private space access block), `WikiVersionViewTests` (list, restore), and `WikiCommentViewTests` (create, resolve, delete by author).
   - Ancestor field assertions validate both empty ancestors for root pages and correct root-first ordering for nested pages.

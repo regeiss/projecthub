@@ -51,6 +51,16 @@ class WikiSpaceViewTests(TestCase):
         resp = self.client.delete(f"/api/v1/wiki/spaces/{space.pk}/")
         self.assertEqual(resp.status_code, 204)
 
+    def test_update_space(self):
+        self.space = make_space(self.ws, self.member)
+        resp = self.client.patch(
+            f"/api/v1/wiki/spaces/{self.space.id}/",
+            {"name": "Updated Name"},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.space.refresh_from_db()
+        self.assertEqual(self.space.name, "Updated Name")
+
 
 class WikiPageViewTests(TestCase):
     def setUp(self):
@@ -58,6 +68,7 @@ class WikiPageViewTests(TestCase):
         self.ws = Workspace.objects.create(name="WS2", slug="ws-pv")
         self.member = make_member(self.ws)
         self.space = make_space(self.ws, self.member)
+        self.page = make_page(self.space, self.member)
         self.client.force_authenticate(user=self.member)
 
     def test_list_pages(self):
@@ -101,12 +112,33 @@ class WikiPageViewTests(TestCase):
         resp = self.client.delete(f"/api/v1/wiki/pages/{page.pk}/")
         self.assertEqual(resp.status_code, 204)
 
+    def test_move_page(self):
+        new_parent = WikiPage.objects.create(space=self.space, title="New Parent", sort_order=10.0, created_by=self.member)
+        resp = self.client.patch(
+            f"/api/v1/wiki/pages/{self.page.id}/move/",
+            {"parent": str(new_parent.id)},
+        )
+        self.assertIn(resp.status_code, [200, 204])
+        self.page.refresh_from_db()
+        self.assertEqual(self.page.parent, new_parent)
+
     def test_publish_page(self):
         page = make_page(self.space, self.member)
         resp = self.client.post(f"/api/v1/wiki/pages/{page.pk}/publish/", {"publish": True})
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(resp.data["is_published"])
         self.assertIsNotNone(resp.data["published_token"])
+
+    def test_unpublish_page(self):
+        self.page.is_published = True
+        self.page.save()
+        resp = self.client.patch(
+            f"/api/v1/wiki/pages/{self.page.id}/",
+            {"is_published": False},
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.page.refresh_from_db()
+        self.assertFalse(self.page.is_published)
 
     def test_public_page_no_auth(self):
         page = make_page(self.space, self.member)
@@ -123,7 +155,7 @@ class WikiPageViewTests(TestCase):
         other = make_member(self.ws, suffix="b")
         self.client.force_authenticate(user=other)
         resp = self.client.patch(f"/api/v1/wiki/pages/{page.pk}/", {"title": "Hack"})
-        self.assertIn(resp.status_code, [403, 400])
+        self.assertEqual(resp.status_code, 403)
 
     def test_private_space_blocks_non_member(self):
         private_space = make_space(self.ws, self.member, private=True)
@@ -131,7 +163,7 @@ class WikiPageViewTests(TestCase):
         stranger = make_member(self.ws, suffix="z")
         self.client.force_authenticate(user=stranger)
         resp = self.client.get(f"/api/v1/wiki/pages/{page.pk}/")
-        self.assertIn(resp.status_code, [403, 404])
+        self.assertEqual(resp.status_code, 404)
 
 
 class WikiVersionViewTests(TestCase):
