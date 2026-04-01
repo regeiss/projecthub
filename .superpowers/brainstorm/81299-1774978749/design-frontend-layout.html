@@ -1,0 +1,100 @@
+<h2>Phase 1 Design — Section 3: Frontend Layout</h2>
+<p class="subtitle">WikiLayout restructured to 3 columns + new Breadcrumb and TOC components</p>
+
+<div class="mockup">
+  <div class="mockup-header">WikiLayout.tsx — 3-column structure</div>
+  <div class="mockup-body" style="padding:12px">
+    <div style="display:flex;height:320px;gap:0;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden;font-size:0.78em">
+
+      <!-- Left sidebar -->
+      <div style="width:220px;background:#f8fafc;border-right:1px solid #e2e8f0;padding:12px;flex-shrink:0">
+        <div style="font-size:0.7em;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:10px">📁 Engineering Wiki</div>
+        <div style="padding:4px 8px;background:#eff6ff;border-radius:4px;color:#2563eb;margin-bottom:2px;font-size:0.9em">▾ Backend</div>
+        <div style="padding:4px 8px;color:#334155;margin-left:12px;margin-bottom:2px;font-size:0.9em">• API Design</div>
+        <div style="padding:4px 8px;color:#334155;margin-left:12px;margin-bottom:2px;font-size:0.9em;background:#f0f9ff;border-radius:3px;font-weight:600">• Auth Flow ←</div>
+        <div style="padding:4px 8px;color:#334155;margin-left:12px;margin-bottom:2px;font-size:0.9em">• Database</div>
+        <div style="padding:4px 8px;color:#334155;margin-bottom:2px;font-size:0.9em">▸ Frontend</div>
+        <div style="padding:4px 8px;color:#334155;margin-bottom:2px;font-size:0.9em">▸ DevOps</div>
+        <div style="margin-top:10px;padding:4px 8px;color:#94a3b8;font-size:0.85em;border-top:1px solid #e2e8f0;padding-top:8px">+ New page</div>
+      </div>
+
+      <!-- Main content -->
+      <div style="flex:1;padding:16px;overflow:auto;background:#fff">
+        <!-- Breadcrumb -->
+        <div style="font-size:0.8em;color:#94a3b8;margin-bottom:12px;display:flex;align-items:center;gap:4px">
+          <span>📁 Engineering Wiki</span>
+          <span>›</span>
+          <span>Backend</span>
+          <span>›</span>
+          <span style="color:#1e293b;font-weight:600">Auth Flow</span>
+        </div>
+        <!-- Title -->
+        <div style="font-size:1.4em;font-weight:700;color:#0f172a;margin-bottom:12px">Auth Flow</div>
+        <!-- Toolbar placeholder -->
+        <div style="height:28px;background:#f1f5f9;border-radius:4px;margin-bottom:12px;display:flex;align-items:center;padding:0 8px;gap:8px">
+          <div style="width:16px;height:16px;background:#cbd5e1;border-radius:2px"></div>
+          <div style="width:16px;height:16px;background:#cbd5e1;border-radius:2px"></div>
+          <div style="width:16px;height:16px;background:#cbd5e1;border-radius:2px"></div>
+          <div style="width:1px;height:16px;background:#e2e8f0"></div>
+          <div style="width:16px;height:16px;background:#cbd5e1;border-radius:2px"></div>
+          <div style="width:16px;height:16px;background:#cbd5e1;border-radius:2px"></div>
+        </div>
+        <!-- Content -->
+        <div style="background:#e2e8f0;height:10px;border-radius:3px;margin-bottom:6px;width:95%"></div>
+        <div style="background:#e2e8f0;height:10px;border-radius:3px;margin-bottom:6px;width:88%"></div>
+        <div style="background:#e2e8f0;height:10px;border-radius:3px;margin-bottom:6px;width:92%"></div>
+        <div style="background:#1e293b;height:13px;border-radius:3px;margin-bottom:6px;margin-top:14px;width:40%"></div>
+        <div style="background:#e2e8f0;height:10px;border-radius:3px;margin-bottom:6px;width:90%"></div>
+        <div style="background:#e2e8f0;height:10px;border-radius:3px;margin-bottom:6px;width:85%"></div>
+      </div>
+
+      <!-- Right TOC sidebar -->
+      <div style="width:180px;background:#f8fafc;border-left:1px solid #e2e8f0;padding:12px;flex-shrink:0">
+        <div style="font-size:0.7em;font-weight:700;color:#64748b;text-transform:uppercase;margin-bottom:10px">On this page</div>
+        <div style="padding:3px 0;color:#2563eb;font-size:0.85em;border-left:2px solid #2563eb;padding-left:8px;margin-bottom:4px">Overview</div>
+        <div style="padding:3px 0;color:#64748b;font-size:0.82em;padding-left:8px;margin-bottom:2px;margin-left:8px">Token flow</div>
+        <div style="padding:3px 0;color:#64748b;font-size:0.82em;padding-left:8px;margin-bottom:2px;margin-left:8px">Refresh logic</div>
+        <div style="padding:3px 0;color:#475569;font-size:0.85em;padding-left:8px;margin-bottom:4px">Keycloak setup</div>
+        <div style="padding:3px 0;color:#64748b;font-size:0.82em;padding-left:8px;margin-bottom:2px;margin-left:8px">Realm config</div>
+        <div style="padding:3px 0;color:#475569;font-size:0.85em;padding-left:8px;margin-bottom:4px">Troubleshooting</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Component breakdown</div>
+  <div class="mockup-body" style="padding:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:0.85em">
+      <div style="background:#f0f4ff;padding:10px;border-radius:6px">
+        <strong>WikiBreadcrumb.tsx</strong> (new)<br>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.7">
+          <li>Reads <code>page.ancestors</code> from detail response</li>
+          <li>Renders Space icon → ancestors → current title</li>
+          <li>Each segment is a link</li>
+          <li>Truncates middle segments on narrow screens</li>
+        </ul>
+      </div>
+      <div style="background:#f0fff4;padding:10px;border-radius:6px">
+        <strong>WikiTOC.tsx</strong> (new)<br>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.7">
+          <li>Receives <code>editor</code> instance as prop</li>
+          <li>Parses TipTap JSON for heading nodes (H1–H3)</li>
+          <li>Active heading highlighted via IntersectionObserver</li>
+          <li>Click scrolls to heading anchor</li>
+          <li>Hidden when &lt;3 headings</li>
+        </ul>
+      </div>
+      <div style="background:#fdf4ff;padding:10px;border-radius:6px">
+        <strong>WikiLayout.tsx</strong> (updated)<br>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.7">
+          <li>2-col → 3-col grid</li>
+          <li>TOC col hidden on screens &lt;1280px</li>
+          <li>Max content width capped at 720px</li>
+          <li>WikiPage receives <code>ancestors</code> from hook</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,45 @@
+<h2>8 features — let's decompose into phases</h2>
+<p class="subtitle">Too large for one spec. Which order makes sense? Below is my proposed grouping — click to agree or disagree.</p>
+
+<div class="section">
+  <div class="options">
+    <div class="option" data-choice="phased" onclick="toggleSelect(this)">
+      <div class="letter">✓</div>
+      <div class="content">
+        <h3>Build in 4 phases (recommended)</h3>
+        <p>Tackle naturally-grouped features together, each as its own spec → plan → implementation cycle.</p>
+        <br>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px">
+          <div style="background:#f0f4ff;border-radius:8px;padding:12px">
+            <strong>Phase 1 — Foundation</strong><br>
+            <span style="font-size:0.85em;color:#555">Breadcrumbs · Table of Contents · Tests</span><br>
+            <span style="font-size:0.8em;color:#888">Low risk, high value, unblocks everything</span>
+          </div>
+          <div style="background:#f0fff4;border-radius:8px;padding:12px">
+            <strong>Phase 2 — Search</strong><br>
+            <span style="font-size:0.85em;color:#555">Full-text search (PostgreSQL FTS or backend index)</span><br>
+            <span style="font-size:0.8em;color:#888">Standalone feature, no dependencies</span>
+          </div>
+          <div style="background:#fff8f0;border-radius:8px;padding:12px">
+            <strong>Phase 3 — Connectivity</strong><br>
+            <span style="font-size:0.85em;color:#555">Wikilinks · Backlinks · Graph View</span><br>
+            <span style="font-size:0.8em;color:#888">Linked features — build together</span>
+          </div>
+          <div style="background:#fdf0ff;border-radius:8px;padding:12px">
+            <strong>Phase 4 — Power Features</strong><br>
+            <span style="font-size:0.85em;color:#555">Page Templates · Version Diff View</span><br>
+            <span style="font-size:0.8em;color:#888">Nice-to-have, builds on stable foundation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="option" data-choice="reorder" onclick="toggleSelect(this)">
+      <div class="letter">↕</div>
+      <div class="content">
+        <h3>Different order</h3>
+        <p>Tell me in the terminal what order you'd prefer, or which phase to start with.</p>
+      </div>
+    </div>
+  </div>
+</div>

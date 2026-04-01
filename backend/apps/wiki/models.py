@@ -52,6 +52,7 @@ class WikiPage(models.Model):
     )
     title = models.CharField(max_length=500)
     content = models.JSONField(null=True, blank=True)  # TipTap / Yjs state
+    yjs_state = models.BinaryField(null=True, blank=True)
     emoji = models.CharField(max_length=10, blank=True, null=True)
     cover_url = models.TextField(blank=True, null=True)
     sort_order = models.FloatField(default=65535.0, db_column="position")
@@ -92,6 +93,7 @@ class WikiPageVersion(models.Model):
     version_number = models.IntegerField()
     title = models.CharField(max_length=500)
     content = models.JSONField()
+    yjs_state = models.BinaryField(null=True, blank=True)
     change_summary = models.CharField(max_length=500, blank=True, null=True)
     created_by = models.ForeignKey(
         "workspaces.WorkspaceMember", on_delete=models.PROTECT, db_column="created_by"

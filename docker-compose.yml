@@ -280,6 +280,8 @@ services:
       - keycloak                 # Só sobe com: docker compose --profile keycloak up
     networks:
       - projecthub_net
+    volumes: 
+      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema 
 
 # =============================================================================
 volumes:

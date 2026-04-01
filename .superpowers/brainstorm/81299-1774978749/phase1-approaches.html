@@ -1,0 +1,42 @@
+<h2>Phase 1 — Implementation Approaches</h2>
+<p class="subtitle">Key constraint: content is stored as raw Yjs binary — backend can't read headings. Choose how to handle this.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="dual-store" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Dual-store: persist TipTap JSON alongside Yjs (recommended)</h3>
+      <p>When saving, the frontend sends both the Yjs binary AND the TipTap JSON. Backend stores TipTap JSON in <code>content</code> and Yjs in a new <code>yjs_state</code> field. Backend can now read headings for TOC, full-text search, and diffs.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>Unlocks backend search (Phase 2)</li><li>Version diffs readable (Phase 4)</li><li>Clean data model</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>Migration + new DB column</li><li>Larger payloads on save</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="frontend-only" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Frontend-only: parse Yjs in browser, no backend changes</h3>
+      <p>TOC is extracted client-side from the live TipTap/Yjs editor state. Breadcrumbs resolved by walking up the TanStack Query cache. No backend changes needed for Phase 1.</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>No migration, no backend work</li><li>Fast to ship</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>TOC only works while editor is mounted</li><li>Doesn't enable future search or diffs</li><li>Breadcrumbs require N cache hits for deep pages</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="hybrid" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Hybrid: frontend TOC + backend ancestors endpoint</h3>
+      <p>TOC is frontend-only (from live editor). A new <code>/wiki/pages/{pk}/ancestors/</code> endpoint returns the ancestor chain efficiently for breadcrumbs. Defers content storage refactor to Phase 2 (when search forces it).</p>
+      <div class="pros-cons" style="margin-top:8px">
+        <div class="pros"><h4>Pros</h4><ul><li>Breadcrumbs are reliable and fast</li><li>No forced migration now</li><li>Ancestors endpoint reusable for graph view</li></ul></div>
+        <div class="cons"><h4>Cons</h4><ul><li>TOC still frontend-only</li><li>Content refactor just deferred, not avoided</li></ul></div>
+      </div>
+    </div>
+  </div>
+
+</div>

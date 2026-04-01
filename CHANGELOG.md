@@ -7,6 +7,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **`IssueRelationListCreateView` — remove pagination (2026-03-22)**: added `pagination_class = None` so `GET /issues/{id}/relations/` returns a flat array instead of a paginated envelope. The frontend service passes the response directly as an array; the previous paginated response caused the relation list to always appear empty. Updated `test_relations.py` to match the flat response (`resp.data[0]` instead of `resp.data['results'][0]`).
+
 ### Added
 - **Issue Linking — complete feature (2026-03-22)**:
   - **Backend — `IssueRelationSerializer` derived fields**: added 4 read-only computed fields (`related_issue_title`, `related_issue_sequence_id`, `related_issue_project_id`, `related_issue_project_name`) sourced via `select_related('related_issue', 'related_issue__project')` to avoid N+1 queries.

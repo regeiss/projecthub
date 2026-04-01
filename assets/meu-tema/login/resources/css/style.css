@@ -1,0 +1,164 @@
+/* 1. ESTRUTURA E FUNDO DA PÁGINA */
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-image: url('../img/background.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+    background-repeat: no-repeat !important;
+    background-color: #333 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* 2. CENTRALIZAÇÃO E LAYOUT */
+#kc-container-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+.login-pf body {
+    background-color: transparent !important;
+}
+
+#kc-header {
+    display: none;
+}
+
+/* 3. O CARD DE LOGIN (VIDRO FUMÊ CLARO) */
+.card-pf {
+    margin-top: 0 !important;
+    background: rgba(50, 50, 50, 0.45) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 20px !important;
+    /* Cantos do Card */
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
+    padding: 40px !important;
+    max-width: 420px;
+    width: 100%;
+}
+
+/* 4. TEXTOS E LABELS */
+.login-pf label,
+.login-pf .control-label,
+#kc-registration,
+#kc-registration a,
+#kc-current-locale-link,
+#kc-page-title {
+    color: #ffffff !important;
+    text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+    font-weight: 600;
+}
+
+#kc-form-options a,
+#kc-info-wrapper span a {
+    color: #ffffff !important;
+    text-decoration: underline;
+    font-size: 0.9em;
+}
+
+/* 5. INPUTS / TEXT BOXES (CANTOS ARREDONDADOS) */
+#username {
+    border-radius: 12px !important;
+}
+
+/* 5.2 Arredonda o GRUPO da senha (o container que segura o input + ícone) */
+.input-group {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    /* ISSO AQUI: corta as quinas quadradas dos filhos */
+    display: flex !important;
+    background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+/* 5.3 Garante que o input dentro do grupo não tenha bordas próprias que conflitem */
+.input-group .form-control {
+    border: none !important;
+    border-radius: 12px 0 0 12px !important;
+    /* Arredonda só o início */
+    height: 50px !important;
+    background-color: transparent !important;
+    /* Usa o fundo do grupo */
+}
+
+/* 5.4 Ajusta o botão do "olho" para casar com o arredondamento */
+.input-group-addon {
+    border: none !important;
+    background-color: transparent !important;
+    padding-right: 15px !important;
+    border-radius: 0 12px 12px 0 !important;
+    /* Arredonda só o fim */
+}
+
+/* Remove qualquer borda padrão do PatternFly que possa aparecer no hover */
+.pf-c-form-control,
+.form-control {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* 6. CORREÇÃO DO SELETOR DE IDIOMAS */
+#kc-locale-dropdown ul {
+    display: none;
+    position: absolute;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    list-style: none;
+    padding: 8px 0;
+    margin: 8px 0 0 0;
+    z-index: 1000;
+}
+
+#kc-locale-dropdown:hover ul,
+#kc-locale-dropdown.open ul {
+    display: block;
+}
+
+/* 7. BOTÃO DE LOGIN (IMPONENTE E ARREDONDADO) */
+#kc-login {
+    margin-top: 30px !important;
+}
+
+input#kc-login,
+button#kc-login,
+.login-pf-page .form-group #kc-login,
+#kc-login-wrapper .btn-primary {
+    background-color: #007aff !important;
+    border: none !important;
+    border-radius: 15px !important;
+    /* Cantos bem arredondados no botão */
+
+    height: 60px !important;
+    min-height: 60px !important;
+    line-height: 60px !important;
+
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+
+    box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3) !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    width: 100% !important;
+    display: block !important;
+    padding: 0 !important;
+}
+
+input#kc-login:hover {
+    background-color: #0063cf !important;
+    transform: scale(1.02);
+    /* Leve pulsação ao passar o mouse */
+}

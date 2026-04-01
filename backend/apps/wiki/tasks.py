@@ -35,9 +35,9 @@ def save_yjs_state(self, page_id: str, yjs_hex: str, member_id: str):
         yjs_bytes = bytes.fromhex(yjs_hex)
 
         with transaction.atomic():
-            page.content = {"_yjs": yjs_hex}  # armazena hex em JSON para compatibilidade
+            page.yjs_state = yjs_bytes
             page.updated_by = member
-            page.save(update_fields=["content", "updated_by", "updated_at"])
+            page.save(update_fields=["yjs_state", "updated_by", "updated_at"])
 
         # Limpa pending flag no Redis
         cache.delete(f"wiki_yjs_pending_{page_id}")

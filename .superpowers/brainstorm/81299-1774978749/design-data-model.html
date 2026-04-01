@@ -1,0 +1,70 @@
+<h2>Phase 1 Design — Section 1: Data Model</h2>
+<p class="subtitle">Changes to WikiPage to support dual-store content</p>
+
+<div class="mockup">
+  <div class="mockup-header">WikiPage model — before vs after</div>
+  <div class="mockup-body">
+    <div class="split">
+      <div style="flex:1;padding:12px">
+        <div class="label" style="color:#ef4444">Before</div>
+        <pre style="font-size:0.8em;background:#fff5f5;padding:10px;border-radius:6px;margin-top:6px;line-height:1.6">class WikiPage(models.Model):
+    ...
+    content = JSONField(
+      default=dict
+    )
+    # stores {"_yjs": "hex..."}
+    # or TipTap JSON
+    # — mixed, opaque</pre>
+      </div>
+      <div style="flex:1;padding:12px">
+        <div class="label" style="color:#22c55e">After</div>
+        <pre style="font-size:0.8em;background:#f0fff4;padding:10px;border-radius:6px;margin-top:6px;line-height:1.6">class WikiPage(models.Model):
+    ...
+    content = JSONField(
+      default=dict
+    )
+    # Always TipTap JSON now
+    # readable by backend
+
+    yjs_state = models.BinaryField(
+      null=True, blank=True
+    )
+    # Raw Yjs binary state
+    # for real-time sync only</pre>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;padding:12px;background:#fffbeb;border-radius:6px;border:1px solid #fcd34d">
+      <strong>Migration plan:</strong>
+      <ul style="margin-top:6px;font-size:0.9em;line-height:1.8">
+        <li>Add <code>yjs_state</code> BinaryField (nullable)</li>
+        <li>Existing rows with <code>{"_yjs": hex}</code> in <code>content</code>: move hex → <code>yjs_state</code>, set <code>content = {}</code></li>
+        <li>WikiPageVersion: same split — add <code>yjs_state</code> field</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Save flow — how dual-store works end-to-end</div>
+  <div class="mockup-body" style="padding:12px;font-size:0.88em;line-height:1.8">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:#f0f4ff;padding:10px;border-radius:6px">
+        <strong>WebSocket (Yjs sync)</strong><br>
+        Consumer receives binary Yjs update<br>
+        → Relay to peers (unchanged)<br>
+        → Debounce 10s → save to <code>yjs_state</code>
+      </div>
+      <div style="background:#f0fff4;padding:10px;border-radius:6px">
+        <strong>REST save (title + content)</strong><br>
+        Frontend sends TipTap JSON on Save<br>
+        → PATCH <code>/wiki/pages/{pk}/</code><br>
+        → Saved to <code>content</code> JSONField
+      </div>
+    </div>
+    <div style="margin-top:10px;background:#fdf4ff;padding:10px;border-radius:6px">
+      <strong>On load (WebSocket connect)</strong><br>
+      Consumer sends both: <code>content</code> (TipTap JSON for initial render) + <code>yjs_state</code> binary (for Yjs reconciliation). Editor shows content immediately; Yjs catches up any in-flight peer edits.
+    </div>
+  </div>
+</div>
