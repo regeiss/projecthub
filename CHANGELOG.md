@@ -7,6 +7,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Wiki Phase 1 — dual-store model, breadcrumbs, TOC, and test suite (2026-04-01)**:
+  - **Backend — dual-store content model**: added `yjs_state` `BinaryField` to `WikiPage` and `WikiPageVersion`; `save_yjs_state` Celery task now writes to `yjs_state` only (not `content`); `WikiPageConsumer` sends TipTap JSON init message followed by Yjs binary on connect.
+  - **Backend — `ancestors` field**: `WikiPageDetailSerializer` now includes `ancestors` list (root-first chain of `{id, title}` objects) for breadcrumb navigation.
+  - **Backend — test suite**: comprehensive tests for models, views, consumers, and tasks under `apps/wiki/tests/`.
+  - **Frontend — `WikiBreadcrumb`**: breadcrumb nav component (Space › Ancestor › Current Page) with `aria-current="page"` on the active item.
+  - **Frontend — `WikiTOC`**: right-sidebar table of contents with `IntersectionObserver` active-heading tracking; hidden below `xl` breakpoint; only rendered when page has ≥ 3 headings.
+  - **Frontend — `HeadingWithId` extension**: TipTap extension that injects slugified `id` attributes on headings for TOC anchor links.
+  - **Frontend — 3-column `WikiLayout`**: left page-tree sidebar, centre content area, right TOC sidebar; uses React Router outlet context to pass `editor` instance up to the layout.
+  - **Frontend — types and service**: `WikiPage` type extended with `ancestors`; `mapPage` maps backend `ancestors` array.
+
 ### Fixed
 - **`IssueRelationListCreateView` — remove pagination (2026-03-22)**: added `pagination_class = None` so `GET /issues/{id}/relations/` returns a flat array instead of a paginated envelope. The frontend service passes the response directly as an array; the previous paginated response caused the relation list to always appear empty. Updated `test_relations.py` to match the flat response (`resp.data[0]` instead of `resp.data['results'][0]`).
 

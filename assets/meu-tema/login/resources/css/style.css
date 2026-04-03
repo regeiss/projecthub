@@ -69,44 +69,59 @@ body {
     font-size: 0.9em;
 }
 
-/* 5. INPUTS / TEXT BOXES (CANTOS ARREDONDADOS) */
-#username {
-    border-radius: 12px !important;
-}
+/* 5. INPUTS E CAMPOS DE TEXTO - CORREÇÃO DEFINITIVA SENHA */
 
-/* 5.2 Arredonda o GRUPO da senha (o container que segura o input + ícone) */
-.input-group {
+/* 5.1 Usuário (Simples) */
+#username,
+.pf-c-form-control:not(.pf-m-search) {
     border-radius: 12px !important;
-    overflow: hidden !important;
-    /* ISSO AQUI: corta as quinas quadradas dos filhos */
-    display: flex !important;
+    height: 50px !important;
+    border: none !important;
     background-color: rgba(255, 255, 255, 0.95) !important;
 }
 
-/* 5.3 Garante que o input dentro do grupo não tenha bordas próprias que conflitem */
-.input-group .form-control {
+/* 5.2 Senha (O Container do Grupo) */
+/* Atacamos o container que envolve o input e o botão do olho */
+.input-group,
+.pf-c-input-group {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    /* Corta as quinas dos filhos */
+    background-color: rgba(255, 255, 255, 0.95) !important;
     border: none !important;
-    border-radius: 12px 0 0 12px !important;
-    /* Arredonda só o início */
+    display: flex !important;
     height: 50px !important;
-    background-color: transparent !important;
-    /* Usa o fundo do grupo */
 }
 
-/* 5.4 Ajusta o botão do "olho" para casar com o arredondamento */
-.input-group-addon {
+/* 5.3 O Campo de texto da senha em si */
+#password,
+.pf-c-input-group__text-control .pf-c-form-control {
+    border-radius: 12px 0 0 12px !important;
     border: none !important;
     background-color: transparent !important;
-    padding-right: 15px !important;
+    /* Usa o fundo do pai */
+    height: 100% !important;
+    flex-grow: 1 !important;
+}
+
+/* 5.4 O Botão do "Olho" (Addon) */
+.input-group-addon,
+.pf-c-input-group__addon,
+.pf-c-button.pf-m-control {
+    border: none !important;
+    background-color: transparent !important;
     border-radius: 0 12px 12px 0 !important;
-    /* Arredonda só o fim */
+    height: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 15px !important;
 }
 
-/* Remove qualquer borda padrão do PatternFly que possa aparecer no hover */
-.pf-c-form-control,
-.form-control {
-    border: none !important;
-    box-shadow: none !important;
+/* 5.5 Remove sombras de foco que denunciam o formato quadrado original */
+.form-control:focus,
+.input-group:focus-within {
+    box-shadow: 0 0 0 2px #007aff !important;
+    outline: none !important;
 }
 
 /* 6. CORREÇÃO DO SELETOR DE IDIOMAS */

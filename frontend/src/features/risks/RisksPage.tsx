@@ -110,7 +110,7 @@ export function RisksPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum risco registrado</p>
         </div>
       ) : (
-        <div className="grid grid-cols-[1fr_380px] gap-6 items-start">
+        <div className="grid grid-cols-[1fr_460px] gap-6 items-start">
           <div className="space-y-2">
             {filtered.sort((a, b) => b.score - a.score).map((r) => (
               <div key={r.id} className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-3">

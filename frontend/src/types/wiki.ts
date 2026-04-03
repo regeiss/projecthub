@@ -28,6 +28,7 @@ export interface WikiPage {
   wordCount: number
   createdById: string
   updatedById: string | null
+  ancestors: { id: string; title: string }[]
   children?: WikiPageListItem[]
   createdAt: string
   updatedAt: string

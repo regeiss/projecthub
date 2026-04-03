@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
+import type { Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Image from '@tiptap/extension-image'
@@ -20,6 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EditorToolbar } from './EditorToolbar'
+import { HeadingWithId } from './extensions/HeadingWithId'
 
 interface WikiEditorProps {
   pageId: string
@@ -27,6 +29,7 @@ interface WikiEditorProps {
   readOnly?: boolean
   className?: string
   onContentChange?: (content: object) => void
+  onEditorReady?: (editor: Editor) => void
 }
 
 function BubbleButton({
@@ -55,7 +58,7 @@ function BubbleButton({
   )
 }
 
-export function WikiEditor({ pageId, initialContent, readOnly = false, className, onContentChange }: WikiEditorProps) {
+export function WikiEditor({ pageId, initialContent, readOnly = false, className, onContentChange, onEditorReady }: WikiEditorProps) {
   const ydoc = useMemo(() => new Y.Doc(), [pageId])
 
   // Keep a stable ref so the onUpdate closure always calls the latest callback
@@ -86,7 +89,8 @@ export function WikiEditor({ pageId, initialContent, readOnly = false, className
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ history: false }),
+      StarterKit.configure({ history: false, heading: false }),
+      HeadingWithId.configure({ levels: [1, 2, 3] }),
       Placeholder.configure({ placeholder: 'Comece a escrever…' }),
       Image,
       TaskList,
@@ -115,6 +119,13 @@ export function WikiEditor({ pageId, initialContent, readOnly = false, className
       },
     },
   })
+
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor)
+    }
+    // onEditorReady is intentionally excluded: callers pass setEditor (stable setState ref)
+  }, [editor]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!editor || contentSeeded.current) return

@@ -7,9 +7,9 @@ interface RiskMatrixProps {
 
 function cellColor(p: number, i: number): string {
   const score = p * i
-  if (score <= 6)  return 'bg-green-100 hover:bg-green-200'
-  if (score <= 14) return 'bg-amber-100 hover:bg-amber-200'
-  return 'bg-red-100 hover:bg-red-200'
+  if (score <= 6)  return 'bg-green-300 hover:bg-green-400 dark:bg-green-700 dark:hover:bg-green-600'
+  if (score <= 14) return 'bg-amber-300 hover:bg-amber-400 dark:bg-amber-600 dark:hover:bg-amber-500'
+  return 'bg-red-400 hover:bg-red-500 dark:bg-red-700 dark:hover:bg-red-600'
 }
 
 const LEVEL_LABELS = ['', 'Muito baixo', 'Baixo', 'Médio', 'Alto', 'Muito alto']
@@ -36,7 +36,7 @@ export function RiskMatrix({ risks, onRiskClick }: RiskMatrixProps) {
         </div>
 
         <div>
-          <div className="mb-1 grid grid-cols-5 gap-1 pl-12">
+          <div className="mb-1 grid grid-cols-5 gap-1 pl-[52px]">
             {[1, 2, 3, 4, 5].map((p) => (
               <div key={p} className="w-16 text-center text-[10px] text-gray-400 dark:text-gray-500">
                 {p}<br />{LEVEL_LABELS[p].split(' ')[0]}
@@ -87,15 +87,15 @@ export function RiskMatrix({ risks, onRiskClick }: RiskMatrixProps) {
 
       <div className="mt-3 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
         <div className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded bg-green-200" />
+          <span className="h-3 w-3 rounded bg-green-300 dark:bg-green-700" />
           Baixo (≤6)
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded bg-amber-200" />
+          <span className="h-3 w-3 rounded bg-amber-300 dark:bg-amber-600" />
           Médio (7-14)
         </div>
         <div className="flex items-center gap-1">
-          <span className="h-3 w-3 rounded bg-red-200" />
+          <span className="h-3 w-3 rounded bg-red-400 dark:bg-red-700" />
           Alto (≥15)
         </div>
       </div>

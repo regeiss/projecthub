@@ -1,23 +1,29 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useOutletContext } from 'react-router-dom'
 import { Save } from 'lucide-react'
-import { useWikiPage, useWikiPageComments, useUpdateWikiPage } from '@/hooks/useWiki'
+import { useWikiPage, useWikiPageComments, useUpdateWikiPage, useWikiSpaces } from '@/hooks/useWiki'
 import { WikiEditor } from './WikiEditor'
+import { WikiBreadcrumb } from './WikiBreadcrumb'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { PageSpinner } from '@/components/ui/Spinner'
 import { relativeTime } from '@/lib/utils'
+import type { WikiOutletContext } from './WikiLayout'
 
 export function WikiPage() {
-  const { pageId } = useParams()
+  const { pageId, projectId = '' } = useParams()
   const { data: page, isLoading } = useWikiPage(pageId ?? '')
   const { data: comments = [] } = useWikiPageComments(pageId ?? '')
+  const { data: spaces = [] } = useWikiSpaces()
+  const { setEditor } = useOutletContext<WikiOutletContext>()
   const updatePage = useUpdateWikiPage()
   const [title, setTitle] = useState('')
   const [isDirty, setIsDirty] = useState(false)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
   const latestContent = useRef<object | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
+
+  const space = spaces.find((s) => s.projectId === projectId)
 
   useEffect(() => {
     if (page) {
@@ -85,6 +91,14 @@ export function WikiPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        {/* Breadcrumb */}
+        <WikiBreadcrumb
+          spaceName={space?.name ?? ''}
+          ancestors={page.ancestors}
+          currentTitle={page.title}
+          className="mb-2"
+        />
+
         <div className="flex items-start justify-between gap-4">
           <input
             className="flex-1 bg-transparent text-2xl font-semibold text-gray-900 dark:text-gray-100 outline-none placeholder:text-gray-300 dark:placeholder:text-gray-600"
@@ -129,11 +143,12 @@ export function WikiPage() {
         initialContent={page.content}
         className="flex-1 rounded-none border-0"
         onContentChange={handleContentChange}
+        onEditorReady={setEditor}
       />
 
       {/* Comments */}
       {comments.length > 0 && (
-        <div className="mt-8">
+        <div className="mt-8 px-6 pb-6">
           <h3 className="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">
             Comentários ({comments.length})
           </h3>

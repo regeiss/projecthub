@@ -79,6 +79,17 @@ export function useUpdateWikiPage() {
   })
 }
 
+export function useDeleteWikiPage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ pageId, spaceId }: { pageId: string; spaceId: string }) =>
+      wikiService.deletePage(pageId),
+    onSuccess: (_data, { spaceId }) => {
+      qc.invalidateQueries({ queryKey: ['wiki-pages', spaceId] })
+    },
+  })
+}
+
 export function useRestoreWikiVersion() {
   const qc = useQueryClient()
   return useMutation({

@@ -36,6 +36,7 @@ function mapPage(raw: any): WikiPage {
     wordCount: raw.word_count ?? 0,
     createdById: raw.created_by,
     updatedById: raw.updated_by ?? null,
+    ancestors: (raw.ancestors ?? []).map((a: any) => ({ id: a.id, title: a.title })),
     children: (raw.children ?? []).map(mapPageListItem),
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,

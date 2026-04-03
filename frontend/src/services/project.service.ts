@@ -34,7 +34,7 @@ export const projectService = {
     api.get<PaginatedResponse<ProjectMember>>(`/projects/${projectId}/members/`).then((r) => r.data.results.map(mapProjectMember)),
 
   addMember: (projectId: string, memberId: string, role: string) =>
-    api.post<ProjectMember>(`/projects/${projectId}/members/`, { member: memberId, role }).then((r) => r.data),
+    api.post<ProjectMember>(`/projects/${projectId}/members/`, { member_id: memberId, role }).then((r) => r.data),
 
   removeMember: (projectId: string, memberId: string) =>
     api.delete(`/projects/${projectId}/members/${memberId}/`),
