@@ -119,7 +119,7 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
 
         {/* Hover actions */}
         {!renaming && (
-          <div className="invisible flex items-center gap-0.5 group-hover:visible" aria-hidden="true">
+          <div className="invisible flex items-center gap-0.5 group-hover:visible">
             {/* Add child page */}
             <button
               type="button"
@@ -132,7 +132,7 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
             </button>
 
             {/* More options */}
-            <Dropdown modal={false}>
+            <Dropdown>
               <DropdownTrigger asChild>
                 <button
                   type="button"

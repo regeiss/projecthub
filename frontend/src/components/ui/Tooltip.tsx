@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import * as RadixTooltip from '@radix-ui/react-tooltip'
 import { cn } from '@/lib/utils'
 
@@ -26,11 +25,9 @@ export function Tooltip({
   align = 'center',
   className,
 }: TooltipProps) {
-  const [open, setOpen] = useState(false)
-
   return (
-    <RadixTooltip.Root open={open} onOpenChange={setOpen}>
-      <RadixTooltip.Trigger asChild onMouseLeave={() => setOpen(false)}>{children}</RadixTooltip.Trigger>
+    <RadixTooltip.Root>
+      <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
       <RadixTooltip.Portal>
         <RadixTooltip.Content
           side={side}

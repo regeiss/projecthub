@@ -121,16 +121,16 @@ sync-backend:
 # Sync project to WSL (exclui node_modules, .git, arquivos gerados)
 sync-wsl:
 	@echo "Sincronizando projeto → WSL (/home/robertogeiss/projecthub)..."
-	wsl bash -c "rsync -av --no-perms --no-group \
+	rsync -av --no-perms --no-group \
 		--exclude='node_modules' --exclude='.git' --exclude='__pycache__' \
 		--exclude='*.pyc' --exclude='staticfiles' --exclude='.env' \
-		/mnt/d/projecthub/ /home/robertogeiss/projecthub/"
+		/mnt/d/projecthub/ /home/robertogeiss/projecthub/
 	@echo "Done."
 
 # Sync só o frontend/src para WSL (mais rápido que sync-wsl completo)
 sync-frontend:
 	@echo "Sincronizando frontend/src → WSL..."
-	wsl bash -c "rsync -av /mnt/d/projecthub/frontend/src/ /home/robertogeiss/projecthub/frontend/src/"
+	rsync -av /mnt/d/projecthub/frontend/src/ /home/robertogeiss/projecthub/frontend/src/
 	@echo "Done. Vite irá recarregar automaticamente."
 
 # Frontend
