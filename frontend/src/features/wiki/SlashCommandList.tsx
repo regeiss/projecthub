@@ -1,5 +1,5 @@
 // frontend/src/features/wiki/SlashCommandList.tsx
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
 import type { SuggestionKeyDownProps } from '@tiptap/suggestion'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -108,11 +108,11 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
       setSelectedPointer(0)
     }, [items])
 
-    function selectItem(pointer: number) {
+    const selectItem = useCallback((pointer: number) => {
       const idx = selectableIndices[pointer]
       const item = idx !== undefined ? entries[idx] : undefined
       if (item?.type === 'item') command(item.action)
-    }
+    }, [selectableIndices, entries, command])
 
     useImperativeHandle(ref, () => ({
       onKeyDown: ({ event }) => {
