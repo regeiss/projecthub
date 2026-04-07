@@ -140,6 +140,7 @@ export function WikiPage() {
       <WikiEditor
         key={page.id}
         pageId={page.id}
+        projectId={projectId}
         initialContent={page.content}
         className="flex-1 rounded-none border-0"
         onContentChange={handleContentChange}

@@ -1,4 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react'
+import type { ProjectMember } from '@/types'
+import { useProjectMembers } from '@/hooks/useProjects'
+import { PanelExtension } from './extensions/Panel'
+import { buildMentionExtension } from './extensions/Mention'
+import { SlashCommandExtension } from './extensions/SlashCommand'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import type { Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -25,6 +30,7 @@ import { HeadingWithId } from './extensions/HeadingWithId'
 
 interface WikiEditorProps {
   pageId: string
+  projectId?: string          // enables @mention member list
   initialContent?: object | null
   readOnly?: boolean
   className?: string
@@ -58,7 +64,7 @@ function BubbleButton({
   )
 }
 
-export function WikiEditor({ pageId, initialContent, readOnly = false, className, onContentChange, onEditorReady }: WikiEditorProps) {
+export function WikiEditor({ pageId, projectId, initialContent, readOnly = false, className, onContentChange, onEditorReady }: WikiEditorProps) {
   const ydoc = useMemo(() => new Y.Doc(), [pageId])
 
   // Keep a stable ref so the onUpdate closure always calls the latest callback
@@ -72,6 +78,11 @@ export function WikiEditor({ pageId, initialContent, readOnly = false, className
   // background refetch). Once seeded, we never overwrite the editor again so
   // in-progress edits are not clobbered.
   const contentSeeded = useRef(false)
+
+  // @mention: call hook unconditionally (rules of hooks); enabled guard inside hook prevents API call when projectId is absent
+  const { data: members = [] } = useProjectMembers(projectId ?? '')
+  const membersRef = useRef<ProjectMember[]>(members)
+  membersRef.current = members
 
   useEffect(() => {
     const wsUrl = import.meta.env.VITE_WS_URL ?? 'ws://localhost/ws'
@@ -102,6 +113,9 @@ export function WikiEditor({ pageId, initialContent, readOnly = false, className
       TableCell,
       Link.configure({ openOnClick: false, autolink: true }),
       Underline,
+      PanelExtension,
+      buildMentionExtension(() => membersRef.current),
+      SlashCommandExtension,
     ],
     editable: !readOnly,
     onUpdate: ({ editor }) => {
