@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { NavLink, useNavigate, useParams } from 'react-router-dom'
 import { ChevronDown, ChevronRight, FileText, Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useWikiPages, useCreateWikiPage, useUpdateWikiPage, useDeleteWikiPage } from '@/hooks/useWiki'
-import { Dropdown, DropdownTrigger, DropdownContent, DropdownItem } from '@/components/ui/Dropdown'
 import type { WikiPageListItem } from '@/types'
 import { cn } from '@/lib/utils'
 
@@ -16,7 +16,11 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
   const [expanded, setExpanded] = useState(true)
   const [renaming, setRenaming] = useState(false)
   const [renameValue, setRenameValue] = useState(page.title)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
   const renameInputRef = useRef<HTMLInputElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
   const { pageId } = useParams()
   const navigate = useNavigate()
   const { data: children = [] } = useWikiPages(spaceId, page.id)
@@ -25,10 +29,28 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
   const deletePage = useDeleteWikiPage()
 
   useEffect(() => {
-    if (renaming) {
-      renameInputRef.current?.select()
-    }
+    if (renaming) renameInputRef.current?.select()
   }, [renaming])
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function onMouseDown(e: MouseEvent) {
+      if (
+        menuRef.current?.contains(e.target as Node) ||
+        triggerRef.current?.contains(e.target as Node)
+      ) return
+      setMenuOpen(false)
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    return () => document.removeEventListener('mousedown', onMouseDown)
+  }, [menuOpen])
+
+  function openMenu() {
+    if (!triggerRef.current) return
+    const rect = triggerRef.current.getBoundingClientRect()
+    setMenuPos({ top: rect.bottom + 4, left: rect.left })
+    setMenuOpen((v) => !v)
+  }
 
   function handleAddChild() {
     createPage.mutate(
@@ -55,6 +77,7 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
   }
 
   function handleDelete() {
+    setMenuOpen(false)
     if (!confirm(`Excluir "${page.title}" e todas as subpáginas?`)) return
     deletePage.mutate({ pageId: page.id, spaceId })
     if (pageId === page.id) navigate('.')
@@ -120,7 +143,6 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
         {/* Hover actions */}
         {!renaming && (
           <div className="invisible flex items-center gap-0.5 group-hover:visible">
-            {/* Add child page */}
             <button
               type="button"
               aria-label="Adicionar subpágina"
@@ -131,37 +153,46 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
               <Plus className="h-3 w-3" />
             </button>
 
-            {/* More options */}
-            <Dropdown>
-              <DropdownTrigger asChild>
-                <button
-                  type="button"
-                  aria-label="Mais opções"
-                  title="Mais opções"
-                  className="flex h-5 w-5 items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300"
-                >
-                  <MoreHorizontal className="h-3 w-3" />
-                </button>
-              </DropdownTrigger>
-              <DropdownContent align="start">
-                <DropdownItem
-                  onSelect={() => { setRenameValue(page.title); setRenaming(true) }}
-                  icon={<Pencil className="h-3.5 w-3.5" />}
-                >
-                  Renomear
-                </DropdownItem>
-                <DropdownItem
-                  onSelect={handleDelete}
-                  icon={<Trash2 className="h-3.5 w-3.5" />}
-                  danger
-                >
-                  Excluir
-                </DropdownItem>
-              </DropdownContent>
-            </Dropdown>
+            <button
+              ref={triggerRef}
+              type="button"
+              aria-label="Mais opções"
+              title="Mais opções"
+              className="flex h-5 w-5 items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300"
+              onClick={openMenu}
+            >
+              <MoreHorizontal className="h-3 w-3" />
+            </button>
           </div>
         )}
       </div>
+
+      {/* Context menu — rendered in a portal so overflow:hidden on the aside doesn't clip it */}
+      {menuOpen && createPortal(
+        <div
+          ref={menuRef}
+          style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, zIndex: 9999 }}
+          className="min-w-[160px] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-1 shadow-md dark:shadow-black/40"
+        >
+          <button
+            type="button"
+            className="flex w-full cursor-pointer select-none items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 outline-none"
+            onClick={() => { setRenameValue(page.title); setRenaming(true); setMenuOpen(false) }}
+          >
+            <span className="h-4 w-4 shrink-0"><Pencil className="h-3.5 w-3.5" /></span>
+            Renomear
+          </button>
+          <button
+            type="button"
+            className="flex w-full cursor-pointer select-none items-center gap-2 px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 outline-none"
+            onClick={handleDelete}
+          >
+            <span className="h-4 w-4 shrink-0"><Trash2 className="h-3.5 w-3.5" /></span>
+            Excluir
+          </button>
+        </div>,
+        document.body,
+      )}
 
       {expanded &&
         children.map((child) => (

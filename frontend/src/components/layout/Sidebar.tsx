@@ -11,7 +11,6 @@ import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useWorkspaces, useCreateWorkspace } from '@/hooks/useWorkspace'
 import { useProjects } from '@/hooks/useProjects'
-import { Tooltip } from '@/components/ui/Tooltip'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -33,22 +32,25 @@ function NavItem({
   label: string
 }) {
   return (
-    <Tooltip content={label} side="right">
-      <span className="inline-flex">
-        <NavLink
-          to={to}
-          className={({ isActive }) =>
-            cn(
-              'flex h-8 w-8 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
-              isActive && 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
-            )
-          }
-          aria-label={label}
-        >
-          <Icon className="h-4 w-4" />
-        </NavLink>
-      </span>
-    </Tooltip>
+    <div className="group/nav relative">
+      <NavLink
+        to={to}
+        className={({ isActive }) =>
+          cn(
+            'flex h-8 w-8 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
+            isActive && 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+          )
+        }
+        aria-label={label}
+      >
+        <Icon className="h-4 w-4" />
+      </NavLink>
+      <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/nav:block z-50">
+        <div className="rounded bg-gray-900 px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
+          {label}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -160,21 +162,24 @@ export function Sidebar() {
           <div className="mx-2 my-2 h-px bg-gray-200 dark:bg-gray-700" />
           <div className="flex flex-col items-center gap-1 px-2">
             {projects.slice(0, 6).map((p) => (
-              <Tooltip key={p.id} content={p.name} side="right">
-                <span className="inline-flex">
-                  <NavLink
-                    to={`/projects/${p.id}/board`}
-                    className={cn(
-                      'flex h-7 w-7 items-center justify-center rounded text-xs font-semibold transition-colors',
-                      projectId === p.id
-                        ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
-                    )}
-                  >
-                    {p.identifier}
-                  </NavLink>
-                </span>
-              </Tooltip>
+              <div key={p.id} className="group/proj relative">
+                <NavLink
+                  to={`/projects/${p.id}/board`}
+                  className={cn(
+                    'flex h-7 w-7 items-center justify-center rounded text-xs font-semibold transition-colors',
+                    projectId === p.id
+                      ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
+                  )}
+                >
+                  {p.identifier}
+                </NavLink>
+                <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/proj:block z-50">
+                  <div className="rounded bg-gray-900 px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
+                    {p.name}
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </>
