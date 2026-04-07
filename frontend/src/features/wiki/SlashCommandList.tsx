@@ -68,11 +68,6 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
     // without needing to be recreated on every render.
     const selectedPointerRef = useRef(0)
 
-    function updatePointer(next: number) {
-      selectedPointerRef.current = next
-      setSelectedPointer(next)
-    }
-
     // Build display entries by walking SLASH_COMMANDS and including a header
     // only if at least one of its group's items appears in the filtered set.
     const { entries, selectableIndices } = useMemo(() => {
@@ -108,7 +103,10 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
     }, [items])
 
     // Reset pointer when items change
-    useEffect(() => updatePointer(0), [items])
+    useEffect(() => {
+      selectedPointerRef.current = 0
+      setSelectedPointer(0)
+    }, [items])
 
     function selectItem(pointer: number) {
       const idx = selectableIndices[pointer]
@@ -121,12 +119,14 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
         if (selectableIndices.length === 0) return false
         if (event.key === 'ArrowUp') {
           const next = (selectedPointerRef.current + selectableIndices.length - 1) % selectableIndices.length
-          updatePointer(next)
+          selectedPointerRef.current = next
+          setSelectedPointer(next)
           return true
         }
         if (event.key === 'ArrowDown') {
           const next = (selectedPointerRef.current + 1) % selectableIndices.length
-          updatePointer(next)
+          selectedPointerRef.current = next
+          setSelectedPointer(next)
           return true
         }
         if (event.key === 'Enter') {
@@ -135,7 +135,7 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
         }
         return false
       },
-    }))
+    }), [selectableIndices, selectItem])
 
     if (items.length === 0) return null
 
