@@ -22,7 +22,7 @@ function DateNodeView({ node, getPos, editor }: NodeViewProps) {
 
   function handleConfirm(isoDate: string) {
     const pos = getPos()
-    if (pos === undefined) return
+    if (pos === undefined || editor.isDestroyed) return
     editor.chain().command(({ tr }) => {
       tr.setNodeMarkup(pos, undefined, { date: isoDate })
       return true
@@ -66,7 +66,7 @@ export function DatePickerOverlay({ value, onConfirm, onClose, style }: DatePick
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Escape') onClose()
-    if (e.key === 'Enter') onConfirm(selected)
+    if (e.key === 'Enter') { e.preventDefault(); onConfirm(selected) }
   }
 
   return (
