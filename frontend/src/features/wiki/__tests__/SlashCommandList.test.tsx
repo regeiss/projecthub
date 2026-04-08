@@ -8,7 +8,6 @@ import {
   SLASH_COMMANDS,
   type SlashCommandListHandle,
   type SlashCommandItem,
-  type SlashCommandAction,
 } from '../SlashCommandList'
 
 // All 14 selectable items (no headers)
@@ -50,27 +49,36 @@ describe('SlashCommandList', () => {
     expect(container.firstChild).toBeNull()
   })
 
-  it('calls command with panel action on click', async () => {
+  it('calls command with the full item on click', async () => {
     const command = vi.fn()
     render(<SlashCommandList items={ALL_ITEMS} command={command} />)
     await userEvent.click(screen.getByText('Painel Aviso'))
-    expect(command).toHaveBeenCalledWith({ type: 'panel', panelType: 'warning' } satisfies SlashCommandAction)
+    const calledWith = command.mock.calls[0][0] as SlashCommandItem
+    expect(calledWith.type).toBe('item')
+    expect(calledWith.filterKey).toBe('warning')
+    expect(calledWith.action).toEqual({ type: 'panel', panelType: 'warning' })
   })
 
-  it('calls command with date action on click', async () => {
+  it('calls command with the full item on click (date)', async () => {
     const command = vi.fn()
     render(<SlashCommandList items={ALL_ITEMS} command={command} />)
     await userEvent.click(screen.getByText('Data'))
-    expect(command).toHaveBeenCalledWith({ type: 'date' } satisfies SlashCommandAction)
+    const calledWith = command.mock.calls[0][0] as SlashCommandItem
+    expect(calledWith.type).toBe('item')
+    expect(calledWith.filterKey).toBe('data')
+    expect(calledWith.action).toEqual({ type: 'date' })
   })
 
-  it('keyboard ArrowDown skips headers and Enter dispatches action', () => {
+  it('keyboard ArrowDown skips headers and Enter dispatches full item', () => {
     const command = vi.fn()
     const ref = createRef<SlashCommandListHandle>()
     render(<SlashCommandList ref={ref} items={ALL_ITEMS} command={command} />)
     // starts at pointer=0 (Painel Info); ArrowDown → pointer=1 (Painel Nota)
     ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'ArrowDown' }) })
     ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'Enter' }) })
-    expect(command).toHaveBeenCalledWith({ type: 'panel', panelType: 'note' })
+    const calledWith = command.mock.calls[0][0] as SlashCommandItem
+    expect(calledWith.type).toBe('item')
+    expect(calledWith.filterKey).toBe('note')
+    expect(calledWith.action).toEqual({ type: 'panel', panelType: 'note' })
   })
 })

@@ -58,7 +58,7 @@ export const SLASH_COMMANDS: SlashCommandEntry[] = [
 
 interface SlashCommandListProps {
   items: SlashCommandItem[]   // filtered selectable items only (no headers)
-  command: (action: SlashCommandAction) => void
+  command: (item: SlashCommandItem) => void
 }
 
 export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandListProps>(
@@ -111,7 +111,7 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
     const selectItem = useCallback((pointer: number) => {
       const idx = selectableIndices[pointer]
       const item = idx !== undefined ? entries[idx] : undefined
-      if (item?.type === 'item') command(item.action)
+      if (item?.type === 'item') command(item)
     }, [selectableIndices, entries, command])
 
     useImperativeHandle(ref, () => ({
