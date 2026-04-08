@@ -8,6 +8,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Fixed
+- **Portfolio — "Add project" modal showed empty project list (2026-04-08)**: `AddProjectModal` called `useProjects()` without a `workspaceId`, which disabled the query (`enabled: !!workspaceId`). Fixed by reading `workspaceId` from `useWorkspaceStore` and passing it to `useProjects(workspaceId)`.
 - **Wiki — slash command menu compact layout (2026-04-08)**: reduced item padding (`py-1`), font sizes (`text-xs` for labels, `text-[10px]` for subtitles, `text-sm` for icons), and added `max-height: min(480px, 70vh)` with `overflow-y-auto` so the menu never bleeds off-screen regardless of the number of items (`SlashCommandList.tsx`).
 - **Wiki — slash command broken after refactor (2026-04-08)**: `SlashCommandList.selectItem` was calling `command(item.action)` (a `SlashCommandAction`) instead of `command(item)` (the full `SlashCommandItem`). The TipTap Suggestion command handler expected the full item to access `item.action.type` via switch; passing only the action made the switch fall through silently. Updated tests to assert on the full item object.
 

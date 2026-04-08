@@ -7,6 +7,7 @@ import {
   useRemovePortfolioProject,
 } from '@/hooks/usePortfolio'
 import { useProjects } from '@/hooks/useProjects'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { RagBadge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -40,7 +41,8 @@ function AddProjectModal({
   portfolioId: string
   existingProjectIds: string[]
 }) {
-  const { data: allProjects = [] } = useProjects()
+  const workspaceId = useWorkspaceStore((s) => s.workspace?.id)
+  const { data: allProjects = [] } = useProjects(workspaceId)
   const add = useAddPortfolioProject(portfolioId)
   const [projectId, setProjectId] = useState('')
   const [startDate, setStartDate] = useState('')
