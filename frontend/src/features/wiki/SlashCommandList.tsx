@@ -140,13 +140,13 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
     if (items.length === 0) return null
 
     return (
-      <div className="min-w-[260px] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-1 shadow-md">
+      <div className="min-w-[220px] max-h-[min(480px,70vh)] overflow-y-auto overflow-x-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-0.5 shadow-md">
         {entries.map((entry, displayIndex) => {
           if (entry.type === 'header') {
             return (
               <div
                 key={`header-${entry.label}`}
-                className="px-3 pt-2 pb-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 select-none"
+                className="px-2.5 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 select-none"
               >
                 {entry.label}
               </div>
@@ -159,17 +159,17 @@ export const SlashCommandList = forwardRef<SlashCommandListHandle, SlashCommandL
             <button
               key={entry.filterKey}
               type="button"
-              className={`flex w-full items-start gap-2.5 px-3 py-2 text-sm text-left ${
+              className={`flex w-full items-center gap-2 px-2.5 py-1 text-xs text-left ${
                 isSelected
                   ? 'bg-gray-100 dark:bg-gray-800'
                   : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
               }`}
               onClick={() => selectItem(pointerForThis)}
             >
-              <span className="shrink-0 text-base leading-tight mt-0.5">{entry.icon}</span>
+              <span className="shrink-0 text-sm leading-none">{entry.icon}</span>
               <div>
-                <div className="font-medium text-gray-900 dark:text-gray-100">{entry.label}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{entry.subtitle}</div>
+                <div className="font-medium text-gray-900 dark:text-gray-100 leading-tight">{entry.label}</div>
+                <div className="text-[10px] text-gray-500 dark:text-gray-400 leading-tight">{entry.subtitle}</div>
               </div>
             </button>
           )
