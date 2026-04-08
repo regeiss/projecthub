@@ -7,6 +7,17 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Wiki — slash command menu compact layout (2026-04-08)**: reduced item padding (`py-1`), font sizes (`text-xs` for labels, `text-[10px]` for subtitles, `text-sm` for icons), and added `max-height: min(480px, 70vh)` with `overflow-y-auto` so the menu never bleeds off-screen regardless of the number of items (`SlashCommandList.tsx`).
+- **Wiki — slash command broken after refactor (2026-04-08)**: `SlashCommandList.selectItem` was calling `command(item.action)` (a `SlashCommandAction`) instead of `command(item)` (the full `SlashCommandItem`). The TipTap Suggestion command handler expected the full item to access `item.action.type` via switch; passing only the action made the switch fall through silently. Updated tests to assert on the full item object.
+
+### Added
+- **Wiki — extended slash commands (2026-04-08)**:
+  - New TipTap node extensions: `DateExtension` (inline date picker), `StatusExtension` (in-progress/done/blocked/in-review/pending badges), `VideoExtension` (YouTube/Vimeo/direct URL embed), `FileExtension` (external file link with `javascript:` URL sanitisation).
+  - Slash command menu now groups commands under section headers "Painéis", "Conteúdo" and "Mídia"; headers are omitted when their group has no matches in the filtered result.
+  - `SlashCommandAction` is a discriminated union; `SlashCommandItem` carries label, icon, filterKey, and action; selection passes the full item to the Suggestion plugin.
+  - Diacritic-aware filtering — typing "conclusao" matches "Concluído".
+
 ### Added
 - **Wiki Phase 1 — dual-store model, breadcrumbs, TOC, and test suite (2026-04-01)**:
   - **Backend — dual-store content model**: added `yjs_state` `BinaryField` to `WikiPage` and `WikiPageVersion`; `save_yjs_state` Celery task now writes to `yjs_state` only (not `content`); `WikiPageConsumer` sends TipTap JSON init message followed by Yjs binary on connect.
