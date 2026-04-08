@@ -4,6 +4,10 @@ import { useProjectMembers } from '@/hooks/useProjects'
 import { PanelExtension } from './extensions/Panel'
 import { buildMentionExtension } from './extensions/Mention'
 import { SlashCommandExtension } from './extensions/SlashCommand'
+import { DateExtension } from './extensions/DateNode'
+import { StatusExtension } from './extensions/StatusNode'
+import { VideoExtension } from './extensions/VideoNode'
+import { FileExtension } from './extensions/FileNode'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import type { Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
@@ -116,6 +120,10 @@ export function WikiEditor({ pageId, projectId, initialContent, readOnly = false
       PanelExtension,
       buildMentionExtension(() => membersRef.current),
       SlashCommandExtension,
+      DateExtension,
+      StatusExtension,
+      VideoExtension,
+      FileExtension,
     ],
     editable: !readOnly,
     onUpdate: ({ editor }) => {
