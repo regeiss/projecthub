@@ -5,8 +5,18 @@ import type { NodeViewProps } from '@tiptap/react'
 
 // ─── NodeView ─────────────────────────────────────────────────────────────────
 
+function isSafeUrl(url: string): boolean {
+  try {
+    const { protocol } = new URL(url)
+    return protocol === 'http:' || protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 function FileNodeView({ node }: NodeViewProps) {
-  const href: string = node.attrs.href ?? ''
+  const rawHref: string = node.attrs.href ?? ''
+  const href = isSafeUrl(rawHref) ? rawHref : ''
   const filename: string = node.attrs.filename ?? 'arquivo'
 
   return (

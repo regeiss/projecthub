@@ -4,7 +4,7 @@ import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import type { NodeViewProps } from '@tiptap/react'
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 
 // ─── NodeView ─────────────────────────────────────────────────────────────────
 
@@ -15,7 +15,7 @@ function DateNodeView({ node, getPos, editor }: NodeViewProps) {
   // Format for display: ISO string → dd/MM/yyyy
   let displayDate = dateStr
   try {
-    if (dateStr) displayDate = format(new Date(dateStr + 'T00:00:00'), 'dd/MM/yyyy')
+    if (dateStr) displayDate = format(parseISO(dateStr), 'dd/MM/yyyy')
   } catch {
     displayDate = dateStr
   }
