@@ -7,6 +7,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **Auth — "Parâmetro inválido: redirect_uri" no refresh (2026-04-09)**: ao fazer refresh em qualquer rota interna (ex: `/projects/123/board`), o `keycloak-js` usava `window.location.href` como `redirect_uri`, que não estava registrada no client do Keycloak. Fix: adicionado `redirectUri: window.location.origin + '/'` no `keycloak.init()` para sempre enviar a URI raiz, que já é registrada como válida.
+
 ### Added
 - **Portfolio — OKR per-objective colors (2026-04-09)**: each objective card gets a distinct color from the same 10-color palette. Color is applied to the `Target` icon, the progress bar fill, the card border tint, and the linked-project badges.
 - **Portfolio — roadmap per-project colors (2026-04-09)**: each project bar gets a distinct color from a 10-color palette (indigo, amber, emerald, red, blue, violet, orange, teal, pink, lime) derived by index, replacing the unreliable `projectColor` field. A matching color dot is shown next to the project name in the left column.

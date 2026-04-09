@@ -16,6 +16,7 @@ export function initKeycloak(): Promise<boolean> {
     onLoad: 'login-required',
     checkLoginIframe: false,
     pkceMethod: 'S256',
+    redirectUri: window.location.origin + '/',
   })
   return _initPromise
 }
