@@ -7,6 +7,23 @@ interface RoadmapViewProps {
   portfolioId: string
 }
 
+const PALETTE = [
+  '#6366f1', // indigo
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#ef4444', // red
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#f97316', // orange
+  '#14b8a6', // teal
+  '#ec4899', // pink
+  '#84cc16', // lime
+]
+
+function projectColor(index: number): string {
+  return PALETTE[index % PALETTE.length]
+}
+
 export function RoadmapView({ portfolioId }: RoadmapViewProps) {
   const { data, isLoading } = usePortfolioRoadmap(portfolioId)
 
@@ -96,39 +113,46 @@ export function RoadmapView({ portfolioId }: RoadmapViewProps) {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {projects.map((pp) => (
-              <tr key={pp.id}>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
-                  <span className="mr-1.5 font-mono text-xs text-gray-400 dark:text-gray-500">{pp.projectIdentifier}</span>
-                  {pp.projectName}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="relative h-6 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                    {/* Month separator lines */}
-                    {monthLines.map(({ date, pct }) => (
-                      <div
-                        key={date.toISOString()}
-                        className="absolute top-0 bottom-0 w-px bg-gray-300 dark:bg-gray-600"
-                        style={{ left: `${pct}%` }}
-                      />
-                    ))}
-                    {/* Project bar */}
-                    <div
-                      className="absolute top-1 h-4 rounded-sm"
-                      style={{
-                        ...barStyle(pp.startDate, pp.endDate),
-                        backgroundColor: pp.projectColor,
-                        opacity: 0.75,
-                      }}
-                      title={`${formatDate(pp.startDate)} — ${formatDate(pp.endDate)}`}
+            {projects.map((pp, idx) => {
+              const color = projectColor(idx)
+              return (
+                <tr key={pp.id}>
+                  <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                    <span
+                      className="mr-2 inline-block h-2.5 w-2.5 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color }}
                     />
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <RagBadge status={pp.ragStatus} />
-                </td>
-              </tr>
-            ))}
+                    <span className="mr-1.5 font-mono text-xs text-gray-400 dark:text-gray-500">{pp.projectIdentifier}</span>
+                    {pp.projectName}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="relative h-6 rounded bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                      {/* Month separator lines */}
+                      {monthLines.map(({ date, pct }) => (
+                        <div
+                          key={date.toISOString()}
+                          className="absolute top-0 bottom-0 w-px bg-gray-300 dark:bg-gray-600"
+                          style={{ left: `${pct}%` }}
+                        />
+                      ))}
+                      {/* Project bar */}
+                      <div
+                        className="absolute top-1 h-4 rounded-sm"
+                        style={{
+                          ...barStyle(pp.startDate, pp.endDate),
+                          backgroundColor: color,
+                          opacity: 0.8,
+                        }}
+                        title={`${formatDate(pp.startDate)} — ${formatDate(pp.endDate)}`}
+                      />
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <RagBadge status={pp.ragStatus} />
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

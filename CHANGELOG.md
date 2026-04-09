@@ -8,6 +8,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Portfolio — roadmap per-project colors (2026-04-09)**: each project bar gets a distinct color from a 10-color palette (indigo, amber, emerald, red, blue, violet, orange, teal, pink, lime) derived by index, replacing the unreliable `projectColor` field. A matching color dot is shown next to the project name in the left column.
 - **Portfolio — roadmap month separators (2026-04-09)**: the timeline now shows vertical lines at each month boundary with abbreviated month+year labels (e.g. "Abr 26") in the header. Timeline range is snapped to the first/last day of the bounding months for clean alignment (`RoadmapView.tsx`).
 
 ### Fixed
