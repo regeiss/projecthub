@@ -199,6 +199,39 @@ function EvmCard({ label, value, sub }: { label: string; value: string; sub?: st
   )
 }
 
+// ─── Project status badge ─────────────────────────────────────────────────────
+
+function projectStatus(
+  startDate: string | null,
+  endDate: string | null,
+  ragStatus: string,
+): { label: string; color: string; bg: string } {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  if (!startDate) return { label: '—', color: '#9ca3af', bg: '#f3f4f6' }
+
+  const start = new Date(startDate)
+  if (today < start)
+    return { label: 'Não iniciado', color: '#6366f1', bg: '#eef2ff' }
+
+  if (endDate) {
+    const end = new Date(endDate)
+    if (today > end) {
+      if (ragStatus === 'RED')
+        return { label: 'Atrasado', color: '#ef4444', bg: '#fef2f2' }
+      return { label: 'Concluído', color: '#10b981', bg: '#f0fdf4' }
+    }
+  }
+
+  return { label: 'Em andamento', color: '#3b82f6', bg: '#eff6ff' }
+}
+
+function fmtDate(d: string | null) {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function ExecutiveDashboard({ portfolioId }: Props) {
@@ -271,6 +304,9 @@ export function ExecutiveDashboard({ portfolioId }: Props) {
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950">
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 dark:text-gray-400">Projeto</th>
+                <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Status</th>
+                <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Início</th>
+                <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Término</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">PV</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">EV</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">CPI</th>
@@ -288,6 +324,25 @@ export function ExecutiveDashboard({ portfolioId }: Props) {
                       {pp.projectIdentifier}
                     </span>
                     {pp.projectName}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {(() => {
+                      const s = projectStatus(pp.startDate, pp.endDate, pp.ragStatus)
+                      return (
+                        <span
+                          className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                          style={{ backgroundColor: s.bg, color: s.color }}
+                        >
+                          {s.label}
+                        </span>
+                      )
+                    })()}
+                  </td>
+                  <td className="px-4 py-3 text-center text-xs text-gray-600 dark:text-gray-400">
+                    {fmtDate(pp.startDate)}
+                  </td>
+                  <td className="px-4 py-3 text-center text-xs text-gray-600 dark:text-gray-400">
+                    {fmtDate(pp.endDate)}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-700 dark:text-gray-300">
                     {formatCurrency(pp.evm?.pv ?? 0)}
