@@ -129,7 +129,7 @@ function Report({ projects }: { projects: PortfolioDashboardProject[] }) {
         <SummaryCard
           label="Estimativa no término (EAC)"
           value={formatCurrency(eac)}
-          sub={`CPI portfolio: ${portfolioCPI.toFixed(2)}`}
+          sub={`IDC portfolio: ${portfolioCPI.toFixed(2)}`}
         />
       </div>
 
@@ -142,7 +142,7 @@ function Report({ projects }: { projects: PortfolioDashboardProject[] }) {
               <th className="px-4 py-2.5 text-right  text-xs font-medium text-gray-500 dark:text-gray-400">Orçamento</th>
               <th className="px-4 py-2.5 text-right  text-xs font-medium text-gray-500 dark:text-gray-400">Custo real</th>
               <th className="px-4 py-2.5 text-right  text-xs font-medium text-gray-500 dark:text-gray-400">Valor agregado (EV)</th>
-              <th className="px-4 py-2.5 text-right  text-xs font-medium text-gray-500 dark:text-gray-400">CPI</th>
+              <th className="px-4 py-2.5 text-right  text-xs font-medium text-gray-500 dark:text-gray-400">IDC</th>
               <th className="px-4 py-2.5 text-right  text-xs font-medium text-gray-500 dark:text-gray-400">Variância</th>
               <th className="px-4 py-2.5 pl-6 text-left text-xs font-medium text-gray-500 dark:text-gray-400">% utilizado</th>
             </tr>

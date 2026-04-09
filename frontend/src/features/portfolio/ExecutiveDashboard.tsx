@@ -276,15 +276,15 @@ export function ExecutiveDashboard({ portfolioId }: Props) {
 
       {/* EVM totals — aggregated from projects */}
       <div className="mb-6 grid grid-cols-4 gap-3">
-        <EvmCard label="PV (Planned Value)" value={formatCurrency(aggPV)} />
-        <EvmCard label="EV (Earned Value)"  value={formatCurrency(aggEV)} />
+        <EvmCard label="VP — Valor Planejado" value={formatCurrency(aggPV)} />
+        <EvmCard label="VA — Valor Agregado"  value={formatCurrency(aggEV)} />
         <EvmCard
-          label="CPI"
+          label="IDC — Índice de Custo"
           value={aggCPI.toFixed(2)}
           sub={aggCPI >= 1 ? '✓ Abaixo do orçamento' : '⚠ Acima do orçamento'}
         />
         <EvmCard
-          label="SPI"
+          label="IDP — Índice de Prazo"
           value={aggSPI.toFixed(2)}
           sub={aggSPI >= 1 ? '✓ Adiantado' : '⚠ Atrasado'}
         />
@@ -307,10 +307,10 @@ export function ExecutiveDashboard({ portfolioId }: Props) {
                 <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Status</th>
                 <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Início</th>
                 <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Término</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">PV</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">EV</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">CPI</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">SPI</th>
+                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">VP</th>
+                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">VA</th>
+                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">IDC</th>
+                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 dark:text-gray-400">IDP</th>
                 <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">RAG</th>
                 <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 dark:text-gray-400">Riscos</th>
                 <th className="w-8 px-2 py-2.5" />
