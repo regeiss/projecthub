@@ -7,6 +7,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Portfolio — roadmap month separators (2026-04-09)**: the timeline now shows vertical lines at each month boundary with abbreviated month+year labels (e.g. "Abr 26") in the header. Timeline range is snapped to the first/last day of the bounding months for clean alignment (`RoadmapView.tsx`).
+
 ### Fixed
 - **Portfolio — "Add project" modal showed empty project list (2026-04-08)**: `AddProjectModal` called `useProjects()` without a `workspaceId`, which disabled the query (`enabled: !!workspaceId`). Fixed by reading `workspaceId` from `useWorkspaceStore` and passing it to `useProjects(workspaceId)`.
 - **Wiki — slash command menu compact layout (2026-04-08)**: reduced item padding (`py-1`), font sizes (`text-xs` for labels, `text-[10px]` for subtitles, `text-sm` for icons), and added `max-height: min(480px, 70vh)` with `overflow-y-auto` so the menu never bleeds off-screen regardless of the number of items (`SlashCommandList.tsx`).
