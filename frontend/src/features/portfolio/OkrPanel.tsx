@@ -16,6 +16,19 @@ interface OkrPanelProps {
   portfolioId: string
 }
 
+const PALETTE = [
+  '#6366f1', // indigo
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#ef4444', // red
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#f97316', // orange
+  '#14b8a6', // teal
+  '#ec4899', // pink
+  '#84cc16', // lime
+]
+
 // ─── Objective Modal ──────────────────────────────────────────────────────────
 
 interface ObjForm {
@@ -141,24 +154,27 @@ function ObjectiveModal({
 function ObjectiveCard({
   obj,
   portfolioId,
+  color,
   onEdit,
 }: {
   obj: PortfolioObjective
   portfolioId: string
+  color: string
   onEdit: (o: PortfolioObjective) => void
 }) {
   const remove = useDeleteObjective(portfolioId)
   const pct = obj.progressPct ?? 0
   const current = parseFloat(String(obj.currentValue ?? 0)) || 0
   const target = parseFloat(String(obj.targetValue ?? 100)) || 100
-  const barColor =
-    pct >= 80 ? 'bg-green-500' : pct >= 40 ? 'bg-amber-400' : 'bg-indigo-500'
 
   return (
-    <div className="group rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+    <div
+      className="group rounded-lg border bg-white dark:bg-gray-900 p-4"
+      style={{ borderColor: color + '55' }}
+    >
       <div className="mb-2 flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
-          <Target className="h-4 w-4 shrink-0 text-indigo-500" />
+          <Target className="h-4 w-4 shrink-0" style={{ color }} />
           <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{obj.title}</p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
@@ -192,8 +208,8 @@ function ObjectiveCard({
       </div>
       <div className="h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
         <div
-          className={`h-full rounded-full transition-all ${barColor}`}
-          style={{ width: `${Math.min(100, pct)}%` }}
+          className="h-full rounded-full transition-all"
+          style={{ width: `${Math.min(100, pct)}%`, backgroundColor: color }}
         />
       </div>
 
@@ -208,7 +224,8 @@ function ObjectiveCard({
             {obj.linkedProjects.map((p) => (
               <span
                 key={p.project}
-                className="inline-flex items-center rounded bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 text-xs text-indigo-700 dark:text-indigo-400"
+                className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: color + '22', color }}
               >
                 {p.projectName}
               </span>
@@ -250,11 +267,12 @@ export function OkrPanel({ portfolioId }: OkrPanelProps) {
         </div>
       ) : (
         <div className="space-y-4">
-          {objectives.map((obj) => (
+          {objectives.map((obj, idx) => (
             <ObjectiveCard
               key={obj.id}
               obj={obj}
               portfolioId={portfolioId}
+              color={PALETTE[idx % PALETTE.length]}
               onEdit={setEditingObj}
             />
           ))}

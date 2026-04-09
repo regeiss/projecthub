@@ -8,6 +8,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Portfolio — OKR per-objective colors (2026-04-09)**: each objective card gets a distinct color from the same 10-color palette. Color is applied to the `Target` icon, the progress bar fill, the card border tint, and the linked-project badges.
 - **Portfolio — roadmap per-project colors (2026-04-09)**: each project bar gets a distinct color from a 10-color palette (indigo, amber, emerald, red, blue, violet, orange, teal, pink, lime) derived by index, replacing the unreliable `projectColor` field. A matching color dot is shown next to the project name in the left column.
 - **Portfolio — roadmap month separators (2026-04-09)**: the timeline now shows vertical lines at each month boundary with abbreviated month+year labels (e.g. "Abr 26") in the header. Timeline range is snapped to the first/last day of the bounding months for clean alignment (`RoadmapView.tsx`).
 
