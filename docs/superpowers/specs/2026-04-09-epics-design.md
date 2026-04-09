@@ -4,7 +4,7 @@
 
 **Goal:** Add first-class epic support to ProjectHub — epics as a parent-level issue type that groups related issues, with a dedicated Epics page, backlog grouping, and colored epic badges throughout the UI.
 
-**Architecture:** Epics are issues with `type='epic'`, reusing the existing `issues` table. A `color` column is added for badge styling. Child issues reference their epic via the existing `epic_id` FK. Dedicated read endpoints aggregate progress counts; write endpoints make `epic_id` and `color` writable.
+**Architecture:** Epics are issues with `type='epic'`, reusing the existing `issues` table. A `color` field is added via Django migration. Child issues reference their epic via the existing `epic_id` FK. Dedicated read endpoints aggregate progress counts; write endpoints make `epic_id` and `color` writable.
 
 **Tech Stack:** Django 5.1 + DRF (backend), React 18 + TypeScript + TanStack Query + Tailwind (frontend)
 
@@ -12,51 +12,70 @@
 
 ## Section 1: Data Model & Backend
 
-### 1.1 Database
+### 1.1 Database & model migration
 
-One schema change is required. Add `color VARCHAR(7) DEFAULT NULL` to the `issues` table in `scripts/db/init.sql`. This column is only populated when `type = 'epic'` and stores a hex color string (e.g. `#6366f1`).
+The `Issue` model is `managed=True`, so the `color` field is added via a standard Django migration:
+
+```python
+# apps/issues/migrations/XXXX_add_color_to_issue.py
+migrations.AddField(
+    model_name='issue',
+    name='color',
+    field=models.CharField(max_length=7, null=True, blank=True),
+)
+```
+
+Also add the column to `scripts/db/init.sql` so fresh installs pick it up (the Django migration handles existing deployments):
 
 ```sql
-ALTER TABLE issues ADD COLUMN color VARCHAR(7) DEFAULT NULL;
+color VARCHAR(7) DEFAULT NULL,
 ```
 
 No other schema changes — `epic_id UUID REFERENCES issues(id)` and `type VARCHAR(20) CHECK (type IN ('task','bug','story','epic','subtask'))` already exist.
 
-### 1.2 Model
+### 1.2 Serializers (`apps/issues/serializers.py`)
 
-`apps/issues/models.py` — `Issue` model already has `epic_id` and `type` fields. No model changes required beyond verifying the fields are present.
+**New `EpicSummarySerializer`** — slim serializer used as the nested `epic` field on `IssueSerializer` (for badge rendering on board/backlog). Contains exactly:
+```python
+fields = ['id', 'sequence_id', 'title', 'color']
+```
 
-### 1.3 Serializer changes (`apps/issues/serializers.py`)
-
-**`IssueSerializer`:**
-- Add `color` to serializer fields (writable)
-- Remove `epic` from `read_only_fields` — make it writable
-- Add `validate` method with two rules:
-  1. If `type == 'epic'`, `epic_id` must be `None` (epics cannot belong to other epics)
-  2. If `parent_id` is set (subtask), `epic_id` must be `None`
-
-**`EpicSerializer`** (new, for list endpoint):
+**`EpicSerializer`** — full serializer used by the epics list endpoint:
 ```python
 fields = ['id', 'sequence_id', 'title', 'color', 'state', 'assignee',
-          'start_date', 'due_date', 'child_count', 'completed_count',
-          'created_at']
+          'start_date', 'due_date', 'child_count', 'completed_count', 'created_at']
 ```
-`child_count` and `completed_count` are annotated in the queryset — not model fields.
+`child_count` and `completed_count` are `SerializerMethodField` values derived from queryset annotations (`Count` + conditional `Count`).
 
-### 1.4 New endpoints
+**`IssueSerializer` changes:**
+- Add `color = serializers.CharField(max_length=7, allow_null=True, required=False)` as a writable field
+- Add `epic = EpicSummarySerializer(read_only=True)` as a nested read-only representation (mirrors the existing pattern: `labels` is the read-only nested field, `label_ids` is the writable counterpart)
+- Add `epic_id = PrimaryKeyRelatedField(write_only=True, allow_null=True, required=False, queryset=Issue.objects.filter(type='epic'), source='epic')` as the writable counterpart — the `queryset` filter on `type='epic'` provides a first line of defense against assigning a non-epic as an epic
+- Remove `epic` / `epic_id` from any existing `read_only_fields` entries
+- Add `validate` method enforcing:
+  1. If `type == 'epic'`: `epic_id` must be `None`
+  2. If `parent_id` is set: `epic_id` must be `None`
+  3. If `epic_id` is provided: the referenced epic must belong to the same project as the issue (cross-project assignment rejected with 400)
+  4. If `type` is being changed **to** `'epic'` and the instance already has `epic_id` set: reject with 400 (do not auto-strip)
+  5. If `type` is being changed **from** `'epic'` and the instance has issues linked via `epic_id`: reject with 400 (cannot demote an epic that has children; user must reassign children first)
+- Add `color` validation: if provided and non-null, must match `^#[0-9A-Fa-f]{6}$`; return 400 otherwise
 
-Add to `apps/issues/urls.py`:
+### 1.3 New endpoints
 
-| Method | URL | Description |
-|--------|-----|-------------|
-| `GET` | `/api/v1/projects/{projectId}/epics/` | List all epics in project, ordered by `created_at`. Annotated with `child_count` (total linked issues) and `completed_count` (linked issues whose state `is_completed=True`). |
-| `GET` | `/api/v1/issues/{epicId}/issues/` | List all child issues for a given epic. Returns standard `IssueSerializer`. |
+**Owned by the `issues` app** (`apps/issues/views.py` + `apps/issues/urls.py`):
 
-Existing `POST /api/v1/issues/` and `PATCH /api/v1/issues/{id}/` gain `epic_id` and `color` as writable fields (no new endpoints needed for write operations).
+| Method | URL | Permission | Description |
+|--------|-----|------------|-------------|
+| `GET` | `/api/v1/projects/{projectId}/epics/` | `IsProjectViewer` | List all issues with `type='epic'` in the project, ordered by `created_at`. Annotated with `child_count` (total linked issues) and `completed_count` (linked issues whose state `is_completed=True`). Uses `EpicSerializer`. |
+| `GET` | `/api/v1/issues/{epicId}/epic-issues/` | `IsProjectViewer` | List all child issues for a given epic (issues where `epic_id=epicId`). Unpaginated — returns all children in a single response (maximum 500 children enforced by queryset `.[:500]`). Uses standard `IssueSerializer`. Validates that `{epicId}` refers to an issue with `type='epic'`; returns 400 otherwise. |
 
-### 1.5 Permissions
+The project-epics endpoint is implemented as a standalone `APIView` (not a ViewSet action) in `apps/issues/views.py`, registered in `apps/issues/urls.py` and included in the main router under `/api/v1/projects/{projectId}/epics/`. The `{projectId}` comes from the URL kwarg; the view filters `Issue.objects.filter(project_id=projectId, type='epic')`.
 
-Same as existing issue permissions — `IsProjectMember` for read, `IsProjectMember` for write. No special epic-level permissions.
+Existing `POST /api/v1/issues/` and `PATCH /api/v1/issues/{id}/` gain `epic_id` and `color` as writable fields via the serializer changes above. No new write endpoints are needed.
+
+### 1.4 Board filtering
+
+Epics must not appear in the Kanban board. Because the existing `IssueFilter` does not support exclusion filters, this is handled **purely on the frontend** in `BoardPage`: after the full issue list is fetched, filter the result array in JavaScript before rendering (`issues.filter(i => i.type !== 'epic')`). The standard `GET /issues/` endpoint is not changed. No new backend filter parameter is needed.
 
 ---
 
@@ -64,56 +83,91 @@ Same as existing issue permissions — `IsProjectMember` for read, `IsProjectMem
 
 ### 2.1 TypeScript types (`frontend/src/types/issue.ts`)
 
-- Add `color: string | null` to `Issue` interface
-- Add `childCount: number` and `completedCount: number` to `Issue` interface (populated for epics from the list endpoint)
-- Add `epicId?: string | null` and `color?: string | null` to `UpdateIssueDto`
-- Add `EpicSummary` interface (subset used for badge rendering):
-  ```typescript
-  export interface EpicSummary {
-    id: string
-    title: string
-    color: string | null
-    sequenceId: number
-  }
-  ```
+Add to `Issue` interface:
+```typescript
+color: string | null          // set on epics only
+childCount: number            // populated by EpicSerializer, 0 for non-epics
+completedCount: number        // populated by EpicSerializer, 0 for non-epics
+epic: EpicSummary | null      // nested epic object (for badge rendering)
+```
 
-### 2.2 Service & hooks
+Add to `UpdateIssueDto`:
+```typescript
+epicId?: string | null
+color?: string | null
+```
+
+New `EpicSummary` interface (mirrors `EpicSummarySerializer`):
+```typescript
+export interface EpicSummary {
+  id: string
+  sequenceId: number
+  title: string
+  color: string | null
+}
+```
+
+### 2.2 Services & hooks
 
 **`frontend/src/services/issue.service.ts`:**
-- Add `getEpics(projectId: string): Promise<Issue[]>` — `GET /projects/{projectId}/epics/`
-- Add `getEpicIssues(epicId: string): Promise<Issue[]>` — `GET /issues/{epicId}/issues/`
+```typescript
+getEpics(projectId: string): Promise<Issue[]>
+  // GET /api/v1/projects/{projectId}/epics/
+
+getEpicIssues(epicId: string): Promise<Issue[]>
+  // GET /api/v1/issues/{epicId}/epic-issues/
+```
+
+**`mapIssue()` update** (also in `issue.service.ts`): the `epic` field changes from a UUID scalar to a nested object. Update the mapping:
+```typescript
+// before:
+epicId: raw.epic ?? null,
+
+// after:
+epicId: raw.epic?.id ?? null,
+epic: raw.epic
+  ? { id: raw.epic.id, sequenceId: raw.epic.sequence_id, title: raw.epic.title, color: raw.epic.color }
+  : null,
+```
 
 **`frontend/src/hooks/useIssues.ts`:**
-- Add `useEpics(projectId: string)` — TanStack Query wrapper for `getEpics`
-- Add `useEpicIssues(epicId: string)` — TanStack Query wrapper for `getEpicIssues`
-- `useCreateIssue` and `useUpdateIssue` already pass through arbitrary fields; no changes needed there beyond the type update
+```typescript
+useEpics(projectId: string)      // TanStack Query wrapper for getEpics
+useEpicIssues(epicId: string)    // TanStack Query wrapper for getEpicIssues
+```
+
+The epic selector in `IssueForm` fetches the epic list using `useEpics(projectId)`, which returns the full `Issue[]` from the epics list endpoint.
+
+`useEpicIssues(epicId)` is called **on-demand only** — it is invoked inside `EpicDetail` which is only mounted when the user expands an epic card. Child issues are not pre-fetched for all epics on page load, avoiding N+1 HTTP requests.
 
 ### 2.3 New components
 
 **`frontend/src/features/issues/EpicBadge.tsx`**
-A small inline pill used wherever an issue is rendered:
+Small colored pill for displaying the epic an issue belongs to.
 ```tsx
+// Props: epic: EpicSummary | null
+// Renders nothing when epic is null
 <span style={{ backgroundColor: color + '22', color }}>
   ● {title}
 </span>
 ```
-Props: `epic: EpicSummary | null`. Renders nothing if `epic` is null.
 
 **`frontend/src/features/epics/EpicsPage.tsx`**
-Main epics list view. Shows a card per epic with:
-- Left color strip (4px wide, `epic.color`)
-- Title + sequence ID
+Main epics list view (`/projects/:projectId/epics`). Shows one card per epic:
+- Left color strip (4 px, `epic.color`)
+- Title + sequence ID (`#E-{sequenceId}`)
 - Assignee avatar
 - State badge
-- Progress bar: `completed_count / child_count` issues, e.g. "3 de 8 concluídas"
-- Due date (if set)
-- "Nova épico" button — opens `IssueForm` pre-set to `type='epic'` with color picker shown
+- Progress bar: `completedCount / childCount` — label "X de Y concluídas"
+- Due date if set
+- Click card → expands inline to show `EpicDetail`
+- "Nova épico" button → opens `IssueForm` pre-set to `type='epic'`
 
 **`frontend/src/features/epics/EpicDetail.tsx`**
-Rendered inline below the epic card (expand/collapse) or as a panel. Shows child issues grouped by state — same row layout as `BacklogPage`. Includes an inline "Adicionar issue" row that creates an issue pre-linked to this epic.
+Rendered **inline** (expand/collapse) inside `EpicsPage` — no separate route. Shows child issues (from `useEpicIssues`) grouped by state using the same row layout as `BacklogPage`. Includes an inline "Adicionar issue" row that creates an issue with `epicId` pre-filled.
 
 **`frontend/src/features/epics/EpicColorPicker.tsx`**
-A row of 10 color swatches (same palette used in Roadmap/OKR) for picking epic color. Used inside `IssueForm` when `type === 'epic'`.
+A row of 10 color swatches (same palette as Roadmap/OKR: `['#6366f1','#f59e0b','#10b981','#ef4444','#3b82f6','#8b5cf6','#f97316','#14b8a6','#ec4899','#84cc16']`). Used inside `IssueForm` when `type === 'epic'`.
 
 ### 2.4 Modified components
 
@@ -124,48 +178,54 @@ Add "Épicos" tab (icon: `Layers`) between Backlog and Gantt.
 Add route `/projects/:projectId/epics` → `<EpicsPage />`.
 
 **`frontend/src/features/backlog/BacklogPage.tsx`**
-- Add toggle button in toolbar: `por estado` / `por épico`
-- In epic grouping mode: fetch epics with `useEpics(projectId)`, group issues by `epicId`. Issues with `epicId = null` go into a "Sem épico" section with a grey header.
-- Each epic group header shows: color dot, epic title, `X de Y` progress text.
-- Toggle state is component-local (`useState`), not persisted.
+- Add toggle button in toolbar: `Por estado` / `Por épico`
+- In **epic grouping mode**:
+  - Fetch epics with `useEpics(projectId)` and issues with `useIssues(projectId)`
+  - Epics appear as **section headers only** (colored dot + epic title + "X de Y" count) — not as issue rows
+  - Child issues (issues where `epicId` matches) are rendered as rows under each epic header
+  - Issues with `epicId === null` are rendered under a grey "Sem épico" section at the bottom
+  - Epics with zero child issues still render their header (with "0 de 0" count)
+  - Epics themselves (`type === 'epic'`) are excluded from all issue rows in both grouping modes
+- Toggle state is component-local (`useState`), not persisted
 
 **`frontend/src/features/board/BoardPage.tsx`**
-Add `EpicBadge` to each kanban card. Requires the issue list to include `epicId` + the epic's `title` and `color`. The issue serializer should return a nested `epic` object with `{id, title, color, sequenceId}` — add this to `IssueSerializer` as a nested read-only field.
+- Add `type: { notIn: ['epic'] }` (or equivalent) to the issues filter when fetching board data, so epics never appear as cards
+- Add `<EpicBadge epic={issue.epic} />` to each kanban card (renders nothing when `issue.epic` is null)
 
 **`frontend/src/features/issues/IssueForm.tsx`**
-- Add epic selector: a searchable dropdown filtered to epics in the same project (hidden when `type === 'epic'`)
-- Add color picker (`EpicColorPicker`) shown only when `type === 'epic'`
+- Add epic selector: searchable dropdown populated by `useEpics(projectId)`. Shown only when `type !== 'epic'`. Allows clearing (sets `epicId` to null).
+- Add `<EpicColorPicker>` shown only when `type === 'epic'`; sets `color` in form state
 
 **`frontend/src/features/issues/IssueDetailPage.tsx`**
-- Add epic field to sidebar metadata section, showing `EpicBadge` (clickable — navigates to Epics page)
-- Allow changing the epic via the same selector as `IssueForm`
+- Add epic field to sidebar metadata: shows `<EpicBadge>` when `issue.epic` is set; allows changing epic via same selector dropdown
+- Clicking the badge has no navigation (stays on the issue detail page); the Épicos tab in the nav is the way to browse epics
 
 ### 2.5 File structure summary
 
 ```
 frontend/src/features/epics/
   EpicsPage.tsx          (new)
-  EpicDetail.tsx         (new)
+  EpicDetail.tsx         (new — rendered inline inside EpicsPage, no route)
   EpicColorPicker.tsx    (new)
 
 frontend/src/features/issues/
   EpicBadge.tsx          (new)
   IssueForm.tsx          (modified — epic selector + color picker)
-  IssueDetailPage.tsx    (modified — epic sidebar field)
+  IssueDetailPage.tsx    (modified — epic badge + selector in sidebar)
 
 frontend/src/features/backlog/
   BacklogPage.tsx         (modified — epic grouping toggle)
 
 frontend/src/features/board/
-  BoardPage.tsx           (modified — EpicBadge on cards)
+  BoardPage.tsx           (modified — exclude epics, add EpicBadge to cards)
 
 frontend/src/components/layout/
   ProjectNav.tsx          (modified — Épicos tab)
 
 frontend/src/
   App.tsx                 (modified — /epics route)
-  types/issue.ts          (modified — color, childCount, EpicSummary)
-  services/issue.service.ts (modified — getEpics, getEpicIssues)
+  types/issue.ts          (modified — color, childCount, completedCount, EpicSummary)
+  services/issue.service.ts (modified — getEpics, getEpicIssues, mapIssue epic field)
   hooks/useIssues.ts      (modified — useEpics, useEpicIssues)
 ```
 
@@ -173,11 +233,14 @@ frontend/src/
 
 ## Section 3: Constraints & edge cases
 
-- **Epic deleted:** Child issues keep their `epic_id` FK (SET NULL on delete — add `on_delete=models.SET_NULL` to the `epic` FK on the Issue model if not already set)
-- **Issue type change:** If an issue is changed from `epic` to another type, `color` is cleared. If it has children, those children retain their `epic_id` pointing to a non-epic — the backend should validate and reject type changes on issues that have children linked via `epic_id`
-- **CPM integration:** Epics can participate in CPM relations (they are issues), but `estimate_days` on an epic is independent of its children — epics are a grouping mechanism, not a rolled-up schedule node
-- **Notifications:** No new notification types for epics in this phase
-- **Board columns:** Epics do not appear on the Kanban board (filtered out by type in `BoardPage`)
+- **Epic deleted:** `epic_id` FK uses `on_delete=models.SET_NULL` — verify this is set on the Issue model; if not, add it in the migration
+- **Type change → epic:** If the issue already has `epic_id` set, reject with 400 (user must clear `epic_id` first)
+- **Type change from epic:** If the epic has issues linked via `epic_id`, reject with 400 (user must reassign children first)
+- **Color validation:** Backend enforces `^#[0-9A-Fa-f]{6}$` regex on the `color` field; frontend constrains to 10 swatches so invalid values should never be submitted
+- **Cross-project epics:** Serializer validates that the referenced epic belongs to the same project as the issue; returns 400 if not
+- **CPM integration:** Epics can participate in CPM relations (they are issues), but `estimate_days` on an epic is independent of its children
+- **Notifications:** No new notification types in this phase
+- **Board:** Epics excluded via frontend filter (`type!='epic'`) on the issues query
 
 ---
 
@@ -188,3 +251,4 @@ frontend/src/
 - Nested epics (epics within epics)
 - Bulk assign issues to epic
 - Epic templates
+- Epic search endpoint (epic selector uses full list from `useEpics`)
