@@ -8,7 +8,8 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- **Portfolio — relatório de situação financeira no dashboard (2026-04-09)**: nova seção "Situação Financeira" adicionada abaixo da tabela de projetos no dashboard executivo, com:
+- **Portfolio — aba "Financeiro" separada (2026-04-09)**: o relatório de situação financeira foi movido para sua própria aba no portfolio (ao lado de Dashboard / Roadmap / OKR). Novo arquivo `FinancialReport.tsx` com busca de dados própria via `usePortfolioDashboard`. A aba anterior dentro do Dashboard foi removida.
+- **Portfolio — relatório de situação financeira no dashboard (2026-04-09)** *(movido para aba própria — ver entrada acima)*: nova seção "Situação Financeira" adicionada abaixo da tabela de projetos no dashboard executivo, com:
   - 4 cards de resumo: Orçamento total, Custo real (AC), Variância de custo (verde/vermelho), Estimativa no Término (EAC = BAC/CPI)
   - Tabela detalhada por projeto: Orçamento, Custo real, Valor agregado (EV), CPI colorido (verde ≥1, vermelho <1), Variância com ícone de tendência, barra de % utilizado (verde/âmbar/vermelho)
   - Linha de totais no rodapé da tabela com agregação do portfolio

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, LayoutDashboard, Map, Target, Settings, Trash2 } from 'lucide-react'
+import { Plus, LayoutDashboard, Map, Target, DollarSign, Settings, Trash2 } from 'lucide-react'
 import {
   usePortfolios,
   useCreatePortfolio,
@@ -15,9 +15,10 @@ import { PageSpinner } from '@/components/ui/Spinner'
 import { ExecutiveDashboard } from './ExecutiveDashboard'
 import { RoadmapView } from './RoadmapView'
 import { OkrPanel } from './OkrPanel'
+import { FinancialReport } from './FinancialReport'
 import type { Portfolio } from '@/types'
 
-type View = 'dashboard' | 'roadmap' | 'okr'
+type View = 'dashboard' | 'roadmap' | 'okr' | 'financeiro'
 
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
@@ -113,9 +114,10 @@ function EditPortfolioModal({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const viewTabs = [
-  { id: 'dashboard' as View, label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'roadmap' as View, label: 'Roadmap', icon: Map },
-  { id: 'okr' as View, label: 'OKR', icon: Target },
+  { id: 'dashboard'  as View, label: 'Dashboard',  icon: LayoutDashboard },
+  { id: 'roadmap'    as View, label: 'Roadmap',    icon: Map },
+  { id: 'okr'        as View, label: 'OKR',        icon: Target },
+  { id: 'financeiro' as View, label: 'Financeiro', icon: DollarSign },
 ]
 
 export function PortfolioPage() {
@@ -228,8 +230,10 @@ export function PortfolioPage() {
           <ExecutiveDashboard portfolioId={portfolio.id} />
         ) : view === 'roadmap' ? (
           <RoadmapView portfolioId={portfolio.id} />
-        ) : (
+        ) : view === 'okr' ? (
           <OkrPanel portfolioId={portfolio.id} />
+        ) : (
+          <FinancialReport portfolioId={portfolio.id} />
         )}
       </div>
 
