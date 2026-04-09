@@ -7,6 +7,13 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- **Portfolio — relatório de situação financeira no dashboard (2026-04-09)**: nova seção "Situação Financeira" adicionada abaixo da tabela de projetos no dashboard executivo, com:
+  - 4 cards de resumo: Orçamento total, Custo real (AC), Variância de custo (verde/vermelho), Estimativa no Término (EAC = BAC/CPI)
+  - Tabela detalhada por projeto: Orçamento, Custo real, Valor agregado (EV), CPI colorido (verde ≥1, vermelho <1), Variância com ícone de tendência, barra de % utilizado (verde/âmbar/vermelho)
+  - Linha de totais no rodapé da tabela com agregação do portfolio
+  - Os cards EVM do topo (PV/EV/CPI/SPI) foram corrigidos para agregar dos projetos individuais em vez do campo `totals` do backend (que retornava zeros)
+
 ### Fixed
 - **Auth — "Parâmetro inválido: redirect_uri" no refresh (2026-04-09)**: ao fazer refresh em qualquer rota interna (ex: `/projects/123/board`), o `keycloak-js` usava `window.location.href` como `redirect_uri`, que não estava registrada no client do Keycloak. Fix: adicionado `redirectUri: window.location.origin + '/'` no `keycloak.init()` para sempre enviar a URI raiz, que já é registrada como válida.
 
