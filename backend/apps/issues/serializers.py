@@ -36,6 +36,56 @@ class SubtaskSerializer(serializers.ModelSerializer):
     read_only_fields = fields
 
 
+class EpicSummarySerializer(serializers.ModelSerializer):
+    """Slim nested representation used for badge rendering (IssueSerializer.epic field)."""
+
+    class Meta:
+        model = Issue
+        fields = ['id', 'sequence_id', 'title', 'color']
+
+
+class EpicSerializer(serializers.ModelSerializer):
+    """Full serializer used by the epics list endpoint.
+
+    Note: state_name, state_color, assignee_name, assignee_avatar are intentional
+    extensions — they match the flat field pattern used by SubtaskSerializer/IssueSerializer
+    and avoid extra frontend lookups.
+    """
+
+    child_count = serializers.SerializerMethodField()
+    completed_count = serializers.SerializerMethodField()
+    # Flat read-only fields — same pattern as SubtaskSerializer
+    state_name = serializers.CharField(source='state.name', read_only=True)
+    state_color = serializers.CharField(source='state.color', read_only=True)
+    assignee_name = serializers.CharField(
+        source='assignee.name', read_only=True, default=None
+    )
+    assignee_avatar = serializers.CharField(
+        source='assignee.avatar_url', read_only=True, default=None
+    )
+
+    class Meta:
+        model = Issue
+        fields = [
+            'id', 'sequence_id', 'title', 'color',
+            'state', 'state_name', 'state_color',
+            'assignee', 'assignee_name', 'assignee_avatar',
+            'start_date', 'due_date', 'created_at',
+            'child_count', 'completed_count',
+        ]
+
+    def get_child_count(self, obj):
+        # Use queryset annotation from EpicListView if available (avoids N+1)
+        if hasattr(obj, 'child_count'):
+            return obj.child_count
+        return Issue.objects.filter(epic=obj).count()
+
+    def get_completed_count(self, obj):
+        if hasattr(obj, 'completed_count'):
+            return obj.completed_count
+        return Issue.objects.filter(epic=obj, state__category='completed').count()
+
+
 class IssueSerializer(serializers.ModelSerializer):
     # Campos de leitura expandidos (flat, alinhado com FRONTEND.md)
     state_name = serializers.CharField(source="state.name", read_only=True)
