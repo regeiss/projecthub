@@ -1,3 +1,5 @@
+import re
+
 from django.db import connection
 from rest_framework import serializers
 
@@ -145,6 +147,18 @@ class IssueSerializer(serializers.ModelSerializer):
         queryset=Label.objects.all(),
     )
 
+    # Epic — read-only nested badge; writable FK counterpart (mirrors labels/label_ids pattern)
+    epic = EpicSummarySerializer(read_only=True)
+    epic_id = serializers.PrimaryKeyRelatedField(
+        write_only=True,
+        allow_null=True,
+        required=False,
+        queryset=Issue.objects.filter(type='epic'),
+        source='epic',
+    )
+    # Color — only meaningful for type='epic'
+    color = serializers.CharField(max_length=7, allow_null=True, required=False)
+
     class Meta:
         model = Issue
         fields = [
@@ -168,6 +182,8 @@ class IssueSerializer(serializers.ModelSerializer):
             "reporter_name",
             "parent",
             "epic",
+            "epic_id",
+            "color",
             "estimate_points",
             "size",
             "estimate_days",
@@ -207,6 +223,64 @@ class IssueSerializer(serializers.ModelSerializer):
                     "INSERT INTO issue_labels (issue_id, label_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
                     [(issue_id, label.id) for label in labels],
                 )
+
+    def validate(self, data):
+        issue_type = data.get('type') or (self.instance.type if self.instance else None)
+        epic = data.get('epic')        # resolved FK object (source='epic')
+        parent = data.get('parent') or (self.instance.parent if self.instance else None)
+        color = data.get('color')
+
+        # Resolve project_id:
+        # 'project' is read-only so won't be in validated data; get it from the
+        # request payload directly (on create) or from the existing instance (on update).
+        project_obj = data.get('project')
+        if project_obj is not None:
+            project_id = project_obj.id
+        elif self.instance is not None:
+            project_id = self.instance.project_id
+        else:
+            request = self.context.get('request')
+            project_id = request.data.get('project') if request else None
+
+        # Rule 1: epics cannot belong to another epic
+        if issue_type == 'epic' and epic is not None:
+            raise serializers.ValidationError(
+                {'epic_id': 'An epic cannot be linked to another epic.'}
+            )
+
+        # Rule 2: subtasks (have parent) cannot have an epic
+        if parent is not None and epic is not None:
+            raise serializers.ValidationError(
+                {'epic_id': 'A subtask cannot be linked to an epic.'}
+            )
+
+        # Rule 3: cross-project epic assignment
+        if epic is not None and project_id and str(epic.project_id) != str(project_id):
+            raise serializers.ValidationError(
+                {'epic_id': 'The epic must belong to the same project as the issue.'}
+            )
+
+        # Rule 4: changing type TO 'epic' while instance already has epic_id
+        if (self.instance and self.instance.type != 'epic' and issue_type == 'epic'
+                and self.instance.epic_id is not None and 'epic' not in data):
+            raise serializers.ValidationError(
+                {'type': 'Clear the epic assignment before changing this issue to epic type.'}
+            )
+
+        # Rule 5: changing type FROM 'epic' while children exist
+        if (self.instance and self.instance.type == 'epic' and issue_type != 'epic'
+                and Issue.objects.filter(epic=self.instance).exists()):
+            raise serializers.ValidationError(
+                {'type': "Reassign all child issues before changing this epic's type."}
+            )
+
+        # Rule 6: color must be valid 6-digit hex
+        if color is not None and not re.match(r'^#[0-9A-Fa-f]{6}$', color):
+            raise serializers.ValidationError(
+                {'color': 'Color must be a valid hex color, e.g. #3B82F6.'}
+            )
+
+        return data
 
     def create(self, validated_data):
         labels = validated_data.pop("labels", [])
