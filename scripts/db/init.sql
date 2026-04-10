@@ -164,6 +164,7 @@ CREATE TABLE issues (
                         CHECK (priority IN ('urgent', 'high', 'medium', 'low', 'none')),
     type            VARCHAR(20)     NOT NULL DEFAULT 'task'
                         CHECK (type IN ('task', 'bug', 'story', 'epic', 'subtask')),
+    color           VARCHAR(7)      DEFAULT NULL,
     assignee_id     UUID            REFERENCES workspace_members(id) ON DELETE SET NULL,
     reporter_id     UUID            REFERENCES workspace_members(id) ON DELETE SET NULL,
     parent_id       UUID            REFERENCES issues(id) ON DELETE SET NULL,   -- sub-task

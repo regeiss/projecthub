@@ -34,6 +34,7 @@ class Issue(models.Model):
     type = models.CharField(
         max_length=10, choices=Type.choices, default=Type.TASK
     )
+    color = models.CharField(max_length=7, null=True, blank=True)
     assignee = models.ForeignKey(
         "workspaces.WorkspaceMember",
         on_delete=models.SET_NULL,
