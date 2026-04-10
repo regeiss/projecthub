@@ -185,7 +185,11 @@
       "Bash(wsl -- bash -ic \"rsync -av /mnt/d/projecthub/frontend/src/features/wiki/ ~/projecthub/frontend/src/features/wiki/ --delete && cd ~/projecthub/frontend && node node_modules/vitest/vitest.mjs run src/features/wiki/ 2>&1\")",
       "Bash(git -C \"D:/projecthub\" branch --show-current && git -C \"D:/projecthub\" log --oneline bd3db61..HEAD)",
       "Bash(git -C \"D:/projecthub\" push origin main 2>&1)",
-      "Bash(cd /mnt/d/projecthub/frontend && node node_modules/vitest/vitest.mjs run src/features/wiki/__tests__/SlashCommandList.test.tsx 2>&1)"
+      "Bash(cd /mnt/d/projecthub/frontend && node node_modules/vitest/vitest.mjs run src/features/wiki/__tests__/SlashCommandList.test.tsx 2>&1)",
+      "Bash(docker run:*)",
+      "Bash(docker network:*)",
+      "Bash(git -C D:/projecthub add backend/apps/issues/models.py backend/apps/issues/migrations/0003_add_issue_color.py scripts/db/init.sql)",
+      "Bash(git -C D:/projecthub status)"
     ]
   }
 }
