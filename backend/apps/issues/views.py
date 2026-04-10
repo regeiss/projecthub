@@ -413,6 +413,8 @@ class EpicIssuesView(generics.ListAPIView):
     """GET /api/v1/issues/{issue_pk}/epic-issues/ — list child issues of an epic."""
     serializer_class = IssueSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None  # children are bounded per epic; frontend expects a flat array
+    filter_backends = []     # no global filter backends — queryset is already scoped to the epic
 
     def get_queryset(self):
         user = self.request.user

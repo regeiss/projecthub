@@ -161,3 +161,94 @@ class IssueEpicValidationTests(TestCase):
         })
         self.assertEqual(r.status_code, 201)
         self.assertEqual(r.data['color'], '#6366f1')
+
+
+class EpicIssuesEndpointTests(TestCase):
+    def setUp(self):
+        self.ws, self.member = _make_workspace()
+        self.project, self.state = _make_project(self.ws, self.member)
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.member)
+        self.epic = Issue.objects.create(
+            project=self.project, title='Epic', state=self.state,
+            type='epic', color='#6366f1', created_by=self.member, reporter=self.member
+        )
+
+    def test_returns_child_issues_only(self):
+        child = Issue.objects.create(
+            project=self.project, title='Child', state=self.state,
+            type='task', epic=self.epic, created_by=self.member, reporter=self.member
+        )
+        Issue.objects.create(
+            project=self.project, title='Unrelated', state=self.state,
+            type='task', created_by=self.member, reporter=self.member
+        )
+        r = self.client.get(f'/api/v1/issues/{self.epic.id}/epic-issues/')
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(len(r.data), 1)
+        self.assertEqual(r.data[0]['id'], str(child.id))
+
+    def test_returns_400_for_non_epic(self):
+        task = Issue.objects.create(
+            project=self.project, title='Task', state=self.state,
+            type='task', created_by=self.member, reporter=self.member
+        )
+        r = self.client.get(f'/api/v1/issues/{task.id}/epic-issues/')
+        self.assertEqual(r.status_code, 400)
+
+    def test_issue_response_includes_nested_epic_object(self):
+        r = self.client.post('/api/v1/issues/', {
+            'project': str(self.project.id),
+            'title': 'Child',
+            'state': str(self.state.id),
+            'type': 'task',
+            'epic_id': str(self.epic.id),
+        }, format='json')
+        self.assertEqual(r.status_code, 201)
+        self.assertEqual(r.data['epic']['id'], str(self.epic.id))
+        self.assertEqual(r.data['epic']['title'], 'Epic')
+        self.assertEqual(r.data['epic']['color'], '#6366f1')
+
+
+class IssueTypeChangeValidationTests(TestCase):
+    """Tests for Rules 4 and 5 (type-change guards requiring PATCH/update)."""
+
+    def setUp(self):
+        self.ws, self.member = _make_workspace()
+        self.project, self.state = _make_project(self.ws, self.member)
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.member)
+
+    def test_cannot_change_type_to_epic_when_issue_has_epic_id(self):
+        """Rule 4: Cannot promote to epic if the issue is already linked to an epic."""
+        epic = Issue.objects.create(
+            project=self.project, title='Epic', state=self.state,
+            type='epic', created_by=self.member, reporter=self.member
+        )
+        task = Issue.objects.create(
+            project=self.project, title='Task', state=self.state,
+            type='task', epic=epic, created_by=self.member, reporter=self.member
+        )
+        r = self.client.patch(
+            f'/api/v1/issues/{task.id}/',
+            {'type': 'epic'},
+            format='json',
+        )
+        self.assertEqual(r.status_code, 400)
+
+    def test_cannot_change_type_from_epic_when_children_exist(self):
+        """Rule 5: Cannot demote from epic if children are linked."""
+        epic = Issue.objects.create(
+            project=self.project, title='Epic', state=self.state,
+            type='epic', created_by=self.member, reporter=self.member
+        )
+        Issue.objects.create(
+            project=self.project, title='Child', state=self.state,
+            type='task', epic=epic, created_by=self.member, reporter=self.member
+        )
+        r = self.client.patch(
+            f'/api/v1/issues/{epic.id}/',
+            {'type': 'task'},
+            format='json',
+        )
+        self.assertEqual(r.status_code, 400)
