@@ -1,6 +1,7 @@
 from django.urls import include, path
 
 from apps.cycles.urls import nested_urlpatterns as cycle_patterns
+from apps.issues.views import EpicListView
 from apps.modules.urls import nested_urlpatterns as module_patterns
 
 from .views import (
@@ -66,4 +67,7 @@ urlpatterns = [
 
     # Risks (aninhados)
     path("<uuid:project_pk>/risks/", include(("apps.risks.urls", "project-risks"))),
+
+    # Epics
+    path("<uuid:project_id>/epics/", EpicListView.as_view(), name="project-epics"),
 ]

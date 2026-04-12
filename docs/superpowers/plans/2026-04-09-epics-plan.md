@@ -183,14 +183,24 @@ class EpicSummarySerializer(serializers.ModelSerializer):
 
 
 class EpicSerializer(serializers.ModelSerializer):
-    """Full serializer used by the epics list endpoint."""
+    """Full serializer used by the epics list endpoint.
+
+    Note: state_name, state_color, assignee_name, assignee_avatar are intentional
+    extensions beyond the base spec fields — they match the flat field pattern used
+    by IssueSerializer and SubtaskSerializer, and avoid extra frontend lookups.
+    """
 
     child_count = serializers.SerializerMethodField()
     completed_count = serializers.SerializerMethodField()
+    # Flat read-only fields — same pattern as IssueSerializer/SubtaskSerializer
     state_name = serializers.CharField(source='state.name', read_only=True)
     state_color = serializers.CharField(source='state.color', read_only=True)
-    assignee_name = serializers.SerializerMethodField()
-    assignee_avatar = serializers.SerializerMethodField()
+    assignee_name = serializers.CharField(
+        source='assignee.name', read_only=True, default=None
+    )
+    assignee_avatar = serializers.CharField(
+        source='assignee.avatar_url', read_only=True, default=None
+    )
 
     class Meta:
         model = Issue
@@ -212,12 +222,6 @@ class EpicSerializer(serializers.ModelSerializer):
         if hasattr(obj, 'completed_count'):
             return obj.completed_count
         return Issue.objects.filter(epic=obj, state__is_completed=True).count()
-
-    def get_assignee_name(self, obj):
-        return obj.assignee.display_name if obj.assignee else None
-
-    def get_assignee_avatar(self, obj):
-        return obj.assignee.avatar_url if obj.assignee else None
 ```
 
 - [ ] **Step 4: Commit serializers (endpoints come next)**
@@ -295,15 +299,14 @@ class IssueEpicValidationTests(TestCase):
         self.assertEqual(r.status_code, 400)
 
     def test_cross_project_epic_rejected(self):
-        ws2, m2 = _make_workspace()
-        # make m2 a member of the same workspace so the client can reach it
-        m2.workspace = self.ws
-        m2.save()
+        # Create a second project in the same workspace
         other_proj, other_state = _make_project(self.ws, self.member)
+        # Create an epic in the OTHER project
         other_epic = Issue.objects.create(
             project=other_proj, title='OtherEpic', state=other_state,
             type='epic', created_by=self.member, reporter=self.member
         )
+        # Try to assign other_epic (project B) to an issue in self.project (project A)
         r = self._post({
             'project': str(self.project.id),
             'title': 'Issue',
@@ -462,26 +465,36 @@ from .serializers import (
 )
 ```
 
-Also add `IsProjectViewer` to the permissions import at the top of `views.py` if not already imported:
-```python
-from core.permissions import IsWorkspaceMember, IsProjectViewer  # add IsProjectViewer
-```
-
 At the end of the file, add:
 
 ```python
 from django.db.models import Count, Q
+from rest_framework.permissions import IsAuthenticated
 
 class EpicListView(generics.ListAPIView):
     """GET /api/v1/projects/{project_id}/epics/ — list all epics in a project."""
     serializer_class = EpicSerializer
-    permission_classes = [IsProjectViewer]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        user = self.request.user
+        project_id = self.kwargs['project_id']
+
+        # Enforce project access at the queryset level — same pattern as IssueViewSet.
+        # IsProjectViewer only implements has_object_permission (never called on list views),
+        # so we guard here instead.
+        from apps.projects.models import Project
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Issue.objects.none()
+        if user.role != 'admin' and not project.members.filter(member=user).exists():
+            return Issue.objects.none()
+
         # Annotate child_count and completed_count so EpicSerializer.get_child_count()
         # can read from the annotation (avoids N+1 queries).
-        return Issue.objects.filter(
-            project_id=self.kwargs['project_id'],
+        return Issue.objects.select_related('state', 'assignee').filter(
+            project_id=project_id,
             type='epic',
         ).annotate(
             child_count=Count('epic_issues'),
@@ -495,18 +508,35 @@ class EpicListView(generics.ListAPIView):
 class EpicIssuesView(generics.ListAPIView):
     """GET /api/v1/issues/{issue_pk}/epic-issues/ — list child issues of an epic."""
     serializer_class = IssueSerializer
-    permission_classes = [IsProjectViewer]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        epic = get_object_or_404(Issue, id=self.kwargs['issue_pk'], type='epic')
-        return Issue.objects.filter(epic=epic).order_by('created_at')[:500]
+        user = self.request.user
+        try:
+            epic = Issue.objects.select_related('project').get(
+                id=self.kwargs['issue_pk']
+            )
+        except Issue.DoesNotExist:
+            raise ValidationError({'detail': 'Issue not found.'})
+
+        if epic.type != 'epic':
+            raise ValidationError({'detail': 'This issue is not an epic.'})
+
+        # Enforce project access
+        if (user.role != 'admin'
+                and not epic.project.members.filter(member=user).exists()):
+            return Issue.objects.none()
+
+        return Issue.objects.select_related(
+            'project', 'state', 'assignee', 'reporter', 'created_by'
+        ).prefetch_related('labels').filter(epic=epic).order_by('created_at')[:500]
 ```
 
 Note: `epic_issues` is the `related_name` of the `epic` FK on `Issue` (confirmed at `models.py` line ~62). If the model uses a different `related_name`, update the annotation filter accordingly.
 
-Verify `get_object_or_404` is imported at the top of `views.py`; if not, add:
+`ValidationError` is already imported in `views.py` (line ~10). Verify `IsAuthenticated` is imported; if not, add:
 ```python
-from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 ```
 
 - [ ] **Step 2: Register `EpicIssuesView` in `apps/issues/urls.py`**
@@ -533,7 +563,25 @@ Open `backend/apps/projects/urls.py`. Add the import at the top of the file:
 from apps.issues.views import EpicListView
 ```
 
-**Circular import check:** `apps.issues` imports from `apps.projects` (for project models). Adding `apps.projects.urls` importing from `apps.issues.views` creates a cross-app dependency. Django's URL conf loading is deferred, so this is generally safe as long as the import is at module level (not inside a function). If Django raises `ImportError: cannot import name` at startup, move the import inside a `urlpatterns` lazy-load pattern or register the view via `apps.issues.urls` instead. Verify the server starts cleanly after adding this import.
+**Circular import check:** `apps.issues` imports from `apps.projects` (for project models). Adding `apps.projects.urls` importing from `apps.issues.views` creates a cross-app dependency. Django's URL conf loading is deferred, so this is generally safe as long as the import is at module level (not inside a function).
+
+**If** Django raises `ImportError: cannot import name 'EpicListView'` at startup, use a lazy import inside the URL pattern instead:
+
+```python
+# apps/projects/urls.py — fallback if module-level import causes circular import
+from django.urls import path
+
+def _epic_list_view():
+    from apps.issues.views import EpicListView
+    return EpicListView.as_view()
+
+# In urlpatterns:
+path('<uuid:project_id>/epics/', lambda req, **kw: _epic_list_view()(req, **kw), name='project-epics'),
+```
+
+Or simply register the route in `apps/issues/urls.py` instead (using a different URL prefix) and include it from `config/urls.py`. Either approach eliminates the circular dependency entirely.
+
+Verify the server starts cleanly after adding this import before proceeding.
 
 ```python
 # Add to urlpatterns in apps/projects/urls.py:
@@ -593,13 +641,13 @@ class EpicIssuesEndpointTests(TestCase):
         self.assertEqual(len(r.data), 1)
         self.assertEqual(r.data[0]['id'], str(child.id))
 
-    def test_returns_404_for_non_epic(self):
+    def test_returns_400_for_non_epic(self):
         task = Issue.objects.create(
             project=self.project, title='Task', state=self.state,
             type='task', created_by=self.member, reporter=self.member
         )
         r = self.client.get(f'/api/v1/issues/{task.id}/epic-issues/')
-        self.assertEqual(r.status_code, 404)
+        self.assertEqual(r.status_code, 400)
 
     def test_issue_response_includes_nested_epic_object(self):
         r = self.client.post('/api/v1/issues/', {
@@ -1041,9 +1089,9 @@ function EpicCard({ epic, projectId }: { epic: Issue; projectId: string }) {
         <ProgressBar completed={epic.completedCount} total={epic.childCount} />
         <span
           className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
-          style={{ backgroundColor: epic.stateColor + '22', color: epic.stateColor }}
+          style={{ backgroundColor: (epic.stateColor ?? '#9ca3af') + '22', color: epic.stateColor ?? '#9ca3af' }}
         >
-          {epic.stateName}
+          {epic.stateName ?? '—'}
         </span>
       </div>
       {expanded && <EpicDetail epicId={epic.id} projectId={projectId} />}

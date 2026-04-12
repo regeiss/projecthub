@@ -20,6 +20,7 @@ from .filters import IssueFilter
 from .models import Issue, IssueActivity, IssueAttachment, IssueComment, IssueRelation
 from .permissions import IsIssueReporterOrProjectMember
 from .serializers import (
+    EpicSerializer,
     IssueActivitySerializer,
     IssueAttachmentSerializer,
     IssueCommentSerializer,
@@ -370,3 +371,68 @@ class IssueSubtaskListCreateView(generics.ListCreateAPIView):
             parent=parent,
             type=Issue.Type.SUBTASK,
         )
+
+
+# ---------------------------------------------------------------------------
+# Epics
+# ---------------------------------------------------------------------------
+
+
+class EpicListView(generics.ListAPIView):
+    """GET /api/v1/projects/{project_id}/epics/ — list all epics in a project."""
+    serializer_class = EpicSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        user = self.request.user
+        project_id = self.kwargs['project_id']
+
+        # Enforce project access at the queryset level — same pattern as IssueViewSet.
+        from apps.projects.models import Project
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Issue.objects.none()
+        if user.role != 'admin' and not project.members.filter(member=user).exists():
+            return Issue.objects.none()
+
+        return Issue.objects.select_related('state', 'assignee').filter(
+            project_id=project_id,
+            type='epic',
+        ).annotate(
+            child_count=Count('epic_issues'),
+            completed_count=Count(
+                'epic_issues',
+                filter=Q(epic_issues__state__category='completed'),
+            ),
+        ).order_by('created_at')
+
+
+class EpicIssuesView(generics.ListAPIView):
+    """GET /api/v1/issues/{issue_pk}/epic-issues/ — list child issues of an epic."""
+    serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None  # children are bounded per epic; frontend expects a flat array
+    filter_backends = []     # no global filter backends — queryset is already scoped to the epic
+
+    def get_queryset(self):
+        user = self.request.user
+        try:
+            epic = Issue.objects.select_related('project').get(
+                id=self.kwargs['issue_pk']
+            )
+        except Issue.DoesNotExist:
+            raise ValidationError({'detail': 'Issue not found.'})
+
+        if epic.type != 'epic':
+            raise ValidationError({'detail': 'This issue is not an epic.'})
+
+        # Enforce project access
+        if (user.role != 'admin'
+                and not epic.project.members.filter(member=user).exists()):
+            return Issue.objects.none()
+
+        return Issue.objects.select_related(
+            'project', 'state', 'assignee', 'reporter', 'created_by'
+        ).prefetch_related('labels').filter(epic=epic).order_by('created_at')[:500]
