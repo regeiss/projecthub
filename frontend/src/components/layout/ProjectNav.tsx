@@ -1,5 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom'
-import { KanbanSquare, List, RotateCcw, Network, BookOpen, Flag, ShieldAlert, Layers, Settings } from 'lucide-react'
+import { KanbanSquare, List, RotateCcw, Network, BookOpen, Flag, ShieldAlert, Layers, Settings, BookMarked } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/types'
 
@@ -10,6 +10,7 @@ interface ProjectNavProps {
 const tabs = [
   { path: 'board', label: 'Painel', icon: KanbanSquare },
   { path: 'backlog', label: 'Backlog', icon: List },
+  { path: 'epics', label: 'Épicos', icon: BookMarked },
   { path: 'cycles', label: 'Ciclos', icon: RotateCcw },
   { path: 'milestones', label: 'Milestones', icon: Flag },
   { path: 'gantt', label: 'Gantt / CPM', icon: Network },

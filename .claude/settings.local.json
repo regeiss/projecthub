@@ -189,7 +189,10 @@
       "Bash(docker run:*)",
       "Bash(docker network:*)",
       "Bash(git -C D:/projecthub add backend/apps/issues/models.py backend/apps/issues/migrations/0003_add_issue_color.py scripts/db/init.sql)",
-      "Bash(git -C D:/projecthub status)"
+      "Bash(git -C D:/projecthub status)",
+      "Bash(make sync-frontend:*)",
+      "Bash(MSYS_NO_PATHCONV=1 docker cp /d/projecthub/backend/. projecthub_api:/app/)",
+      "Bash(MSYS_NO_PATHCONV=1 docker cp:*)"
     ]
   }
 }

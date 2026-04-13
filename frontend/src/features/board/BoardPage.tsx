@@ -29,6 +29,7 @@ import { PriorityCapsule, SizeCapsule } from '@/components/ui/IssueCapsules'
 import { truncate } from '@/lib/utils'
 import { BoardFilters } from './BoardFilters'
 import { IssueForm } from '../issues/IssueForm'
+import { EpicBadge } from '../issues/EpicBadge'
 import { useNavigate } from 'react-router-dom'
 import { projectService } from '@/services/project.service'
 
@@ -73,9 +74,10 @@ function IssueCard({ issue }: { issue: Issue }) {
       onClick={() => navigate(`/projects/${projectId}/issues/${issue.id}`, { state: { from: `/projects/${projectId}/board` } })}
     >
       <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{issue.sequenceId}</p>
-      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
         {truncate(issue.title, 80)}
       </p>
+      <EpicBadge epic={issue.epic} className="mb-2" />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           <PriorityCapsule priority={issue.priority} />
@@ -333,7 +335,7 @@ export function BoardPage() {
   const qc = useQueryClient()
   const { data: states = [], isLoading: loadingStates } = useProjectStates(projectId)
   const { data: issueData, isLoading: loadingIssues } = useIssues(projectId, {})
-  const issues: Issue[] = issueData?.results ?? []
+  const issues: Issue[] = (issueData?.results ?? []).filter((i) => i.type !== 'epic')
   const updateIssue = useUpdateIssue()
 
   const [activeIssue, setActiveIssue] = useState<Issue | null>(null)

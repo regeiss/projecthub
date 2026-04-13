@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProjectStates, useProjectLabels, useProjectMembers } from '@/hooks/useProjects'
-import { useCreateIssue, useUpdateIssue, useCreateSubtask } from '@/hooks/useIssues'
+import { useCreateIssue, useUpdateIssue, useCreateSubtask, useEpics } from '@/hooks/useIssues'
 import { useCycles } from '@/hooks/useCycles'
 import { useMilestones } from '@/hooks/useMilestones'
 import { cycleService } from '@/services/cycle.service'
@@ -10,6 +10,7 @@ import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { MiniEditor } from '@/components/editor/MiniEditor'
+import { EpicColorPicker } from '@/features/epics/EpicColorPicker'
 
 const PRIORITIES: { value: Priority; label: string }[] = [
   { value: 'urgent', label: 'Urgente' },
@@ -65,7 +66,11 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId, par
   )
   const [milestoneId, setMilestoneId] = useState(issue?.milestoneId ?? '')
   const [cycleId, setCycleId] = useState(issue?.cycleId ?? '')
+  const [epicId, setEpicId] = useState<string | null>(issue?.epicId ?? null)
+  const [color, setColor] = useState<string | null>(issue?.color ?? '#6366f1')
   const [continueAdding, setContinueAdding] = useState(false)
+
+  const { data: epics = [] } = useEpics(typeOverride !== 'epic' ? projectId : undefined)
 
   const defaultState =
     states.find((s) => s.category === 'backlog') ?? states[0]
@@ -77,11 +82,14 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId, par
       description: description || undefined,
       stateId: stateId || defaultState?.id,
       priority,
+      type: typeOverride,
       assigneeId: assigneeId || undefined,
       size: (size || undefined) as IssueSize | undefined,
       estimateDays: estimateDays ? parseFloat(estimateDays) : undefined,
       labelIds: selectedLabels,
       milestoneId: milestoneId || undefined,
+      ...(typeOverride !== 'epic' && epicId !== (issue?.epicId ?? null) ? { epicId } : {}),
+      ...(typeOverride === 'epic' && color ? { color } : {}),
     }
     if (isEdit && issue) {
       const snapshotOldCycleId = issue.cycleId ?? ''
@@ -134,6 +142,8 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId, par
             setSelectedLabels([])
             setMilestoneId('')
             setCycleId('')
+            setEpicId(null)
+            setColor('#6366f1')
           } else {
             onClose()
           }
@@ -296,6 +306,30 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId, par
               ))}
             </select>
           </div>
+        )}
+
+        {/* Epic selector — hidden when creating an epic itself */}
+        {typeOverride !== 'epic' && epics.length > 0 && (
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Épico</label>
+            <select
+              value={epicId ?? ''}
+              onChange={(e) => setEpicId(e.target.value || null)}
+              className="h-8 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="">— Nenhum épico —</option>
+              {epics.map((e) => (
+                <option key={e.id} value={e.id}>
+                  #{e.sequenceId} {e.title}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Color picker — shown only when creating/editing an epic */}
+        {typeOverride === 'epic' && (
+          <EpicColorPicker value={color} onChange={setColor} />
         )}
 
         {/* Labels */}

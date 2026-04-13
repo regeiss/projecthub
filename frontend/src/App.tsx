@@ -20,6 +20,7 @@ import { WorkspaceSettings } from './features/workspace/WorkspaceSettings'
 import { MilestonesPage } from './features/milestones/MilestonesPage'
 import { RisksPage } from './features/risks/RisksPage'
 import { ModulesPage } from './features/modules/ModulesPage'
+import { EpicsPage } from './features/epics/EpicsPage'
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/projects/:projectId" element={<ProjectProvider />}>
               <Route path="board" element={<BoardPage />} />
               <Route path="backlog" element={<BacklogPage />} />
+              <Route path="epics" element={<EpicsPage />} />
               <Route path="cycles" element={<CyclesPage />} />
               <Route path="cycles/:cycleId" element={<CycleDetail />} />
               <Route path="milestones" element={<MilestonesPage />} />
