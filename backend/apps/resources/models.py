@@ -39,6 +39,16 @@ class MemberCapacity(models.Model):
         managed = True
         db_table = 'member_capacities'
         unique_together = [('member', 'year', 'month')]
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(month__gte=1, month__lte=12),
+                name='member_capacity_month_1_12',
+            ),
+            models.CheckConstraint(
+                check=models.Q(available_days__gte=0),
+                name='member_capacity_available_days_non_negative',
+            ),
+        ]
 
     def __str__(self):
         return f'{self.member} — {self.year}/{self.month:02d}: {self.available_days}d'
@@ -60,6 +70,11 @@ class TimeEntry(models.Model):
     hours = models.DecimalField(max_digits=5, decimal_places=2)  # may be negative
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            raise ValueError("TimeEntry é imutável. Crie um novo lançamento de correção.")
+        super().save(*args, **kwargs)
 
     class Meta:
         managed = True
