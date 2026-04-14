@@ -53,7 +53,9 @@ class ResourceProfileDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsWorkspaceMember]
 
     def get_queryset(self):
-        return ResourceProfile.objects.filter(project__workspace=self.request.user.workspace)
+        return ResourceProfile.objects.select_related('member', 'project').filter(
+            project__workspace=self.request.user.workspace
+        )
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -105,7 +107,9 @@ class MemberCapacityDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsWorkspaceMember]
 
     def get_queryset(self):
-        return MemberCapacity.objects.filter(member__workspace=self.request.user.workspace)
+        return MemberCapacity.objects.select_related('member').filter(
+            member__workspace=self.request.user.workspace
+        )
 
     def _check_write(self, instance):
         if (self.request.user.role != 'admin' and
