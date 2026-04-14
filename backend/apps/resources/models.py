@@ -41,11 +41,11 @@ class MemberCapacity(models.Model):
         unique_together = [('member', 'year', 'month')]
         constraints = [
             models.CheckConstraint(
-                check=models.Q(month__gte=1, month__lte=12),
+                condition=models.Q(month__gte=1, month__lte=12),
                 name='member_capacity_month_1_12',
             ),
             models.CheckConstraint(
-                check=models.Q(available_days__gte=0),
+                condition=models.Q(available_days__gte=0),
                 name='member_capacity_available_days_non_negative',
             ),
         ]
