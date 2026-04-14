@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from apps.projects.models import ProjectMember
 from .models import MemberCapacity, ResourceProfile, TimeEntry
 
 
@@ -15,7 +16,6 @@ class ResourceProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
     def validate(self, data):
-        from apps.projects.models import ProjectMember
         project = data.get('project') or (self.instance.project if self.instance else None)
         member = data.get('member') or (self.instance.member if self.instance else None)
         if project and member:
@@ -38,6 +38,9 @@ class MemberCapacitySerializer(serializers.ModelSerializer):
         month = data.get('month')
         if month is not None and not (1 <= month <= 12):
             raise serializers.ValidationError({'month': 'Mês deve ser entre 1 e 12.'})
+        year = data.get('year')
+        if year is not None and not (2020 <= year <= 2099):
+            raise serializers.ValidationError({'year': 'Ano deve ser entre 2020 e 2099.'})
         return data
 
 
@@ -56,3 +59,8 @@ class TimeEntrySerializer(serializers.ModelSerializer):
             'date', 'hours', 'description', 'created_at',
         ]
         read_only_fields = ['id', 'created_at']
+
+    def update(self, instance, validated_data):
+        raise serializers.ValidationError(
+            'TimeEntry é imutável. Crie um novo lançamento de correção.'
+        )
