@@ -163,3 +163,31 @@ class TimeEntryViewTest(APITestCase):
         self.client.force_authenticate(user=other)
         res = self.client.delete(f'/api/v1/resources/time-entries/{entry.id}/')
         self.assertEqual(res.status_code, 403)
+
+
+class WorkloadViewTest(APITestCase):
+    def setUp(self):
+        self.ws, self.admin = make_workspace()
+        self.project = make_project(self.ws, self.admin)
+        self.state = IssueState.objects.create(
+            project=self.project, name='Backlog', color='#aaa',
+            category='backlog', sequence=1,
+        )
+        MemberCapacity.objects.create(
+            member=self.admin, year=2026, month=4, available_days='20.0'
+        )
+        self.client.force_authenticate(user=self.admin)
+
+    def test_workspace_workload_returns_member(self):
+        res = self.client.get('/api/v1/resources/workload/?period=2026-04')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['member_name'], 'Admin')
+        self.assertAlmostEqual(res.data[0]['available_days'], 20.0)
+
+    def test_project_workload(self):
+        res = self.client.get(
+            f'/api/v1/resources/projects/{self.project.id}/workload/?period=2026-04'
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data[0]['member_name'], 'Admin')

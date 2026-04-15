@@ -2,10 +2,12 @@ from django.urls import path
 from .views import (
     MemberCapacityDetailView,
     MemberCapacityListCreateView,
+    ProjectWorkloadView,
     ResourceProfileDetailView,
     ResourceProfileListCreateView,
     TimeEntryDestroyView,
     TimeEntryListCreateView,
+    WorkspaceWorkloadView,
 )
 
 urlpatterns = [
@@ -15,4 +17,6 @@ urlpatterns = [
     path('capacity/<uuid:pk>/', MemberCapacityDetailView.as_view(), name='member-capacity-detail'),
     path('time-entries/', TimeEntryListCreateView.as_view(), name='time-entry-list'),
     path('time-entries/<uuid:pk>/', TimeEntryDestroyView.as_view(), name='time-entry-destroy'),
+    path('workload/', WorkspaceWorkloadView.as_view(), name='workspace-workload'),
+    path('projects/<uuid:project_pk>/workload/', ProjectWorkloadView.as_view(), name='project-workload'),
 ]

@@ -1,5 +1,5 @@
 # backend/apps/resources/views.py
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import generics, status
@@ -191,3 +191,76 @@ class TimeEntryDestroyView(generics.DestroyAPIView):
         if not (is_owner or is_project_admin):
             raise PermissionDenied('Apenas o autor ou admin do projeto pode excluir este apontamento.')
         return super().destroy(request, *args, **kwargs)
+
+
+# ---------------------------------------------------------------------------
+# Workload
+# ---------------------------------------------------------------------------
+
+import calendar
+from datetime import date as date_type
+
+from .utils import compute_workload
+
+
+def _parse_period(period_param):
+    """Parse 'YYYY-MM' string. Returns (period_start, period_end) or raises ValueError."""
+    year = int(period_param[:4])
+    month = int(period_param[5:7])
+    _, last_day = calendar.monthrange(year, month)
+    return date_type(year, month, 1), date_type(year, month, last_day)
+
+
+def _period_from_request(request):
+    """Return (period_start, period_end) from query params or current month."""
+    from rest_framework.exceptions import ValidationError
+    cycle_id = request.query_params.get('cycle_id')
+    period_param = request.query_params.get('period')
+
+    if cycle_id:
+        from apps.cycles.models import Cycle
+        try:
+            cycle = Cycle.objects.get(pk=cycle_id)
+        except Cycle.DoesNotExist:
+            raise NotFound('Ciclo não encontrado.')
+        return cycle.start_date, cycle.end_date
+
+    if period_param:
+        try:
+            return _parse_period(period_param)
+        except (ValueError, IndexError):
+            raise ValidationError({'period': 'Use o formato YYYY-MM.'})
+
+    today = date_type.today()
+    _, last_day = calendar.monthrange(today.year, today.month)
+    return date_type(today.year, today.month, 1), date_type(today.year, today.month, last_day)
+
+
+class WorkspaceWorkloadView(APIView):
+    permission_classes = [IsWorkspaceMember]
+
+    def get(self, request):
+        from apps.workspaces.models import WorkspaceMember
+        period_start, period_end = _period_from_request(request)
+        members = WorkspaceMember.objects.filter(
+            workspace=request.user.workspace, is_active=True
+        )
+        return Response(compute_workload(members, period_start, period_end))
+
+
+class ProjectWorkloadView(APIView):
+    permission_classes = [IsWorkspaceMember]
+
+    def get(self, request, project_pk):
+        from apps.projects.models import Project
+        from apps.workspaces.models import WorkspaceMember
+        try:
+            project = Project.objects.get(pk=project_pk, workspace=request.user.workspace)
+        except Project.DoesNotExist:
+            raise NotFound('Projeto não encontrado.')
+
+        period_start, period_end = _period_from_request(request)
+        members = WorkspaceMember.objects.filter(
+            project_memberships__project=project, is_active=True
+        ).distinct()
+        return Response(compute_workload(members, period_start, period_end, project=project))
