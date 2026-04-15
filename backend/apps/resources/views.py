@@ -203,15 +203,7 @@ from datetime import date as date_type
 from .utils import compute_workload
 
 
-def _parse_period(period_param):
-    """Parse 'YYYY-MM' string. Returns (period_start, period_end) or raises ValueError."""
-    year = int(period_param[:4])
-    month = int(period_param[5:7])
-    _, last_day = calendar.monthrange(year, month)
-    return date_type(year, month, 1), date_type(year, month, last_day)
-
-
-def _period_from_request(request):
+def _period_from_request(request, project=None):
     """Return (period_start, period_end) from query params or current month."""
     from rest_framework.exceptions import ValidationError
     cycle_id = request.query_params.get('cycle_id')
@@ -219,16 +211,22 @@ def _period_from_request(request):
 
     if cycle_id:
         from apps.cycles.models import Cycle
+        lookup = {'pk': cycle_id, 'project__workspace': request.user.workspace}
+        if project is not None:
+            lookup['project'] = project
         try:
-            cycle = Cycle.objects.get(pk=cycle_id, project__workspace=request.user.workspace)
+            cycle = Cycle.objects.get(**lookup)
         except Cycle.DoesNotExist:
             raise NotFound('Ciclo não encontrado.')
         return cycle.start_date, cycle.end_date
 
     if period_param:
         try:
-            return _parse_period(period_param)
-        except (ValueError, IndexError):
+            from datetime import datetime
+            dt = datetime.strptime(period_param, '%Y-%m')
+            _, last_day = calendar.monthrange(dt.year, dt.month)
+            return date_type(dt.year, dt.month, 1), date_type(dt.year, dt.month, last_day)
+        except ValueError:
             raise ValidationError({'period': 'Use o formato YYYY-MM.'})
 
     today = date_type.today()
@@ -242,7 +240,7 @@ class WorkspaceWorkloadView(APIView):
     def get(self, request):
         from apps.workspaces.models import WorkspaceMember
         period_start, period_end = _period_from_request(request)
-        members = WorkspaceMember.objects.filter(
+        members = WorkspaceMember.objects.select_related('workspace').filter(
             workspace=request.user.workspace, is_active=True
         )
         return Response(compute_workload(members, period_start, period_end))
@@ -259,8 +257,8 @@ class ProjectWorkloadView(APIView):
         except Project.DoesNotExist:
             raise NotFound('Projeto não encontrado.')
 
-        period_start, period_end = _period_from_request(request)
-        members = WorkspaceMember.objects.filter(
+        period_start, period_end = _period_from_request(request, project=project)
+        members = WorkspaceMember.objects.select_related('workspace').filter(
             project_memberships__project=project, is_active=True
         ).distinct()
         return Response(compute_workload(members, period_start, period_end, project=project))
