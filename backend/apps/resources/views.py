@@ -133,9 +133,16 @@ class TimeEntryListCreateView(APIView):
     permission_classes = [IsWorkspaceMember]
 
     def get(self, request):
-        qs = TimeEntry.objects.select_related('member', 'issue').filter(
+        from apps.projects.models import ProjectMember
+        qs = TimeEntry.objects.select_related('member', 'issue__project').filter(
             issue__project__workspace=request.user.workspace
         )
+        # Non-admins can only see entries for projects they belong to
+        if request.user.role != 'admin':
+            member_project_ids = ProjectMember.objects.filter(
+                member=request.user
+            ).values_list('project_id', flat=True)
+            qs = qs.filter(issue__project_id__in=member_project_ids)
         issue_id = request.query_params.get('issue')
         if issue_id:
             qs = qs.filter(issue_id=issue_id)
