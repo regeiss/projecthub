@@ -145,10 +145,13 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config worker
-      --loglevel=info
-      --concurrency=4
-      --queues=default,cpm,notifications,sync
+      sh -c "
+        python manage.py wait_for_db &&
+        celery -A config worker
+        --loglevel=info
+        --concurrency=4
+        --queues=default,cpm,notifications,sync
+      "
     volumes:
       - ./backend:/app
     depends_on:
@@ -170,9 +173,12 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config beat
-      --loglevel=info
-      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      sh -c "
+        python manage.py wait_for_db &&
+        celery -A config beat
+        --loglevel=info
+        --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      "
     volumes:
       - ./backend:/app
     depends_on:
