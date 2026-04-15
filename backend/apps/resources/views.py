@@ -238,12 +238,16 @@ class WorkspaceWorkloadView(APIView):
     permission_classes = [IsWorkspaceMember]
 
     def get(self, request):
+        from rest_framework.exceptions import ValidationError
         from apps.workspaces.models import WorkspaceMember
         period_start, period_end = _period_from_request(request)
         members = WorkspaceMember.objects.select_related('workspace').filter(
             workspace=request.user.workspace, is_active=True
         )
-        return Response(compute_workload(members, period_start, period_end))
+        try:
+            return Response(compute_workload(members, period_start, period_end))
+        except ValueError as exc:
+            raise ValidationError({'period': str(exc)})
 
 
 class ProjectWorkloadView(APIView):
@@ -257,8 +261,12 @@ class ProjectWorkloadView(APIView):
         except Project.DoesNotExist:
             raise NotFound('Projeto não encontrado.')
 
+        from rest_framework.exceptions import ValidationError
         period_start, period_end = _period_from_request(request, project=project)
         members = WorkspaceMember.objects.select_related('workspace').filter(
             project_memberships__project=project, is_active=True
         ).distinct()
-        return Response(compute_workload(members, period_start, period_end, project=project))
+        try:
+            return Response(compute_workload(members, period_start, period_end, project=project))
+        except ValueError as exc:
+            raise ValidationError({'period': str(exc)})

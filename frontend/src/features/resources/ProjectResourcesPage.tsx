@@ -91,6 +91,11 @@ export function ProjectResourcesPage() {
   const [activeTab, setActiveTab] = useState<Tab>('workload')
 
   const { data: rows = [], isLoading } = useProjectWorkload(projectId ?? '', { period })
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  function toggleExpand(row: MemberWorkload) {
+    setExpandedId(prev => (prev === row.memberId ? null : row.memberId))
+  }
 
   const tabCls = (t: Tab) =>
     cn(
@@ -122,6 +127,8 @@ export function ProjectResourcesPage() {
         <WorkloadGrid
           rows={rows}
           showCost
+          onRowClick={toggleExpand}
+          expandedMemberId={expandedId}
           renderExpanded={(row) =>
             projectId ? <RateEditor projectId={projectId} row={row} /> : null
           }
