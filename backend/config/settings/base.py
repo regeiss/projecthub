@@ -46,11 +46,11 @@ THIRD_PARTY_APPS = [
     "health_check",
     "health_check.db",
     "health_check.cache",
-    "health_check.contrib.celery",
     "health_check.contrib.redis",
 ]
 
 LOCAL_APPS = [
+    "apps.health",  # Must be first to register health checks
     "apps.authentication",
     "apps.workspaces",
     "apps.projects",
@@ -366,3 +366,10 @@ LOGGING = {
         },
     },
 }
+
+# =============================================================================
+# HEALTH CHECKS
+# =============================================================================
+# Custom health checks are auto-discovered from apps/health/checks.py
+# The MigrationHealthCheck ensures the API is only marked healthy after
+# all database migrations are applied, preventing worker startup races.
