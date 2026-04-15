@@ -39,7 +39,7 @@ function NavItem({
         className={({ isActive }) =>
           cn(
             'flex h-8 w-8 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
-            isActive && 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+            isActive && 'bg-primary-light dark:bg-primary/20 text-primary-text dark:text-primary',
           )
         }
         aria-label={label}
@@ -116,13 +116,13 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full w-14 flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-3">
+    <aside className="sidebar-bg flex h-full w-14 flex-col border-r border-gray-200 dark:border-gray-700 dark:bg-gray-900 py-3">
       {/* Workspace selector */}
       <div className="flex justify-center px-2 pb-3">
         <Dropdown open={wsDropdownOpen} onOpenChange={setWsDropdownOpen}>
           <DropdownTrigger asChild>
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700"
+              className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white text-xs font-bold hover:bg-primary-hover"
               aria-label="Selecionar workspace"
             >
               {workspace?.name?.[0]?.toUpperCase() ?? 'W'}

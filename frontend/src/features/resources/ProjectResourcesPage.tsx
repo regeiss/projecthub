@@ -6,6 +6,9 @@ import {
   useResourceProfiles,
   useCreateResourceProfile,
   useUpdateResourceProfile,
+  useMemberCapacities,
+  useCreateCapacity,
+  useUpdateCapacity,
 } from '@/hooks/useResources'
 import { PageSpinner } from '@/components/ui/Spinner'
 import { WorkloadGrid } from './WorkloadGrid'
@@ -83,6 +86,60 @@ function RateEditor({ projectId, row }: { projectId: string; row: MemberWorkload
   )
 }
 
+function CapacityEditor({ row, year, month }: { row: MemberWorkload; year: number; month: number }) {
+  const { data: capacities = [] } = useMemberCapacities({ member: row.memberId, year, month })
+  const create = useCreateCapacity()
+  const update = useUpdateCapacity()
+  const existing = capacities[0] ?? null
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState('')
+
+  function startEdit() {
+    setValue(existing ? String(existing.availableDays) : '')
+    setEditing(true)
+  }
+
+  function handleSave() {
+    const days = parseFloat(value)
+    if (isNaN(days) || days < 0) return
+    if (existing) {
+      update.mutate({ id: existing.id, dto: { availableDays: days } }, { onSuccess: () => setEditing(false) })
+    } else {
+      create.mutate({ member: row.memberId, year, month, availableDays: days }, { onSuccess: () => setEditing(false) })
+    }
+  }
+
+  const isPending = create.isPending || update.isPending
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1.5">
+        <span className="text-xs text-gray-500 dark:text-gray-400 mr-1">Disponível:</span>
+        <input
+          type="number"
+          step="0.5"
+          min="0"
+          max="31"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-20 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          placeholder="dias"
+          autoFocus
+          onKeyDown={(e) => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
+        />
+        <button onClick={handleSave} disabled={isPending} className="text-xs text-indigo-600 hover:underline disabled:opacity-50">salvar</button>
+        <button onClick={() => setEditing(false)} className="text-xs text-gray-400 hover:text-gray-600">cancelar</button>
+      </div>
+    )
+  }
+
+  return (
+    <button onClick={startEdit} className="text-xs text-indigo-600 hover:underline" title="Editar capacidade">
+      {existing ? `${existing.availableDays.toFixed(1)}d disponível` : '+ Capacidade'}
+    </button>
+  )
+}
+
 export function ProjectResourcesPage() {
   const { projectId } = useParams<{ projectId: string }>()
   const today = new Date()
@@ -92,6 +149,7 @@ export function ProjectResourcesPage() {
 
   const { data: rows = [], isLoading } = useProjectWorkload(projectId ?? '', { period })
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [year, month] = period.split('-').map(Number)
 
   function toggleExpand(row: MemberWorkload) {
     setExpandedId(prev => (prev === row.memberId ? null : row.memberId))
@@ -130,7 +188,13 @@ export function ProjectResourcesPage() {
           onRowClick={toggleExpand}
           expandedMemberId={expandedId}
           renderExpanded={(row) =>
-            projectId ? <RateEditor projectId={projectId} row={row} /> : null
+            projectId ? (
+              <div className="flex items-center gap-4">
+                <CapacityEditor row={row} year={year} month={month} />
+                <span className="text-gray-300 dark:text-gray-600">|</span>
+                <RateEditor projectId={projectId} row={row} />
+              </div>
+            ) : null
           }
         />
       )}

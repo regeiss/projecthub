@@ -4,7 +4,8 @@ import { useEpicIssues, useUpdateIssue } from '@/hooks/useIssues'
 import { useProjectStates } from '@/hooks/useProjects'
 import { issueService } from '@/services/issue.service'
 import { PageSpinner } from '@/components/ui/Spinner'
-import { Link2, Search } from 'lucide-react'
+import { IssueForm } from '@/features/issues/IssueForm'
+import { Link2, Plus, Search } from 'lucide-react'
 import type { Issue } from '@/types'
 
 interface Props {
@@ -34,6 +35,7 @@ export function EpicDetail({ epicId, projectId }: Props) {
   const update = useUpdateIssue()
 
   const [linking, setLinking] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [search, setSearch] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -51,9 +53,9 @@ export function EpicDetail({ epicId, projectId }: Props) {
     staleTime: 30_000,
   })
 
-  // Filter out epics and issues already in THIS epic
+  // Filter out epics and issues already assigned to any epic
   const candidates = (candidatesPage?.results ?? []).filter(
-    (issue) => issue.type !== 'epic' && issue.epic?.id !== epicId,
+    (issue) => issue.type !== 'epic' && !issue.epic,
   )
 
   function handleLink(issue: Issue) {
@@ -165,14 +167,36 @@ export function EpicDetail({ epicId, projectId }: Props) {
           </button>
         </div>
       ) : (
-        /* Trigger button */
-        <button
-          onClick={() => setLinking(true)}
-          className="flex w-full items-center gap-2 px-4 py-2 text-xs text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
-        >
-          <Link2 className="h-3.5 w-3.5" />
-          Vincular issue existente
-        </button>
+        /* Trigger buttons */
+        <div className="flex items-center">
+          <button
+            onClick={() => setCreating(true)}
+            className="flex flex-1 items-center gap-2 px-4 py-2 text-xs text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Nova issue
+          </button>
+          <button
+            onClick={() => setLinking(true)}
+            className="flex flex-1 items-center gap-2 px-4 py-2 text-xs text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors border-l border-gray-100 dark:border-gray-800"
+          >
+            <Link2 className="h-3.5 w-3.5" />
+            Vincular issue existente
+          </button>
+        </div>
+      )}
+
+      {creating && (
+        <IssueForm
+          projectId={projectId}
+          open={creating}
+          onClose={() => {
+            setCreating(false)
+            qc.invalidateQueries({ queryKey: ['epic-issues', epicId] })
+            qc.invalidateQueries({ queryKey: ['epics'] })
+          }}
+          defaultEpicId={epicId}
+        />
       )}
     </div>
   )

@@ -36,9 +36,10 @@ interface IssueFormProps {
   defaultStateId?: string
   parentIssueId?: string
   typeOverride?: IssueType
+  defaultEpicId?: string
 }
 
-export function IssueForm({ projectId, open, onClose, issue, defaultStateId, parentIssueId, typeOverride }: IssueFormProps) {
+export function IssueForm({ projectId, open, onClose, issue, defaultStateId, parentIssueId, typeOverride, defaultEpicId }: IssueFormProps) {
   // typeOverride is accepted (passed by SubtaskList) but currently unused
   // because IssueForm has no type selector field — kept for API compatibility
   const isEdit = !!issue
@@ -66,7 +67,7 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId, par
   )
   const [milestoneId, setMilestoneId] = useState(issue?.milestoneId ?? '')
   const [cycleId, setCycleId] = useState(issue?.cycleId ?? '')
-  const [epicId, setEpicId] = useState<string | null>(issue?.epicId ?? null)
+  const [epicId, setEpicId] = useState<string | null>(issue?.epicId ?? defaultEpicId ?? null)
   const [color, setColor] = useState<string | null>(issue?.color ?? '#6366f1')
   const [continueAdding, setContinueAdding] = useState(false)
 

@@ -38,7 +38,7 @@ export function ProjectNav({ project }: ProjectNavProps) {
               cn(
                 'flex h-7 items-center gap-1.5 rounded px-2 text-xs font-medium transition-colors',
                 isActive
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                  ? 'bg-primary-light dark:bg-primary/20 text-primary-text dark:text-primary'
                   : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200',
               )
             }
