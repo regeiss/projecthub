@@ -72,7 +72,7 @@ class TimeEntry(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
-        if self.pk:
+        if not self._state.adding:
             raise ValueError("TimeEntry é imutável. Crie um novo lançamento de correção.")
         super().save(*args, **kwargs)
 

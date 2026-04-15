@@ -91,3 +91,75 @@ class MemberCapacityViewTest(APITestCase):
             'available_days': '20.0',
         })
         self.assertEqual(res.status_code, 400)
+
+
+from apps.resources.models import TimeEntry
+from apps.issues.models import Issue
+
+
+def make_issue(project, creator, state):
+    return Issue.objects.create(
+        project=project,
+        title='Test Issue',
+        state=state,
+        priority='none',
+        reporter=creator,
+        created_by=creator,
+    )
+
+
+class TimeEntryViewTest(APITestCase):
+    def setUp(self):
+        self.ws, self.admin = make_workspace()
+        self.project = make_project(self.ws, self.admin)
+        self.state = IssueState.objects.create(
+            project=self.project,
+            name='Backlog',
+            color='#aaa',
+            category='backlog',
+            sequence=1,
+        )
+        self.issue = make_issue(self.project, self.admin, self.state)
+        self.client.force_authenticate(user=self.admin)
+
+    def test_create_time_entry(self):
+        res = self.client.post('/api/v1/resources/time-entries/', {
+            'issue': str(self.issue.id),
+            'member': str(self.admin.id),
+            'date': '2026-04-14',
+            'hours': '4.00',
+        })
+        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.data['hours'], '4.00')
+
+    def test_list_time_entries_filtered_by_issue(self):
+        TimeEntry.objects.create(
+            issue=self.issue, member=self.admin,
+            date='2026-04-14', hours='3.00',
+        )
+        res = self.client.get(f'/api/v1/resources/time-entries/?issue={self.issue.id}')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(res.data), 1)
+
+    def test_delete_time_entry(self):
+        entry = TimeEntry.objects.create(
+            issue=self.issue, member=self.admin,
+            date='2026-04-14', hours='2.00',
+        )
+        res = self.client.delete(f'/api/v1/resources/time-entries/{entry.id}/')
+        self.assertEqual(res.status_code, 204)
+        self.assertFalse(TimeEntry.objects.filter(id=entry.id).exists())
+
+    def test_member_cannot_delete_others_entry(self):
+        other = WorkspaceMember.objects.create(
+            workspace=self.ws, keycloak_sub='sub-3', email='c@x.com',
+            name='Carol', role='member',
+        )
+        ProjectMember.objects.create(project=self.project, member=other, role='member')
+        entry = TimeEntry.objects.create(
+            issue=self.issue, member=self.admin,
+            date='2026-04-14', hours='2.00',
+        )
+        self.client.force_authenticate(user=other)
+        res = self.client.delete(f'/api/v1/resources/time-entries/{entry.id}/')
+        self.assertEqual(res.status_code, 403)
