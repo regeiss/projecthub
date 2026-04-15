@@ -21,6 +21,8 @@ import { MilestonesPage } from './features/milestones/MilestonesPage'
 import { RisksPage } from './features/risks/RisksPage'
 import { ModulesPage } from './features/modules/ModulesPage'
 import { EpicsPage } from './features/epics/EpicsPage'
+import { ResourcesPage } from './features/resources/ResourcesPage'
+import { ProjectResourcesPage } from './features/resources/ProjectResourcesPage'
 
 export default function App() {
   return (
@@ -43,6 +45,7 @@ export default function App() {
               <Route path="risks" element={<RisksPage />} />
               <Route path="modules" element={<ModulesPage />} />
               <Route path="gantt" element={<GanttPage />} />
+              <Route path="resources" element={<ProjectResourcesPage />} />
               <Route path="issues/:issueId" element={<IssueDetailPage />} />
               <Route path="settings" element={<ProjectSettings />} />
               <Route path="wiki" element={<WikiLayout />}>
@@ -52,6 +55,7 @@ export default function App() {
             </Route>
 
             <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/workspace/resources" element={<ResourcesPage />} />
             <Route path="/workspace/settings" element={<WorkspaceSettings />} />
           </Route>
         </Route>

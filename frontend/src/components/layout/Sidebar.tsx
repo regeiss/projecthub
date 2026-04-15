@@ -6,6 +6,7 @@ import {
   BarChart3,
   Settings,
   Plus,
+  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -154,6 +155,7 @@ export function Sidebar() {
         <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
         <NavItem to="/projects" icon={FolderKanban} label="Projetos" />
         <NavItem to="/portfolio" icon={BarChart3} label="Portfolio" />
+        <NavItem to="/workspace/resources" icon={Users} label="Recursos" />
       </nav>
 
       {/* Projects quick list */}

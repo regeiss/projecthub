@@ -1,5 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom'
-import { KanbanSquare, List, RotateCcw, Network, BookOpen, Flag, ShieldAlert, Layers, Settings, BookMarked } from 'lucide-react'
+import { KanbanSquare, List, RotateCcw, Network, BookOpen, Flag, ShieldAlert, Layers, Settings, BookMarked, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/types'
 
@@ -17,6 +17,7 @@ const tabs = [
   { path: 'wiki', label: 'Wiki', icon: BookOpen },
   { path: 'modules', label: 'Módulos', icon: Layers },
   { path: 'risks', label: 'Riscos', icon: ShieldAlert },
+  { path: 'resources', label: 'Recursos', icon: Users },
   { path: 'settings', label: 'Configurações', icon: Settings },
 ]
 
