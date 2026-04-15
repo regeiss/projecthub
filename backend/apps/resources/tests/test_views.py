@@ -191,3 +191,34 @@ class WorkloadViewTest(APITestCase):
         )
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.data[0]['member_name'], 'Admin')
+
+    def test_workspace_workload_cost_fields_are_null(self):
+        res = self.client.get('/api/v1/resources/workload/?period=2026-04')
+        self.assertEqual(res.status_code, 200)
+        self.assertIsNone(res.data[0]['daily_rate_brl'])
+        self.assertIsNone(res.data[0]['planned_cost'])
+        self.assertIsNone(res.data[0]['actual_cost'])
+
+    def test_project_workload_with_rate_returns_cost(self):
+        from apps.resources.models import ResourceProfile, TimeEntry
+        ResourceProfile.objects.create(
+            project=self.project, member=self.admin, daily_rate_brl='400.00'
+        )
+        issue = make_issue(self.project, self.admin, self.state)
+        issue.assignee = self.admin
+        issue.estimate_days = 5
+        issue.save()
+        TimeEntry.objects.create(
+            issue=issue, member=self.admin, date='2026-04-10', hours='8.00'
+        )
+        res = self.client.get(
+            f'/api/v1/resources/projects/{self.project.id}/workload/?period=2026-04'
+        )
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.data[0]['daily_rate_brl'], '400.00')
+        self.assertIsNotNone(res.data[0]['planned_cost'])
+        self.assertIsNotNone(res.data[0]['actual_cost'])
+
+    def test_workload_default_period_returns_200(self):
+        res = self.client.get('/api/v1/resources/workload/')
+        self.assertEqual(res.status_code, 200)

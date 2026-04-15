@@ -220,7 +220,7 @@ def _period_from_request(request):
     if cycle_id:
         from apps.cycles.models import Cycle
         try:
-            cycle = Cycle.objects.get(pk=cycle_id)
+            cycle = Cycle.objects.get(pk=cycle_id, project__workspace=request.user.workspace)
         except Cycle.DoesNotExist:
             raise NotFound('Ciclo não encontrado.')
         return cycle.start_date, cycle.end_date

@@ -86,8 +86,8 @@ def compute_workload(members, period_start: date, period_end: date, project=None
             profile = None
 
         daily_rate = profile.daily_rate_brl if profile else None
-        planned_cost = float(planned_days) * float(daily_rate) if daily_rate else None
-        actual_cost = float(actual_days) * float(daily_rate) if daily_rate else None
+        planned_cost = float(Decimal(str(planned_days)) * daily_rate) if daily_rate else None
+        actual_cost = float(Decimal(str(actual_days)) * daily_rate) if daily_rate else None
         utilization_pct = (
             round(float(actual_days / available * 100), 1) if available else None
         )
