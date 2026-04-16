@@ -29,6 +29,7 @@ import { PriorityCapsule, SizeCapsule } from '@/components/ui/IssueCapsules'
 import { truncate } from '@/lib/utils'
 import { tiptapToText } from '@/lib/editor'
 import { BoardFilters } from './BoardFilters'
+import type { IssueFilters } from '@/types'
 import { IssueForm } from '../issues/IssueForm'
 import { EpicBadge } from '../issues/EpicBadge'
 import { useNavigate } from 'react-router-dom'
@@ -341,11 +342,11 @@ function KanbanColumn({
 export function BoardPage() {
   const { projectId = '' } = useParams()
   const qc = useQueryClient()
+  const [filters, setFilters] = useState<IssueFilters>({})
   const { data: states = [], isLoading: loadingStates } = useProjectStates(projectId)
-  const { data: issueData, isLoading: loadingIssues } = useIssues(projectId, {})
+  const { data: issueData, isLoading: loadingIssues } = useIssues(projectId, filters)
   const issues: Issue[] = (issueData?.results ?? []).filter((i) => i.type !== 'epic')
   const updateIssue = useUpdateIssue()
-
   const [activeIssue, setActiveIssue] = useState<Issue | null>(null)
   const [newIssueStateId, setNewIssueStateId] = useState<string | null>(null)
   const [hiddenStates, setHiddenStates] = useState<Set<string>>(new Set())
@@ -418,7 +419,7 @@ export function BoardPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2">
-        <BoardFilters projectId={projectId} />
+        <BoardFilters projectId={projectId} filters={filters} onFiltersChange={setFilters} />
       </div>
 
       <div className="flex flex-1 overflow-x-auto">

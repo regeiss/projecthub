@@ -20,7 +20,7 @@ import keycloak from '@/lib/keycloak'
 export function Header() {
   const { user, logout } = useAuthStore()
   const { unreadCount } = useNotificationStore()
-  const { currentProject } = useWorkspaceStore()
+  const { currentProject, workspace: currentWorkspace } = useWorkspaceStore()
   const navigate = useNavigate()
 
   function handleLogout() {
@@ -35,7 +35,9 @@ export function Header() {
         {currentProject ? (
           <ProjectNav project={currentProject} />
         ) : (
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">ProjectHub</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {currentWorkspace?.name ?? 'ProjectHub'}
+          </span>
         )}
       </div>
 

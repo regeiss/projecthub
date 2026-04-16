@@ -47,7 +47,7 @@ function NavItem({
         <Icon className="h-4 w-4" />
       </NavLink>
       <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/nav:block z-50">
-        <div className="rounded bg-gray-900 px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
+        <div className="rounded bg-primary px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
           {label}
         </div>
       </div>
@@ -177,7 +177,7 @@ export function Sidebar() {
                   {p.identifier}
                 </NavLink>
                 <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/proj:block z-50">
-                  <div className="rounded bg-gray-900 px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
+                  <div className="rounded bg-primary px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
                     {p.name}
                   </div>
                 </div>

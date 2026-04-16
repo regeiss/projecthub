@@ -25,7 +25,8 @@ export function DropdownContent({
         sideOffset={sideOffset}
         className={cn(
           'z-50 min-w-[160px] overflow-hidden rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-1 shadow-md dark:shadow-black/40',
-          'animate-in fade-in-0 zoom-in-95',
+          'data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
+          'data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:duration-75',
           className,
         )}
       >
