@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useRef, useState, useCallback } from 'react'
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState, useCallback } from 'react'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -17,12 +17,22 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { EditorToolbar } from '@/features/wiki/EditorToolbar'
+import {
+  buildPageLinkExtension,
+  PAGE_LINK_SUGGESTION_INACTIVE,
+  type PageLinkSuggestionState,
+} from './extensions/PageLink'
+import { WikiPageLinkList, type WikiPageLinkListHandle } from './WikiPageLinkList'
+import { useAllWikiPages } from '@/hooks/useWiki'
+import type { WikiPageListItem } from '@/types'
 
 interface MiniEditorProps {
   onChange?: (html: string, isEmpty: boolean, json: Record<string, unknown>) => void
   placeholder?: string
   className?: string
   initialContent?: string | Record<string, unknown>
+  /** When provided, typing `[[` opens a wiki page search dropdown */
+  projectId?: string
 }
 
 export interface MiniEditorHandle {
@@ -56,7 +66,7 @@ function BubbleButton({
 }
 
 export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
-  function MiniEditor({ onChange, placeholder, className, initialContent }, ref) {
+  function MiniEditor({ onChange, placeholder, className, initialContent, projectId }, ref) {
     const containerRef = useRef<HTMLDivElement>(null)
     const STORAGE_KEY = 'mini-editor-height'
     const [height, setHeight] = useState(() => {
@@ -64,24 +74,58 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
       return saved ? parseInt(saved, 10) : 200
     })
 
-    const startResize = useCallback((e: React.MouseEvent) => {
-      e.preventDefault()
-      const startY = e.clientY
-      const startHeight = containerRef.current?.offsetHeight ?? height
+    // ── Wiki page link suggestion state ───────────────────────────────────────
+    // The dropdown is rendered as JSX inside this component (not via ReactRenderer
+    // into document.body). This is critical: when MiniEditor is used inside a
+    // Radix Dialog, any element appended outside the dialog DOM subtree triggers
+    // Radix's "click outside" focus management — blurring the editor and removing
+    // the dropdown before the click fires. Rendering inline avoids all of that.
+    const [linkSuggestion, setLinkSuggestion] = useState<PageLinkSuggestionState>(
+      PAGE_LINK_SUGGESTION_INACTIVE,
+    )
+    const wikiListRef = useRef<WikiPageLinkListHandle>(null)
 
-      function onMouseMove(ev: MouseEvent) {
-        const next = Math.max(120, startHeight + ev.clientY - startY)
-        setHeight(next)
-        localStorage.setItem(STORAGE_KEY, String(next))
-      }
-      function onMouseUp() {
-        window.removeEventListener('mousemove', onMouseMove)
-        window.removeEventListener('mouseup', onMouseUp)
-      }
-      window.addEventListener('mousemove', onMouseMove)
-      window.addEventListener('mouseup', onMouseUp)
-    }, [height])
+    const { data: wikiPages = [] } = useAllWikiPages(projectId)
+    const pagesRef = useRef<WikiPageListItem[]>(wikiPages)
+    pagesRef.current = wikiPages
 
+    // Extension is built once per projectId; reads from pagesRef for live data.
+    const pageLinkExtension = useMemo(
+      () =>
+        projectId
+          ? buildPageLinkExtension(
+              () => pagesRef.current,
+              projectId,
+              setLinkSuggestion,
+              () => wikiListRef.current,
+            )
+          : null,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [projectId],
+    )
+
+    // ── Resize handle ─────────────────────────────────────────────────────────
+    const startResize = useCallback(
+      (e: React.MouseEvent) => {
+        e.preventDefault()
+        const startY = e.clientY
+        const startHeight = containerRef.current?.offsetHeight ?? height
+        function onMouseMove(ev: MouseEvent) {
+          const next = Math.max(120, startHeight + ev.clientY - startY)
+          setHeight(next)
+          localStorage.setItem(STORAGE_KEY, String(next))
+        }
+        function onMouseUp() {
+          window.removeEventListener('mousemove', onMouseMove)
+          window.removeEventListener('mouseup', onMouseUp)
+        }
+        window.addEventListener('mousemove', onMouseMove)
+        window.addEventListener('mouseup', onMouseUp)
+      },
+      [height],
+    )
+
+    // ── Editor ────────────────────────────────────────────────────────────────
     const editor = useEditor({
       content: initialContent ?? '',
       extensions: [
@@ -96,6 +140,7 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
         TableCell,
         Link.configure({ openOnClick: false, autolink: true }),
         Underline,
+        ...(pageLinkExtension ? [pageLinkExtension] : []),
       ],
       onUpdate: ({ editor }) => {
         onChange?.(editor.getHTML(), editor.isEmpty, editor.getJSON() as Record<string, unknown>)
@@ -115,9 +160,7 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
     })
 
     useImperativeHandle(ref, () => ({
-      clear: () => {
-        editor?.commands.clearContent(true)
-      },
+      clear: () => editor?.commands.clearContent(true),
     }))
 
     function handleSetLink() {
@@ -132,13 +175,28 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
       }
     }
 
+    // Position the dropdown relative to the MiniEditor container using absolute
+    // positioning so that the dialog's CSS transform (-translate-x-1/2 -translate-y-1/2)
+    // doesn't corrupt `position: fixed` coordinates.
+    const suggestionPos = (() => {
+      if (!linkSuggestion.active || !linkSuggestion.getClientRect) return null
+      const cursorRect = linkSuggestion.getClientRect()
+      const containerRect = containerRef.current?.getBoundingClientRect()
+      if (!containerRect) return null
+      return {
+        top: (cursorRect?.bottom ?? containerRect.bottom) - containerRect.top + 4,
+        left: (cursorRect?.left ?? containerRect.left) - containerRect.left,
+      }
+    })()
+
     return (
       <div
         ref={containerRef}
         style={{ height }}
         className={cn(
-          'flex flex-col rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900',
-          'overflow-hidden',
+          // No overflow-hidden here: absolute-positioned dropdown must escape the container.
+          // The inner flex children are constrained by layout so nothing else overflows.
+          'relative flex flex-col rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900',
           className,
         )}
       >
@@ -150,54 +208,32 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
             tippyOptions={{ duration: 100 }}
             className="flex items-center gap-0.5 rounded-lg bg-gray-800 px-1.5 py-1 shadow-lg"
           >
-            <BubbleButton
-              title="Negrito"
-              active={editor.isActive('bold')}
-              onClick={() => editor.chain().focus().toggleBold().run()}
-            >
+            <BubbleButton title="Negrito" active={editor.isActive('bold')}
+              onClick={() => editor.chain().focus().toggleBold().run()}>
               <Bold className="h-3.5 w-3.5" />
             </BubbleButton>
-            <BubbleButton
-              title="Itálico"
-              active={editor.isActive('italic')}
-              onClick={() => editor.chain().focus().toggleItalic().run()}
-            >
+            <BubbleButton title="Itálico" active={editor.isActive('italic')}
+              onClick={() => editor.chain().focus().toggleItalic().run()}>
               <Italic className="h-3.5 w-3.5" />
             </BubbleButton>
-            <BubbleButton
-              title="Sublinhado"
-              active={editor.isActive('underline')}
-              onClick={() => editor.chain().focus().toggleUnderline().run()}
-            >
+            <BubbleButton title="Sublinhado" active={editor.isActive('underline')}
+              onClick={() => editor.chain().focus().toggleUnderline().run()}>
               <UnderlineIcon className="h-3.5 w-3.5" />
             </BubbleButton>
-            <BubbleButton
-              title="Tachado"
-              active={editor.isActive('strike')}
-              onClick={() => editor.chain().focus().toggleStrike().run()}
-            >
+            <BubbleButton title="Tachado" active={editor.isActive('strike')}
+              onClick={() => editor.chain().focus().toggleStrike().run()}>
               <Strikethrough className="h-3.5 w-3.5" />
             </BubbleButton>
             <div className="mx-1 h-4 w-px bg-gray-600" />
-            <BubbleButton
-              title="Destaque"
-              active={editor.isActive('highlight')}
-              onClick={() => editor.chain().focus().toggleHighlight().run()}
-            >
+            <BubbleButton title="Destaque" active={editor.isActive('highlight')}
+              onClick={() => editor.chain().focus().toggleHighlight().run()}>
               <Highlighter className="h-3.5 w-3.5" />
             </BubbleButton>
-            <BubbleButton
-              title="Código inline"
-              active={editor.isActive('code')}
-              onClick={() => editor.chain().focus().toggleCode().run()}
-            >
+            <BubbleButton title="Código inline" active={editor.isActive('code')}
+              onClick={() => editor.chain().focus().toggleCode().run()}>
               <Code className="h-3.5 w-3.5" />
             </BubbleButton>
-            <BubbleButton
-              title="Link"
-              active={editor.isActive('link')}
-              onClick={handleSetLink}
-            >
+            <BubbleButton title="Link" active={editor.isActive('link')} onClick={handleSetLink}>
               <LinkIcon className="h-3.5 w-3.5" />
             </BubbleButton>
           </BubbleMenu>
@@ -220,6 +256,49 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
             <line x1="4" y1="5" x2="20" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </div>
+
+        {/* Wiki page link dropdown — rendered inline so it's inside the dialog DOM tree.
+            Uses position:absolute relative to this container (which is position:relative)
+            so the dialog's CSS transform doesn't corrupt fixed-position coordinates. */}
+        {linkSuggestion.active && suggestionPos && (
+          <div
+            style={{
+              position: 'absolute',
+              top: suggestionPos.top,
+              left: suggestionPos.left,
+              zIndex: 9999,
+            }}
+          >
+            <WikiPageLinkList
+              ref={wikiListRef}
+              items={linkSuggestion.items}
+              command={(page) => {
+                const range = linkSuggestion.range
+                console.log('[cmd] fired — editor:', !!editor, 'range:', range, 'page:', page.title, 'projectId:', projectId)
+                if (editor && range) {
+                  const href = `/projects/${projectId}/wiki/${page.id}`
+                  try {
+                    // Use ProseMirror transaction directly — TipTap chain silently no-ops
+                    const { state, dispatch } = editor.view
+                    const linkMarkType = state.schema.marks.link
+                    console.log('[cmd] linkMarkType:', linkMarkType, 'schema marks:', Object.keys(state.schema.marks))
+                    if (!linkMarkType) return
+                    const tr = state.tr
+                    tr.delete(range.from, range.to)
+                    const linked = state.schema.text(page.title, [linkMarkType.create({ href })])
+                    const space = state.schema.text(' ')
+                    tr.insert(range.from, linked)
+                    tr.insert(range.from + page.title.length, space)
+                    dispatch(tr)
+                  } catch (err) {
+                    console.error('[cmd] error:', err)
+                  }
+                }
+                setLinkSuggestion(PAGE_LINK_SUGGESTION_INACTIVE)
+              }}
+            />
+          </div>
+        )}
       </div>
     )
   },

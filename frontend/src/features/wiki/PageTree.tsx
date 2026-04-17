@@ -5,6 +5,8 @@ import { ChevronDown, ChevronRight, FileText, Plus, MoreHorizontal, Pencil, Tras
 import { useWikiPages, useCreateWikiPage, useUpdateWikiPage, useDeleteWikiPage } from '@/hooks/useWiki'
 import type { WikiPageListItem } from '@/types'
 import { cn } from '@/lib/utils'
+import { TemplatePickerModal } from './TemplatePickerModal'
+import type { WikiTemplate } from './templates'
 
 interface PageTreeNodeProps {
   page: WikiPageListItem
@@ -18,6 +20,7 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
   const [renameValue, setRenameValue] = useState(page.title)
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
+  const [templateOpen, setTemplateOpen] = useState(false)
   const renameInputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -53,11 +56,23 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
   }
 
   function handleAddChild() {
+    setTemplateOpen(true)
+    setExpanded(true)
+  }
+
+  function handleCreateFromTemplate(template: WikiTemplate | null) {
+    setTemplateOpen(false)
     createPage.mutate(
-      { spaceId, data: { title: 'Nova página', content: {}, parentId: page.id } },
+      {
+        spaceId,
+        data: {
+          title: template ? template.title : 'Nova página',
+          content: template ? template.content : {},
+          parentId: page.id,
+        },
+      },
       { onSuccess: (created) => navigate(created.id) },
     )
-    setExpanded(true)
   }
 
   function handleRenameSubmit() {
@@ -203,6 +218,13 @@ function PageTreeNode({ page, spaceId, depth = 0 }: PageTreeNodeProps) {
             depth={depth + 1}
           />
         ))}
+
+      <TemplatePickerModal
+        open={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        onCreate={handleCreateFromTemplate}
+        loading={createPage.isPending}
+      />
     </div>
   )
 }
@@ -215,10 +237,18 @@ export function PageTree({ spaceId }: PageTreeProps) {
   const { data: rootPages = [] } = useWikiPages(spaceId, null)
   const createPage = useCreateWikiPage()
   const navigate = useNavigate()
+  const [templateOpen, setTemplateOpen] = useState(false)
 
-  function handleCreateRoot() {
+  function handleCreateFromTemplate(template: WikiTemplate | null) {
+    setTemplateOpen(false)
     createPage.mutate(
-      { spaceId, data: { title: 'Nova página', content: {} } },
+      {
+        spaceId,
+        data: {
+          title: template ? template.title : 'Nova página',
+          content: template ? template.content : {},
+        },
+      },
       { onSuccess: (created) => navigate(created.id) },
     )
   }
@@ -231,17 +261,25 @@ export function PageTree({ spaceId }: PageTreeProps) {
         </span>
         <button
           type="button"
-          onClick={handleCreateRoot}
+          onClick={() => setTemplateOpen(true)}
           className="flex h-5 w-5 items-center justify-center rounded text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-400"
-          aria-label="Nova página raiz"
+          aria-label="Nova página"
           title="Nova página"
         >
           <Plus className="h-3.5 w-3.5" />
         </button>
       </div>
+
       {rootPages.map((page) => (
         <PageTreeNode key={page.id} page={page} spaceId={spaceId} />
       ))}
+
+      <TemplatePickerModal
+        open={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        onCreate={handleCreateFromTemplate}
+        loading={createPage.isPending}
+      />
     </div>
   )
 }

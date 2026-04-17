@@ -184,8 +184,9 @@ export function IssueForm({ projectId, open, onClose, issue, defaultStateId, par
           </label>
           <MiniEditor
             initialContent={description ?? undefined}
-            placeholder="Detalhes opcionais…"
+            placeholder="Detalhes opcionais… (digite [[ para inserir um link de página wiki)"
             onChange={(html, isEmpty, json) => setDescription(isEmpty ? null : json)}
+            projectId={projectId}
           />
         </div>
 

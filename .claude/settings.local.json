@@ -195,7 +195,9 @@
       "Bash(MSYS_NO_PATHCONV=1 docker cp:*)",
       "Bash(git:*)",
       "Bash(wsl ls:*)",
-      "Bash(wsl:*)"
+      "Bash(wsl:*)",
+      "Bash(rsync -av /mnt/d/projecthub/frontend/src/ /home/robertogeiss/projecthub/frontend/src/)",
+      "Bash(wsl.exe *)"
     ]
   }
 }
