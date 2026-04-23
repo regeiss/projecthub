@@ -138,7 +138,7 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
         TableRow,
         TableHeader,
         TableCell,
-        Link.configure({ openOnClick: false, autolink: true }),
+        Link.configure({ openOnClick: true, autolink: true }),
         Underline,
         ...(pageLinkExtension ? [pageLinkExtension] : []),
       ],
@@ -189,10 +189,23 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
       }
     })()
 
+    function handleEditorClick(e: React.MouseEvent<HTMLDivElement>) {
+      const target = e.target as HTMLElement
+      const anchor = target.closest('a') as HTMLAnchorElement | null
+      if (anchor?.href) {
+        const href = anchor.getAttribute('href')
+        if (href && href.startsWith('/')) {
+          e.preventDefault()
+          window.location.href = href
+        }
+      }
+    }
+
     return (
       <div
         ref={containerRef}
         style={{ height }}
+        onClick={handleEditorClick}
         className={cn(
           // No overflow-hidden here: absolute-positioned dropdown must escape the container.
           // The inner flex children are constrained by layout so nothing else overflows.
@@ -274,25 +287,22 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
               items={linkSuggestion.items}
               command={(page) => {
                 const range = linkSuggestion.range
-                console.log('[cmd] fired — editor:', !!editor, 'range:', range, 'page:', page.title, 'projectId:', projectId)
                 if (editor && range) {
                   const href = `/projects/${projectId}/wiki/${page.id}`
-                  try {
-                    // Use ProseMirror transaction directly — TipTap chain silently no-ops
-                    const { state, dispatch } = editor.view
-                    const linkMarkType = state.schema.marks.link
-                    console.log('[cmd] linkMarkType:', linkMarkType, 'schema marks:', Object.keys(state.schema.marks))
-                    if (!linkMarkType) return
-                    const tr = state.tr
-                    tr.delete(range.from, range.to)
-                    const linked = state.schema.text(page.title, [linkMarkType.create({ href })])
-                    const space = state.schema.text(' ')
-                    tr.insert(range.from, linked)
-                    tr.insert(range.from + page.title.length, space)
-                    dispatch(tr)
-                  } catch (err) {
-                    console.error('[cmd] error:', err)
-                  }
+                  // Pass the full range so insertContentAt handles delete+insert atomically.
+                  // JSON content format is more reliable than HTML parsing for mark application.
+                  editor
+                    .chain()
+                    .focus()
+                    .insertContentAt(range, [
+                      {
+                        type: 'text',
+                        text: page.title,
+                        marks: [{ type: 'link', attrs: { href } }],
+                      },
+                      { type: 'text', text: ' ' },
+                    ])
+                    .run()
                 }
                 setLinkSuggestion(PAGE_LINK_SUGGESTION_INACTIVE)
               }}

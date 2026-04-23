@@ -11,6 +11,7 @@ import { BacklogPage } from './features/backlog/BacklogPage'
 import { CyclesPage } from './features/cycles/CyclesPage'
 import { CycleDetail } from './features/cycles/CycleDetail'
 import { IssueDetailPage } from './features/issues/IssueDetailPage'
+import { ProjectReportsPage } from './features/projects/ProjectReportsPage'
 import { WikiLayout } from './features/wiki/WikiLayout'
 import { WikiPage } from './features/wiki/WikiPage'
 import { GanttPage } from './features/gantt/GanttPage'
@@ -42,6 +43,7 @@ export default function App() {
               <Route path="cycles" element={<CyclesPage />} />
               <Route path="cycles/:cycleId" element={<CycleDetail />} />
               <Route path="milestones" element={<MilestonesPage />} />
+              <Route path="reports" element={<ProjectReportsPage />} />
               <Route path="risks" element={<RisksPage />} />
               <Route path="modules" element={<ModulesPage />} />
               <Route path="gantt" element={<GanttPage />} />

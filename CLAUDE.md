@@ -25,7 +25,8 @@ npm run test:watch   # Vitest watch mode
 cd backend
 
 # With docker compose (recommended — brings up DB + Redis)
-docker compose up api
+docker compose --profile local-db up api   # For local database
+# docker compose up api                     # For remote database
 
 # Or with a venv, after setting env vars:
 python manage.py runserver        # Dev server
@@ -40,9 +41,10 @@ celery -A config beat --scheduler django_celery_beat.schedulers:DatabaseSchedule
 ### Full stack via Docker Compose
 
 ```bash
-docker compose up                          # Starts all services
-docker compose --profile monitoring up    # Also starts Flower (Celery UI on :5555)
-docker compose --profile keycloak up      # Also starts bundled Keycloak on :8080
+docker compose --profile local-db up       # Starts all services with local PostgreSQL
+docker compose up                          # Starts all services with remote database
+docker compose --profile monitoring up     # Also starts Flower (Celery UI on :5555)
+docker compose --profile local-db --profile keycloak up       # Also starts bundled Keycloak on :8080 (requires local DB)
 ```
 
 ### Run a single backend test
@@ -82,6 +84,7 @@ features/ (pages + business logic)
 ### Permissions
 
 Custom permissions in `core/permissions.py`. Never use DRF's `IsAdminUser`.
+
 - `IsWorkspaceMember` — any authenticated member of the workspace
 - `IsProjectAdmin` — project-level admin role
 - Workspace-level admin (`user.role == "admin"`) bypasses project-level checks
@@ -103,6 +106,7 @@ Issue positions use a float `sort_order`. When dragging, the new value is the mi
 ## Key conventions
 
 ### Backend
+
 - All PKs are UUIDs.
 - `request.user` is `WorkspaceMember`, not Django's `User`. Never reference `request.user.id` expecting a Django User PK.
 - Never use raw SQL — always use the ORM or parameterised queries.
@@ -110,6 +114,7 @@ Issue positions use a float `sort_order`. When dragging, the new value is the mi
 - Wiki content is sanitised with `bleach` before saving.
 
 ### Frontend
+
 - Use `@/` path alias for `frontend/src/`.
 - Use `cn()` from `lib/utils.ts` for conditional Tailwind classes.
 - Use `import.meta.env.VITE_*` for env vars — never `process.env`.
@@ -117,6 +122,7 @@ Issue positions use a float `sort_order`. When dragging, the new value is the mi
 - API responses use `snake_case`; TypeScript types use `camelCase`. Mapping happens in `services/`.
 
 ### Routing
+
 All project-level pages live under `/projects/:projectId/<tab>` and are wrapped in `ProjectProvider`, which sets `currentProject` in `workspaceStore`. Add new project tabs to both `ProjectNav.tsx` (navigation) and `App.tsx` (route).
 
 ---
@@ -125,11 +131,11 @@ All project-level pages live under `/projects/:projectId/<tab>` and are wrapped 
 
 See `docs/ARCHITECTURE.md` for the full list. The most critical:
 
-| Variable | Used by |
-|---|---|
-| `VITE_API_URL` | Frontend → API base URL |
-| `VITE_WS_URL` | Frontend → WebSocket base URL |
-| `VITE_KEYCLOAK_*` | Frontend → Keycloak client config |
-| `DATABASE_URL` | Django ORM |
-| `REDIS_URL` / `CELERY_BROKER_URL` | Cache, channels, Celery |
-| `KEYCLOAK_SERVER_URL` / `KEYCLOAK_REALM` / `KEYCLOAK_CLIENT_SECRET` | JWT verification |
+| Variable                                                            | Used by                           |
+| ------------------------------------------------------------------- | --------------------------------- |
+| `VITE_API_URL`                                                      | Frontend → API base URL           |
+| `VITE_WS_URL`                                                       | Frontend → WebSocket base URL     |
+| `VITE_KEYCLOAK_*`                                                   | Frontend → Keycloak client config |
+| `DATABASE_URL`                                                      | Django ORM                        |
+| `REDIS_URL` / `CELERY_BROKER_URL`                                   | Cache, channels, Celery           |
+| `KEYCLOAK_SERVER_URL` / `KEYCLOAK_REALM` / `KEYCLOAK_CLIENT_SECRET` | JWT verification                  |

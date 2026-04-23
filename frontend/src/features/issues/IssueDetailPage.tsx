@@ -34,6 +34,18 @@ export function IssueDetailPage() {
   const [commentEmpty, setCommentEmpty] = useState(true)
   const commentEditorRef = useRef<MiniEditorHandle>(null)
 
+  // Handle clicks on links in rendered HTML (dangerouslySetInnerHTML)
+  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement
+    if (target.tagName === 'A' && target.getAttribute('href')) {
+      const href = target.getAttribute('href')
+      if (href?.startsWith('/')) {
+        e.preventDefault()
+        navigate(href)
+      }
+    }
+  }
+
   if (isLoading) return <PageSpinner />
   if (!issue) return <p className="p-6 text-sm text-gray-500 dark:text-gray-400">Issue não encontrada</p>
 
@@ -103,7 +115,8 @@ export function IssueDetailPage() {
 
           {issue.description ? (
             <div
-              className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300"
+              onClick={handleContentClick}
+              className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300 prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer"
               dangerouslySetInnerHTML={{ __html: tiptapToHtml(issue.description) }}
             />
           ) : (
@@ -143,7 +156,8 @@ export function IssueDetailPage() {
                     </span>
                   </div>
                   <div
-                    className="prose prose-sm max-w-none text-sm text-gray-700 dark:text-gray-300 dark:prose-invert"
+                    onClick={handleContentClick}
+                    className="prose prose-sm max-w-none text-sm text-gray-700 dark:text-gray-300 dark:prose-invert prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer"
                     dangerouslySetInnerHTML={{ __html: tiptapToHtml(c.content) }}
                   />
                 </div>
@@ -153,6 +167,7 @@ export function IssueDetailPage() {
             <form onSubmit={handleComment} className="mt-3">
               <MiniEditor
                 ref={commentEditorRef}
+                projectId={projectId}
                 placeholder="Escreva um comentário…"
                 onChange={(html, isEmpty, json) => {
                   setCommentJson(json)
