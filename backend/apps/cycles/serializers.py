@@ -1,8 +1,12 @@
 from rest_framework import serializers
 
-from apps.issues.serializers import IssueSerializer
-
-from .models import Cycle, CycleIssue
+from .models import (
+    Cycle,
+    CycleIssue,
+    SprintPlan,
+    SprintPlanAllocation,
+    SprintPlanMemberCapacity,
+)
 
 
 class CycleSerializer(serializers.ModelSerializer):
@@ -49,3 +53,55 @@ class CycleProgressSerializer(serializers.Serializer):
     backlog = serializers.IntegerField()
     cancelled = serializers.IntegerField()
     completion_rate = serializers.FloatField()
+
+
+class SprintPlanMemberCapacitySerializer(serializers.ModelSerializer):
+    member_name = serializers.CharField(source="member.name", read_only=True)
+    member_avatar = serializers.CharField(source="member.avatar_url", read_only=True)
+
+    class Meta:
+        model = SprintPlanMemberCapacity
+        fields = [
+            "id",
+            "member",
+            "member_name",
+            "member_avatar",
+            "default_days",
+            "override_days",
+            "note",
+        ]
+
+
+class SprintPlanAllocationSerializer(serializers.ModelSerializer):
+    issue_title = serializers.CharField(source="issue.title", read_only=True)
+    issue_sequence_id = serializers.IntegerField(source="issue.sequence_id", read_only=True)
+
+    class Meta:
+        model = SprintPlanAllocation
+        fields = [
+            "id",
+            "issue",
+            "issue_title",
+            "issue_sequence_id",
+            "planned_member",
+            "planned_days",
+            "planned_story_points",
+            "rank",
+            "note",
+        ]
+
+
+class SprintPlanSerializer(serializers.ModelSerializer):
+    member_capacities = SprintPlanMemberCapacitySerializer(many=True, read_only=True)
+    allocations = SprintPlanAllocationSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = SprintPlan
+        fields = [
+            "id",
+            "cycle",
+            "status",
+            "applied_at",
+            "member_capacities",
+            "allocations",
+        ]

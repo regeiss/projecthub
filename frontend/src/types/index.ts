@@ -7,6 +7,7 @@ export * from './portfolio'
 export * from './milestone'
 export * from './risk'
 export * from './resource'
+export * from './planning'
 
 export interface PaginatedResponse<T> {
   count: number
