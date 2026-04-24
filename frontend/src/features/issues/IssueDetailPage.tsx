@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, Edit2, Trash2, MessageSquare, Flag } from 'lucide-react'
-import { useIssue, useUpdateIssue, useDeleteIssue, useIssueComments, useAddComment } from '@/hooks/useIssues'
+import { useIssue, useUpdateIssue, useDeleteIssue, useIssueComments, useAddComment, useEpics } from '@/hooks/useIssues'
 import { useProjectStates, useProjectMembers, useProjectLabels } from '@/hooks/useProjects'
+import { EpicBadge } from './EpicBadge'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Avatar } from '@/components/ui/Avatar'
@@ -23,12 +24,27 @@ export function IssueDetailPage() {
   const { data: issue, isLoading } = useIssue(projectId, issueId)
   const { data: states = [] } = useProjectStates(projectId)
   const { data: comments = [] } = useIssueComments(projectId, issueId)
+  const { data: epics = [] } = useEpics(projectId)
   const deleteIssue = useDeleteIssue()
+  const updateIssue = useUpdateIssue()
   const addComment = useAddComment()
   const [editing, setEditing] = useState(false)
+  const [editingEpic, setEditingEpic] = useState(false)
   const [commentJson, setCommentJson] = useState<Record<string, unknown>>({})
   const [commentEmpty, setCommentEmpty] = useState(true)
   const commentEditorRef = useRef<MiniEditorHandle>(null)
+
+  // Handle clicks on links in rendered HTML (dangerouslySetInnerHTML)
+  const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement
+    if (target.tagName === 'A' && target.getAttribute('href')) {
+      const href = target.getAttribute('href')
+      if (href?.startsWith('/')) {
+        e.preventDefault()
+        navigate(href)
+      }
+    }
+  }
 
   if (isLoading) return <PageSpinner />
   if (!issue) return <p className="p-6 text-sm text-gray-500 dark:text-gray-400">Issue não encontrada</p>
@@ -99,7 +115,8 @@ export function IssueDetailPage() {
 
           {issue.description ? (
             <div
-              className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300"
+              onClick={handleContentClick}
+              className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300 prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer"
               dangerouslySetInnerHTML={{ __html: tiptapToHtml(issue.description) }}
             />
           ) : (
@@ -139,7 +156,8 @@ export function IssueDetailPage() {
                     </span>
                   </div>
                   <div
-                    className="prose prose-sm max-w-none text-sm text-gray-700 dark:text-gray-300 dark:prose-invert"
+                    onClick={handleContentClick}
+                    className="prose prose-sm max-w-none text-sm text-gray-700 dark:text-gray-300 dark:prose-invert prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer"
                     dangerouslySetInnerHTML={{ __html: tiptapToHtml(c.content) }}
                   />
                 </div>
@@ -149,6 +167,7 @@ export function IssueDetailPage() {
             <form onSubmit={handleComment} className="mt-3">
               <MiniEditor
                 ref={commentEditorRef}
+                projectId={projectId}
                 placeholder="Escreva um comentário…"
                 onChange={(html, isEmpty, json) => {
                   setCommentJson(json)
@@ -190,6 +209,47 @@ export function IssueDetailPage() {
               {priorityLabel(issue.priority)}
             </span>
           </DetailField>
+
+          {issue.type !== 'epic' && (
+            <DetailField label="Épico">
+              {editingEpic ? (
+                <select
+                  autoFocus
+                  defaultValue={issue.epicId ?? ''}
+                  onChange={(e) => {
+                    updateIssue.mutate(
+                      {
+                        projectId,
+                        issueId: issue.id,
+                        data: { epicId: e.target.value || null },
+                      },
+                      { onSuccess: () => setEditingEpic(false) },
+                    )
+                  }}
+                  onBlur={() => setEditingEpic(false)}
+                  className="h-7 w-full rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-1 text-xs text-gray-900 dark:text-gray-100"
+                >
+                  <option value="">— Nenhum —</option>
+                  {epics.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      #{e.sequenceId} {e.title}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <button
+                  onClick={() => setEditingEpic(true)}
+                  className="rounded p-0.5 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  {issue.epic ? (
+                    <EpicBadge epic={issue.epic} />
+                  ) : (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
+                  )}
+                </button>
+              )}
+            </DetailField>
+          )}
 
           {issue.assignee && (
             <DetailField label="Responsável">

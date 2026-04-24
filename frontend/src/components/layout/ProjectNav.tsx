@@ -1,5 +1,5 @@
 import { NavLink, useParams } from 'react-router-dom'
-import { KanbanSquare, List, RotateCcw, Network, BookOpen, Flag, ShieldAlert, Layers, Settings } from 'lucide-react'
+import { BarChart3, KanbanSquare, List, RotateCcw, Network, BookOpen, Flag, ShieldAlert, Layers, Settings, BookMarked, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { Project } from '@/types'
 
@@ -10,12 +10,15 @@ interface ProjectNavProps {
 const tabs = [
   { path: 'board', label: 'Painel', icon: KanbanSquare },
   { path: 'backlog', label: 'Backlog', icon: List },
+  { path: 'epics', label: 'Épicos', icon: BookMarked },
   { path: 'cycles', label: 'Ciclos', icon: RotateCcw },
   { path: 'milestones', label: 'Milestones', icon: Flag },
+  { path: 'reports', label: 'Relatórios', icon: BarChart3 },
   { path: 'gantt', label: 'Gantt / CPM', icon: Network },
   { path: 'wiki', label: 'Wiki', icon: BookOpen },
   { path: 'modules', label: 'Módulos', icon: Layers },
   { path: 'risks', label: 'Riscos', icon: ShieldAlert },
+  { path: 'resources', label: 'Recursos', icon: Users },
   { path: 'settings', label: 'Configurações', icon: Settings },
 ]
 
@@ -36,7 +39,7 @@ export function ProjectNav({ project }: ProjectNavProps) {
               cn(
                 'flex h-7 items-center gap-1.5 rounded px-2 text-xs font-medium transition-colors',
                 isActive
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300'
+                  ? 'bg-primary-light dark:bg-primary/20 text-primary-text dark:text-primary'
                   : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200',
               )
             }

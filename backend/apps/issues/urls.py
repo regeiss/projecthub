@@ -2,6 +2,7 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import (
+    EpicIssuesView,
     IssueActivityListView,
     IssueAttachmentDestroyView,
     IssueAttachmentListCreateView,
@@ -57,6 +58,11 @@ urlpatterns = [
         "<uuid:issue_pk>/subtasks/",
         IssueSubtaskListCreateView.as_view(),
         name="issue-subtask-list",
+    ),
+    path(
+        "<uuid:issue_pk>/epic-issues/",
+        EpicIssuesView.as_view(),
+        name="epic-issues",
     ),
     # Router do IssueViewSet (deve vir por último para não capturar os nested)
     path("", include(router.urls)),

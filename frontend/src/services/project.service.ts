@@ -57,6 +57,9 @@ export const projectService = {
   createLabel: (projectId: string, data: Partial<Label>) =>
     api.post<Label>(`/projects/${projectId}/labels/`, data).then((r) => r.data),
 
+  updateLabel: (projectId: string, labelId: string, data: Partial<Label>) =>
+    api.patch<Label>(`/projects/${projectId}/labels/${labelId}/`, data).then((r) => r.data),
+
   deleteLabel: (projectId: string, labelId: string) =>
     api.delete(`/projects/${projectId}/labels/${labelId}/`),
 }

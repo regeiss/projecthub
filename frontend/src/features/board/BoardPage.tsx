@@ -27,8 +27,11 @@ import { Avatar } from '@/components/ui/Avatar'
 import { PageSpinner } from '@/components/ui/Spinner'
 import { PriorityCapsule, SizeCapsule } from '@/components/ui/IssueCapsules'
 import { truncate } from '@/lib/utils'
+import { tiptapToText } from '@/lib/editor'
 import { BoardFilters } from './BoardFilters'
+import type { IssueFilters } from '@/types'
 import { IssueForm } from '../issues/IssueForm'
+import { EpicBadge } from '../issues/EpicBadge'
 import { useNavigate } from 'react-router-dom'
 import { projectService } from '@/services/project.service'
 
@@ -72,10 +75,18 @@ function IssueCard({ issue }: { issue: Issue }) {
       style={{ ...style, borderLeftColor: PRIORITY_LEFT_COLOR[issue.priority] ?? PRIORITY_LEFT_COLOR.none }}
       onClick={() => navigate(`/projects/${projectId}/issues/${issue.id}`, { state: { from: `/projects/${projectId}/board` } })}
     >
-      <p className="text-xs text-gray-400 dark:text-gray-500 mb-1">{issue.sequenceId}</p>
-      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
+      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1 leading-snug">
         {truncate(issue.title, 80)}
       </p>
+      {issue.description && (() => {
+        const text = tiptapToText(issue.description)
+        return text ? (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed line-clamp-4">
+            {text}
+          </p>
+        ) : null
+      })()}
+      <EpicBadge epic={issue.epic} className="mb-2" />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           <PriorityCapsule priority={issue.priority} />
@@ -331,11 +342,11 @@ function KanbanColumn({
 export function BoardPage() {
   const { projectId = '' } = useParams()
   const qc = useQueryClient()
+  const [filters, setFilters] = useState<IssueFilters>({})
   const { data: states = [], isLoading: loadingStates } = useProjectStates(projectId)
-  const { data: issueData, isLoading: loadingIssues } = useIssues(projectId, {})
-  const issues: Issue[] = issueData?.results ?? []
+  const { data: issueData, isLoading: loadingIssues } = useIssues(projectId, filters)
+  const issues: Issue[] = (issueData?.results ?? []).filter((i) => i.type !== 'epic')
   const updateIssue = useUpdateIssue()
-
   const [activeIssue, setActiveIssue] = useState<Issue | null>(null)
   const [newIssueStateId, setNewIssueStateId] = useState<string | null>(null)
   const [hiddenStates, setHiddenStates] = useState<Set<string>>(new Set())
@@ -408,7 +419,7 @@ export function BoardPage() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2">
-        <BoardFilters projectId={projectId} />
+        <BoardFilters projectId={projectId} filters={filters} onFiltersChange={setFilters} />
       </div>
 
       <div className="flex flex-1 overflow-x-auto">

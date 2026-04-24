@@ -114,7 +114,7 @@ db-restore:
 # Copia todo o backend para o container e reinicia a API
 sync-backend:
 	@echo "Sincronizando backend → container..."
-	docker cp backend/. projecthub_api://app/
+	MSYS_NO_PATHCONV=1 docker cp backend/. projecthub_api:/app/
 	docker compose restart api
 	@echo "Done."
 

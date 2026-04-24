@@ -50,9 +50,6 @@ export function WorkspacePage() {
           <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
             Bem-vindo, {user?.name?.split(' ')[0]}
           </h1>
-          <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-            {workspace.name} — workspace ProjectHub
-          </p>
         </div>
         <Button onClick={() => navigate('/projects')}>
           <Plus className="h-3.5 w-3.5" />
