@@ -270,7 +270,7 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_PROXY: edge
-    command: start-dev
+    command: start-dev --import-realm
     ports:
       - "8080:8080"
     depends_on:
@@ -280,8 +280,9 @@ services:
       - keycloak                 # Só sobe com: docker compose --profile keycloak up
     networks:
       - projecthub_net
-    volumes: 
-      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema 
+    volumes:
+      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema
+      - ./assets/real-export.json:/opt/keycloak/data/import/realm-export.json:ro
 
 # =============================================================================
 volumes:

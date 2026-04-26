@@ -8,6 +8,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- **Keycloak realm export** (`assets/real-export.json`): realm `projecthub` com clientes
+  `projecthub-frontend` (public, PKCE) e `projecthub-backend` (confidential, service account),
+  audience mapper no frontend para incluir o backend no token, roles `workspace-admin` /
+  `workspace-member`, scopes padrão (openid, profile, email, roles) e dois usuários de dev
+  (`devadmin` / `devuser`)
+- **docker-compose.yml**: Keycloak agora usa `start-dev --import-realm` e monta
+  `assets/real-export.json` em `/opt/keycloak/data/import/realm-export.json` para criação
+  automática do realm na primeira inicialização
 - **Portfolio — siglas EVM traduzidas para PT-BR (2026-04-09)**: PV→VP (Valor Planejado), EV→VA (Valor Agregado), CPI→IDC (Índice de Custo), SPI→IDP (Índice de Prazo). Atualizado nos cards de resumo, cabeçalhos da tabela e textos de apoio do dashboard e relatório financeiro.
 - **Portfolio — colunas de status e datas no dashboard (2026-04-09)**: a tabela de projetos do dashboard executivo agora exibe coluna de status atual (Não iniciado / Em andamento / Concluído / Atrasado, como badge colorido), data de início e data de término. O status é derivado das datas e do RAG: projetos com data de término no passado e RAG RED são marcados como "Atrasado".
 - **Portfolio — aba "Financeiro" separada (2026-04-09)**: o relatório de situação financeira foi movido para sua própria aba no portfolio (ao lado de Dashboard / Roadmap / OKR). Novo arquivo `FinancialReport.tsx` com busca de dados própria via `usePortfolioDashboard`. A aba anterior dentro do Dashboard foi removida.
