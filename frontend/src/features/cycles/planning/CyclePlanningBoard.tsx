@@ -14,7 +14,12 @@ import { useIssues } from '@/hooks/useIssues'
 import { useProjectMembers } from '@/hooks/useProjects'
 import type { Cycle } from '@/types'
 import { ApplySprintPlanModal } from './ApplySprintPlanModal'
-import { computePlanningSummary, groupAllocationsByLane } from './planning-board-state'
+import {
+  computePlanningSummary,
+  groupAllocationsByLane,
+  normalizeNonNegativeDays,
+  normalizeNonNegativeNumber,
+} from './planning-board-state'
 import { PlanningMemberColumn } from './PlanningMemberColumn'
 import { PlanningSummary } from './PlanningSummary'
 
@@ -25,7 +30,7 @@ interface CyclePlanningBoardProps {
 }
 
 export function CyclePlanningBoard({ projectId, cycleId, cycle }: CyclePlanningBoardProps) {
-  const { data: plan, isLoading } = useCyclePlanning(projectId, cycleId)
+  const { data: plan, isLoading, isError } = useCyclePlanning(projectId, cycleId)
   const { data: members = [] } = useProjectMembers(projectId)
   const { data: issueData = { results: [] } } = useIssues(projectId, {})
   const applyPlan = useApplySprintPlan(projectId, cycleId)
@@ -39,8 +44,12 @@ export function CyclePlanningBoard({ projectId, cycleId, cycle }: CyclePlanningB
     return <PageSpinner />
   }
 
-  if (!plan) {
-    return null
+  if (isError || !plan) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-300">
+        Nao foi possivel carregar o planejamento da sprint.
+      </div>
+    )
   }
 
   const allocations = plan.allocations
@@ -107,8 +116,9 @@ export function CyclePlanningBoard({ projectId, cycleId, cycle }: CyclePlanningB
       createAllocation.mutate({
         issue: issue.id,
         plannedMember: overId === 'unassigned' ? null : overId,
-        plannedDays: issue.estimateDays == null ? null : String(issue.estimateDays),
-        plannedStoryPoints: issue.estimatePoints,
+        plannedDays:
+          issue.estimateDays == null ? null : normalizeNonNegativeDays(String(issue.estimateDays)),
+        plannedStoryPoints: normalizeNonNegativeNumber(issue.estimatePoints),
         rank: nextRank,
       })
     }

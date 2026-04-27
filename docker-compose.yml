@@ -54,8 +54,6 @@ services:
     image: postgres:16-alpine
     container_name: projecthub_db
     restart: unless-stopped
-    profiles:
-      - local-db                 # Só sobe com: docker compose --profile local-db up
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-projecthub}
       POSTGRES_USER: ${POSTGRES_USER:-projecthub}
@@ -111,7 +109,6 @@ services:
     <<: *django-env
     command: >
       sh -c "
-        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
         python manage.py wait_for_db &&
         python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput &&
@@ -124,6 +121,8 @@ services:
     ports:
       - "8000:8000"           # Remover em produção (acessar via Nginx)
     depends_on:
+      db:
+        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
@@ -146,17 +145,15 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      sh -c "
-        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
-        python manage.py wait_for_db &&
-        celery -A config worker
-        --loglevel=info
-        --concurrency=4
-        --queues=default,cpm,notifications,sync
-      "
+      celery -A config worker
+      --loglevel=info
+      --concurrency=4
+      --queues=default,cpm,notifications,sync
     volumes:
       - ./backend:/app
     depends_on:
+      db:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -173,16 +170,14 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      sh -c "
-        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
-        python manage.py wait_for_db &&
-        celery -A config beat
-        --loglevel=info
-        --scheduler django_celery_beat.schedulers:DatabaseScheduler
-      "
+      celery -A config beat
+      --loglevel=info
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - ./backend:/app
     depends_on:
+      db:
+        condition: service_healthy
       redis:
         condition: service_healthy
     networks:
@@ -199,12 +194,9 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      sh -c "
-        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
-        celery -A config flower
-        --port=5555
-        --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
-      "
+      celery -A config flower
+      --port=5555
+      --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
     ports:
       - "5555:5555"
     depends_on:
@@ -245,7 +237,7 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
-      - "8443:443"           # Changed from 443 to 8443 to avoid port conflict
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
@@ -278,17 +270,7 @@ services:
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_PROXY: edge
-      KC_DB_URL_PROPERTIES: "?connectTimeout=10000&tcpKeepAlives=true"
-    entrypoint:
-      - sh
-      - -c
-      - |
-        for i in {1..30}; do
-          timeout 2 bash -c "</dev/tcp/db/5432" 2>/dev/null && exec /opt/keycloak/bin/kc.sh start-dev
-          [ $$i -lt 30 ] && echo "Waiting for database... (attempt $$i/30)" && sleep 2
-        done
-        echo "Database connection timeout"
-        exit 1
+    command: start-dev --import-realm
     ports:
       - "8080:8080"
     depends_on:
@@ -298,8 +280,9 @@ services:
       - keycloak                 # Só sobe com: docker compose --profile keycloak up
     networks:
       - projecthub_net
-    volumes: 
-      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema 
+    volumes:
+      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema
+      - ./assets/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
 
 # =============================================================================
 volumes:

@@ -4,6 +4,7 @@ import { GripVertical } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import type { SprintPlanAllocation } from '@/types'
+import { normalizeNonNegativeDays, normalizeNonNegativeNumber } from './planning-board-state'
 
 interface PlanningIssueCardProps {
   allocation: SprintPlanAllocation
@@ -85,16 +86,26 @@ export function PlanningIssueCard({
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <Input
           label="Dias"
+          type="number"
+          min="0"
+          step="0.5"
           value={daysValue}
           onChange={(event) => setDaysValue(event.target.value)}
-          onBlur={() => onChangeDays?.(daysValue.trim() ? daysValue : null)}
+          onBlur={() => onChangeDays?.(normalizeNonNegativeDays(daysValue))}
         />
         <Input
           label="Pontos"
+          type="number"
+          min="0"
+          step="1"
           value={pointsValue}
           onChange={(event) => setPointsValue(event.target.value)}
           onBlur={() =>
-            onChangePoints?.(pointsValue.trim() ? Number(pointsValue) : null)
+            onChangePoints?.(
+              pointsValue.trim()
+                ? normalizeNonNegativeNumber(Number(pointsValue.trim()))
+                : null,
+            )
           }
         />
       </div>

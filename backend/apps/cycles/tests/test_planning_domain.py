@@ -140,6 +140,36 @@ class SprintPlanningDomainTests(TestCase):
         self.assertEqual(allocation.rank, 1)
         self.assertIsNone(allocation.note)
 
+    def test_ensure_sprint_plan_adds_capacity_for_member_added_after_plan_creation(self):
+        plan = ensure_sprint_plan(self.cycle, self.actor)
+        late_member = make_member(self.workspace, self.project, "Late Joiner", "late-joiner")
+        MemberCapacity.objects.create(
+            member=late_member,
+            year=2026,
+            month=4,
+            available_days=Decimal("22.0"),
+        )
+        MemberCapacity.objects.create(
+            member=late_member,
+            year=2026,
+            month=5,
+            available_days=Decimal("10.0"),
+        )
+
+        refreshed_plan = ensure_sprint_plan(self.cycle, self.actor)
+        capacity = refreshed_plan.member_capacities.get(member=late_member)
+        april_working = get_working_days(date(2026, 4, 1), date(2026, 4, 30))
+        may_working = get_working_days(date(2026, 5, 1), date(2026, 5, 31))
+        expected = (
+            Decimal("22.0") * Decimal(get_working_days(date(2026, 4, 28), date(2026, 4, 30))) / Decimal(april_working)
+            + Decimal("10.0") * Decimal(get_working_days(date(2026, 5, 1), date(2026, 5, 9))) / Decimal(may_working)
+        ).quantize(Decimal("0.01"))
+
+        self.assertEqual(plan.id, refreshed_plan.id)
+        self.assertEqual(refreshed_plan.member_capacities.count(), 3)
+        self.assertEqual(capacity.default_days, expected)
+        self.assertIsNone(capacity.override_days)
+
     def test_apply_sprint_plan_updates_live_issue_fields_and_marks_plan_applied(self):
         issue = make_issue(self.project, self.state, self.actor, "Planned issue", 2)
 

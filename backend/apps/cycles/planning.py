@@ -24,6 +24,8 @@ def ensure_sprint_plan(cycle, actor):
         if created:
             _bootstrap_member_capacities(plan)
             _bootstrap_allocations(plan)
+        else:
+            _sync_member_capacities(plan)
     return plan
 
 
@@ -78,6 +80,35 @@ def _bootstrap_member_capacities(plan):
                 member, plan.cycle.start_date, plan.cycle.end_date
             ),
         )
+
+
+def _sync_member_capacities(plan):
+    members = [
+        membership.member
+        for membership in ProjectMember.objects.select_related("member").filter(
+            project=plan.cycle.project
+        )
+    ]
+    existing_member_ids = set(
+        plan.member_capacities.values_list("member_id", flat=True)
+    )
+    missing_rows = []
+
+    for member in members:
+        if member.id in existing_member_ids:
+            continue
+        missing_rows.append(
+            SprintPlanMemberCapacity(
+                plan=plan,
+                member=member,
+                default_days=_prorated_capacity_for_cycle(
+                    member, plan.cycle.start_date, plan.cycle.end_date
+                ),
+            )
+        )
+
+    if missing_rows:
+        SprintPlanMemberCapacity.objects.bulk_create(missing_rows)
 
 
 def _bootstrap_allocations(plan):

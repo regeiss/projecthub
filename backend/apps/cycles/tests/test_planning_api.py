@@ -88,3 +88,21 @@ class SprintPlanApiTest(APITestCase):
         self.assertEqual(self.issue.estimate_days, 2.5)
         self.assertEqual(self.issue.estimate_points, 3)
         self.assertEqual(response.data["status"], "applied")
+
+    def test_create_allocation_rejects_negative_story_points(self):
+        plan = ensure_sprint_plan(self.cycle, self.admin)
+
+        response = self.client.post(
+            f"/api/v1/projects/{self.project.id}/cycles/{self.cycle.id}/plan/allocations/",
+            {
+                "issue": str(self.issue.id),
+                "planned_member": str(self.dev.id),
+                "planned_days": "1.00",
+                "planned_story_points": -1,
+                "rank": 0,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(plan.allocations.filter(issue=self.issue).exists())

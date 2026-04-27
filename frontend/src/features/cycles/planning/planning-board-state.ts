@@ -4,6 +4,27 @@ export function parseDays(value: string | null | undefined) {
   return value == null ? 0 : Number(value)
 }
 
+export function normalizeNonNegativeNumber(value: number | null | undefined) {
+  if (value == null || Number.isNaN(value) || value < 0) {
+    return null
+  }
+  return value
+}
+
+export function normalizeNonNegativeDays(value: string | null | undefined) {
+  if (value == null) {
+    return null
+  }
+
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  const parsed = Number(trimmed)
+  return normalizeNonNegativeNumber(parsed) == null ? null : trimmed
+}
+
 export function availableDays(
   capacity: Pick<SprintPlanMemberCapacity, 'defaultDays' | 'overrideDays'>,
 ) {

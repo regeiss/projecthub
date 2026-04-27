@@ -8,22 +8,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- **Issue description — wiki page links (2026-04-17)**: typing `[[` in the issue description editor opens a live-search dropdown of all wiki pages in the project. Selecting a page inserts a clickable link (`/projects/{id}/wiki/{pageId}`) using the existing `Link` mark. `MiniEditor` now accepts a `projectId` prop; `buildPageLinkExtension` + `WikiPageLinkList` added to `components/editor/`. New `useAllWikiPages(projectId)` hook fetches pages across the whole space. Architecture: dropdown rendered as inline JSX inside the dialog DOM tree (not via `ReactRenderer` to `document.body`) so Radix Dialog's `contains()` check passes and Radix never intercepts clicks. `position: absolute` relative to the MiniEditor container (not `position: fixed`) avoids the coordinate corruption caused by the dialog's `-translate-x-1/2 -translate-y-1/2` CSS transform. `onPointerDown + e.preventDefault()` on list items keeps editor focus so TipTap's suggestion `onExit` is not triggered before the command fires. Link inserted via TipTap JSON node format (`{ type: 'text', marks: [{ type: 'link' }] }`) rather than HTML string to guarantee mark application across all TipTap versions.
-- **Wiki — page templates (2026-04-17)**: template picker modal on every "new page" action (root `+` and child `+`). Four templates: 📋 Reunião (participants, agenda, notes, decisions, action tasks), 📖 Runbook (objective, prerequisites, steps, rollback, troubleshooting), ⚙️ Decisão Técnica/ADR (status, context, options, decision, consequences), 🔥 Postmortem (summary, impact, timeline, root cause, contributing factors, corrective actions, what went well). Blank page option always available. Files: `templates.ts`, `TemplatePickerModal.tsx`; `PageTree.tsx` updated.
-- **Project settings — label CRUD (2026-04-17)**: inline edit row (color swatches + name input), add form with live color preview, delete with confirmation dialog. `updateLabel` added to `projectService`. `LabelsSection` component replaces old read-only label list.
-- **Project settings — state CRUD + drag-to-reorder (2026-04-16)**: `SortableStateRow` with dnd-kit drag handle, add form with 11 color presets and category select, delete with confirmation. Sequence updated as midpoint of neighbors on drop (single API call). `StatesSection` component with `DndContext` + `SortableContext`.
-- **Backlog — point estimates + grooming mode (2026-04-16)**: inline editable `PointsCell` (click to edit, Enter/Escape); Fibonacci chip selector (`GroomingChips`) toggled via Sparkles button; total points summary in header ("X pts total · Y/Z estimadas"); points badge per state group header. Grooming mode hides Size column.
-- **Board — issue filters (2026-04-16)**: filter pills for Responsável (assigneeId), Sprint (cycleId), Prioridade, and Tipo with active state highlighting and per-pill clear button. "Limpar" button clears all filters. `BoardFilters` now accepts `filters` + `onFiltersChange` props; `BoardPage` passes filter state to `useIssues`.
-
-### Fixed
-- `useProjectStates` / `useProjectLabels` hooks: replaced implicit `any` in `select` with typed `IssueState[]` / `Label[]` union.
-- `BoardPage` blank screen (TDZ): `useState<IssueFilters>` moved before `useIssues` call.
-- Tooltip staying open after hover: `disableHoverableContent` on `RadixTooltip.Root` + `data-[state]` exit animation classes.
-- Dropdown staying open after hover: added `data-[state=open/closed]` animation classes to `DropdownContent`.
-- Header: shows real active workspace name from `workspaceStore` instead of hardcoded "ProjectHub".
-- Sidebar + tooltip hover labels: background changed to `bg-primary` to match active theme color.
-
-### Added
+- **Keycloak realm export** (`assets/real-export.json`): realm `projecthub` com clientes
+  `projecthub-frontend` (public, PKCE) e `projecthub-backend` (confidential, service account),
+  audience mapper no frontend para incluir o backend no token, roles `workspace-admin` /
+  `workspace-member`, scopes padrão (openid, profile, email, roles) e dois usuários de dev
+  (`devadmin` / `devuser`)
+- **docker-compose.yml**: Keycloak agora usa `start-dev --import-realm` e monta
+  `assets/real-export.json` em `/opt/keycloak/data/import/realm-export.json` para criação
+  automática do realm na primeira inicialização
 - **Portfolio — siglas EVM traduzidas para PT-BR (2026-04-09)**: PV→VP (Valor Planejado), EV→VA (Valor Agregado), CPI→IDC (Índice de Custo), SPI→IDP (Índice de Prazo). Atualizado nos cards de resumo, cabeçalhos da tabela e textos de apoio do dashboard e relatório financeiro.
 - **Portfolio — colunas de status e datas no dashboard (2026-04-09)**: a tabela de projetos do dashboard executivo agora exibe coluna de status atual (Não iniciado / Em andamento / Concluído / Atrasado, como badge colorido), data de início e data de término. O status é derivado das datas e do RAG: projetos com data de término no passado e RAG RED são marcados como "Atrasado".
 - **Portfolio — aba "Financeiro" separada (2026-04-09)**: o relatório de situação financeira foi movido para sua própria aba no portfolio (ao lado de Dashboard / Roadmap / OKR). Novo arquivo `FinancialReport.tsx` com busca de dados própria via `usePortfolioDashboard`. A aba anterior dentro do Dashboard foi removida.

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 
 from .models import (
@@ -75,6 +77,18 @@ class SprintPlanMemberCapacitySerializer(serializers.ModelSerializer):
 class SprintPlanAllocationSerializer(serializers.ModelSerializer):
     issue_title = serializers.CharField(source="issue.title", read_only=True)
     issue_sequence_id = serializers.IntegerField(source="issue.sequence_id", read_only=True)
+    planned_days = serializers.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        required=False,
+        allow_null=True,
+        min_value=Decimal("0"),
+    )
+    planned_story_points = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+        min_value=0,
+    )
 
     class Meta:
         model = SprintPlanAllocation

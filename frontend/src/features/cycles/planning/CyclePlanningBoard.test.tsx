@@ -36,11 +36,16 @@ function buildPlanData() {
 }
 
 let planData = buildPlanData()
+let planningQueryState: { data: ReturnType<typeof buildPlanData> | undefined; isLoading: boolean; isError?: boolean } =
+  {
+    data: planData,
+    isLoading: false,
+    isError: false,
+  }
 
 vi.mock('@/hooks/useCyclePlanning', () => ({
   useCyclePlanning: () => ({
-    data: planData,
-    isLoading: false,
+    ...planningQueryState,
   }),
   useApplySprintPlan: () => ({
     mutate: vi.fn(),
@@ -89,6 +94,7 @@ vi.mock('@/hooks/useIssues', () => ({
 describe('CyclePlanningBoard', () => {
   it('shows overloaded member totals', () => {
     planData = buildPlanData()
+    planningQueryState = { data: planData, isLoading: false, isError: false }
 
     render(
       <CyclePlanningBoard
@@ -106,6 +112,7 @@ describe('CyclePlanningBoard', () => {
 
   it('renders unassigned planned work in its own lane instead of mixing it into backlog', () => {
     planData = buildPlanData()
+    planningQueryState = { data: planData, isLoading: false, isError: false }
     planData.allocations = [
       ...planData.allocations,
       {
@@ -135,5 +142,19 @@ describe('CyclePlanningBoard', () => {
     expect(screen.getByRole('region', { name: 'Nao atribuidas' })).toHaveTextContent(
       'Planned without owner',
     )
+  })
+
+  it('shows an error message when loading the sprint plan fails', () => {
+    planningQueryState = { data: undefined, isLoading: false, isError: true }
+
+    render(
+      <CyclePlanningBoard
+        projectId="project-1"
+        cycleId="cycle-1"
+        cycle={{ id: 'cycle-1', name: 'Sprint 1', startDate: '2026-04-01', endDate: '2026-04-14' }}
+      />,
+    )
+
+    expect(screen.getByText('Nao foi possivel carregar o planejamento da sprint.')).toBeInTheDocument()
   })
 })

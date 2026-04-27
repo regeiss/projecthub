@@ -3,6 +3,7 @@ import {
   computePlanningSummary,
   groupAllocationsByLane,
   moveIssueToLane,
+  normalizeNonNegativeNumber,
 } from './planning-board-state'
 
 const capacities = [
@@ -79,5 +80,13 @@ describe('planning board state', () => {
     const next = moveIssueToLane([...allocations], 'a-2', 'member-2')
     expect(next.find((item) => item.id === 'a-2')?.plannedMember).toBe('member-2')
     expect(next.find((item) => item.id === 'a-2')?.rank).toBe(0)
+  })
+
+  it('normalizes negative planning numbers to null', () => {
+    expect(normalizeNonNegativeNumber(8)).toBe(8)
+    expect(normalizeNonNegativeNumber(0)).toBe(0)
+    expect(normalizeNonNegativeNumber(-1)).toBeNull()
+    expect(normalizeNonNegativeNumber(Number.NaN)).toBeNull()
+    expect(normalizeNonNegativeNumber(null)).toBeNull()
   })
 })
