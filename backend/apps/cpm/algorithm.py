@@ -288,6 +288,8 @@ def build_gantt_data(cpm_result: dict, issues_map: dict, project_start) -> dict:
 
     for node_id, data in cpm_result["nodes"].items():
         issue = issues_map.get(node_id, {})
+        if issue.get("type") == "epic":
+            continue
         start_date = project_start + timedelta(days=data["es"])
         end_date = project_start + timedelta(days=data["ef"])
 
@@ -311,9 +313,10 @@ def build_gantt_data(cpm_result: dict, issues_map: dict, project_start) -> dict:
         )
 
     # Monta dependências
+    visible_task_ids = {task["id"] for task in tasks}
     dep_map: dict[str, list] = {t["id"]: t for t in tasks}
     for edge in cpm_result["edges"]:
-        if edge["target"] in dep_map:
+        if edge["target"] in dep_map and edge["source"] in visible_task_ids:
             dep_map[edge["target"]]["dependencies"].append(edge["source"])
 
     # Converte lista de deps para string separada por vírgula (formato Frappe)

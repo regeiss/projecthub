@@ -54,7 +54,7 @@ def _get_issues_map(project_id: str) -> dict:
     from apps.issues.models import Issue
 
     qs = Issue.objects.filter(project_id=project_id).select_related("state").values(
-        "id", "title", "sequence_id", "due_date", "state__category"
+        "id", "title", "sequence_id", "type", "due_date", "state__category"
     )
     return {str(row["id"]): row for row in qs}
 
@@ -165,6 +165,7 @@ class CpmGanttView(APIView):
         # Determina data zero do projeto: menor start_date ou hoje
         earliest = (
             Issue.objects.filter(project=project, start_date__isnull=False)
+            .exclude(type="epic")
             .order_by("start_date")
             .values_list("start_date", flat=True)
             .first()

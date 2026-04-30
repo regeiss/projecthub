@@ -10,17 +10,20 @@ services:
   api:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.development
+      DEBUG: "True"
       # E-mails vão para o console em vez de SMTP real
       EMAIL_BACKEND: django.core.mail.backends.console.EmailBackend
 
   celery_worker:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.development
+      DEBUG: "True"
     healthcheck:
       disable: true
 
   celery_beat:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.development
+      DEBUG: "True"
     healthcheck:
       disable: true

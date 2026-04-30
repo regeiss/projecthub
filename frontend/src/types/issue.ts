@@ -122,6 +122,8 @@ export interface CreateSubtaskDto {
   priority?: Priority
   assigneeId?: string | null
   description?: object | null
+  startDate?: string | null
+  dueDate?: string | null
   labelIds?: string[]
 }
 

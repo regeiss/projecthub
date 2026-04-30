@@ -112,6 +112,7 @@ services:
         python manage.py wait_for_db &&
         python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput &&
+        python manage.py shell -c 'from apps.workspaces.models import Workspace; import os; Workspace.objects.exists() or Workspace.objects.create(name=os.environ.get(\"DEFAULT_WORKSPACE_NAME\", \"Default\"), slug=os.environ.get(\"DEFAULT_WORKSPACE_SLUG\", \"default\"))' &&
         daphne -b 0.0.0.0 -p 8000 config.asgi:application
       "
     volumes:

@@ -68,7 +68,6 @@ function IssueCard({ issue }: { issue: Issue }) {
   return (
     <div
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
       className="cursor-grab rounded-md border border-gray-200 dark:border-gray-700 border-l-4 bg-white dark:bg-gray-900 p-3 shadow-sm hover:shadow-md active:cursor-grabbing"

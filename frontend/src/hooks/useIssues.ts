@@ -63,6 +63,8 @@ export function useCreateIssue() {
       if (data.type) payload.type = data.type
       if (data.epicId !== undefined) payload.epic_id = data.epicId
       if (data.color) payload.color = data.color
+      if (data.startDate !== undefined) payload.start_date = data.startDate
+      if (data.dueDate !== undefined) payload.due_date = data.dueDate
       if (Array.isArray(data.labelIds) && data.labelIds.length > 0) {
         payload.label_ids = data.labelIds
       }
@@ -194,6 +196,8 @@ export function useCreateSubtask() {
       if (data.stateId) payload.state = data.stateId
       if (data.assigneeId) payload.assignee = data.assigneeId
       if (data.description) payload.description = data.description
+      if (data.startDate !== undefined) payload.start_date = data.startDate
+      if (data.dueDate !== undefined) payload.due_date = data.dueDate
       if (Array.isArray(data.labelIds) && data.labelIds.length > 0) {
         payload.label_ids = data.labelIds
       }
