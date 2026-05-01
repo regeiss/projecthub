@@ -60,13 +60,20 @@ export function useCreateIssue() {
       if (data.stateId) payload.state = data.stateId
       if (data.assigneeId) payload.assignee = data.assigneeId
       if (data.description) payload.description = data.description
+      if (data.type) payload.type = data.type
+      if (data.epicId !== undefined) payload.epic_id = data.epicId
+      if (data.color) payload.color = data.color
       if (Array.isArray(data.labelIds) && data.labelIds.length > 0) {
         payload.label_ids = data.labelIds
       }
       return issueService.create(payload as Parameters<typeof issueService.create>[0])
     },
-    onSuccess: (_, { projectId }) => {
+    onSuccess: (_, { projectId, data }) => {
       qc.invalidateQueries({ queryKey: ['issues', projectId] })
+      qc.invalidateQueries({ queryKey: ['epics'] })
+      if (data.epicId) {
+        qc.invalidateQueries({ queryKey: ['epic-issues', String(data.epicId)] })
+      }
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onError: (err: any) => {
@@ -99,6 +106,8 @@ export function useUpdateIssue() {
       if (data.estimateDays !== undefined) payload.estimate_days = data.estimateDays
       if (data.startDate !== undefined) payload.start_date = data.startDate
       if (data.dueDate !== undefined) payload.due_date = data.dueDate
+      if (data.epicId !== undefined) payload.epic_id = data.epicId
+      if (data.color !== undefined) payload.color = data.color
       if (Array.isArray(data.labelIds)) payload.label_ids = data.labelIds
       // allow direct snake_case passthrough for drag-and-drop
       if (data.state !== undefined) payload.state = data.state
@@ -108,6 +117,7 @@ export function useUpdateIssue() {
     onSuccess: (issue, { issueId }) => {
       qc.invalidateQueries({ queryKey: ['issues'] })
       qc.invalidateQueries({ queryKey: ['issue', issueId] })
+      qc.invalidateQueries({ queryKey: ['epics'] })
     },
   })
 }
@@ -122,7 +132,10 @@ export function useDeleteIssue() {
       projectId: string
       issueId: string
     }) => issueService.delete(issueId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['issues'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['issues'] })
+      qc.invalidateQueries({ queryKey: ['epics'] })
+    },
   })
 }
 
@@ -238,5 +251,21 @@ export function useIssueSearch(query: string) {
     queryFn: () => issueService.search(query),
     enabled: query.length >= 2,
     staleTime: 30_000,
+  })
+}
+
+export function useEpics(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['epics', projectId],
+    queryFn: () => issueService.getEpics(projectId!),
+    enabled: !!projectId,
+  })
+}
+
+export function useEpicIssues(epicId: string | undefined) {
+  return useQuery({
+    queryKey: ['epic-issues', epicId],
+    queryFn: () => issueService.getEpicIssues(epicId!),
+    enabled: !!epicId,
   })
 }

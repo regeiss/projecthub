@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { projectService } from '@/services/project.service'
-import type { Project } from '@/types'
+import type { Project, IssueState, Label } from '@/types'
 
 export function useProjects(workspaceId?: string) {
   return useQuery({
@@ -23,8 +23,8 @@ export function useProjectStates(projectId: string) {
     queryKey: ['project-states', projectId],
     queryFn: () => projectService.states(projectId),
     enabled: !!projectId,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    select: (data: any) => (Array.isArray(data) ? data : (data?.results ?? [])),
+    select: (data: IssueState[] | { results: IssueState[] }) =>
+      Array.isArray(data) ? data : (data?.results ?? []),
   })
 }
 
@@ -33,8 +33,8 @@ export function useProjectLabels(projectId: string) {
     queryKey: ['project-labels', projectId],
     queryFn: () => projectService.labels(projectId),
     enabled: !!projectId,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    select: (data: any) => (Array.isArray(data) ? data : (data?.results ?? [])),
+    select: (data: Label[] | { results: Label[] }) =>
+      Array.isArray(data) ? data : (data?.results ?? []),
   })
 }
 

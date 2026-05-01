@@ -11,6 +11,7 @@ import { BacklogPage } from './features/backlog/BacklogPage'
 import { CyclesPage } from './features/cycles/CyclesPage'
 import { CycleDetail } from './features/cycles/CycleDetail'
 import { IssueDetailPage } from './features/issues/IssueDetailPage'
+import { ProjectReportsPage } from './features/projects/ProjectReportsPage'
 import { WikiLayout } from './features/wiki/WikiLayout'
 import { WikiPage } from './features/wiki/WikiPage'
 import { GanttPage } from './features/gantt/GanttPage'
@@ -20,6 +21,9 @@ import { WorkspaceSettings } from './features/workspace/WorkspaceSettings'
 import { MilestonesPage } from './features/milestones/MilestonesPage'
 import { RisksPage } from './features/risks/RisksPage'
 import { ModulesPage } from './features/modules/ModulesPage'
+import { EpicsPage } from './features/epics/EpicsPage'
+import { ResourcesPage } from './features/resources/ResourcesPage'
+import { ProjectResourcesPage } from './features/resources/ProjectResourcesPage'
 
 export default function App() {
   return (
@@ -35,12 +39,15 @@ export default function App() {
             <Route path="/projects/:projectId" element={<ProjectProvider />}>
               <Route path="board" element={<BoardPage />} />
               <Route path="backlog" element={<BacklogPage />} />
+              <Route path="epics" element={<EpicsPage />} />
               <Route path="cycles" element={<CyclesPage />} />
               <Route path="cycles/:cycleId" element={<CycleDetail />} />
               <Route path="milestones" element={<MilestonesPage />} />
+              <Route path="reports" element={<ProjectReportsPage />} />
               <Route path="risks" element={<RisksPage />} />
               <Route path="modules" element={<ModulesPage />} />
               <Route path="gantt" element={<GanttPage />} />
+              <Route path="resources" element={<ProjectResourcesPage />} />
               <Route path="issues/:issueId" element={<IssueDetailPage />} />
               <Route path="settings" element={<ProjectSettings />} />
               <Route path="wiki" element={<WikiLayout />}>
@@ -50,6 +57,7 @@ export default function App() {
             </Route>
 
             <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/workspace/resources" element={<ResourcesPage />} />
             <Route path="/workspace/settings" element={<WorkspaceSettings />} />
           </Route>
         </Route>

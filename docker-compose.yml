@@ -282,7 +282,7 @@ services:
       - projecthub_net
     volumes:
       - ./assets/meu-tema:/opt/keycloak/themes/meu-tema
-      - ./assets/real-export.json:/opt/keycloak/data/import/realm-export.json:ro
+      - ./assets/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
 
 # =============================================================================
 volumes:

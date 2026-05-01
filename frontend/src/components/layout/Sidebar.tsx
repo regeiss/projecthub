@@ -6,6 +6,7 @@ import {
   BarChart3,
   Settings,
   Plus,
+  Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -38,7 +39,7 @@ function NavItem({
         className={({ isActive }) =>
           cn(
             'flex h-8 w-8 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
-            isActive && 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400',
+            isActive && 'bg-primary-light dark:bg-primary/20 text-primary-text dark:text-primary',
           )
         }
         aria-label={label}
@@ -46,7 +47,7 @@ function NavItem({
         <Icon className="h-4 w-4" />
       </NavLink>
       <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/nav:block z-50">
-        <div className="rounded bg-gray-900 px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
+        <div className="rounded bg-primary px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
           {label}
         </div>
       </div>
@@ -115,13 +116,13 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="flex h-full w-14 flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-3">
+    <aside className="sidebar-bg flex h-full w-14 flex-col border-r border-gray-200 dark:border-gray-700 dark:bg-gray-900 py-3">
       {/* Workspace selector */}
       <div className="flex justify-center px-2 pb-3">
         <Dropdown open={wsDropdownOpen} onOpenChange={setWsDropdownOpen}>
           <DropdownTrigger asChild>
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700"
+              className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white text-xs font-bold hover:bg-primary-hover"
               aria-label="Selecionar workspace"
             >
               {workspace?.name?.[0]?.toUpperCase() ?? 'W'}
@@ -154,6 +155,7 @@ export function Sidebar() {
         <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
         <NavItem to="/projects" icon={FolderKanban} label="Projetos" />
         <NavItem to="/portfolio" icon={BarChart3} label="Portfolio" />
+        <NavItem to="/workspace/resources" icon={Users} label="Recursos" />
       </nav>
 
       {/* Projects quick list */}
@@ -175,7 +177,7 @@ export function Sidebar() {
                   {p.identifier}
                 </NavLink>
                 <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/proj:block z-50">
-                  <div className="rounded bg-gray-900 px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
+                  <div className="rounded bg-primary px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
                     {p.name}
                   </div>
                 </div>

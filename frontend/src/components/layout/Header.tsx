@@ -14,12 +14,13 @@ import {
 } from '@/components/ui/Dropdown'
 import { ProjectNav } from './ProjectNav'
 import { ThemeToggle } from '@/features/theme/ThemeToggle'
+import { ColorThemeSelector } from '@/features/theme/ColorThemeSelector'
 import keycloak from '@/lib/keycloak'
 
 export function Header() {
   const { user, logout } = useAuthStore()
   const { unreadCount } = useNotificationStore()
-  const { currentProject } = useWorkspaceStore()
+  const { currentProject, workspace: currentWorkspace } = useWorkspaceStore()
   const navigate = useNavigate()
 
   function handleLogout() {
@@ -28,18 +29,21 @@ export function Header() {
   }
 
   return (
-    <header className="flex h-11 shrink-0 items-center border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4">
+    <header className="flex h-11 shrink-0 items-center border-b border-gray-200 dark:border-gray-700 bg-surface dark:bg-gray-900 px-4">
       {/* Project navigation tabs or app title */}
       <div className="flex flex-1 items-center">
         {currentProject ? (
           <ProjectNav project={currentProject} />
         ) : (
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">ProjectHub</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {currentWorkspace?.name ?? 'ProjectHub'}
+          </span>
         )}
       </div>
 
       {/* Right side actions */}
       <div className="flex items-center gap-2">
+        <ColorThemeSelector />
         <ThemeToggle />
 
         <Tooltip content="Pesquisar" side="bottom">

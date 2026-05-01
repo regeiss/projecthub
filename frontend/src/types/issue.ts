@@ -1,4 +1,11 @@
 export type Priority = 'urgent' | 'high' | 'medium' | 'low' | 'none'
+
+export interface EpicSummary {
+  id: string
+  sequenceId: number
+  title: string
+  color: string | null
+}
 export type IssueType = 'task' | 'bug' | 'story' | 'epic' | 'subtask'
 export type IssueSize = 'xs' | 's' | 'm' | 'l' | 'xl'
 export type StateCategory = 'backlog' | 'unstarted' | 'started' | 'completed' | 'cancelled'
@@ -39,6 +46,10 @@ export interface Issue {
   projectName: string
   subtaskCount: number
   completedSubtaskCount: number
+  color: string | null
+  childCount: number
+  completedCount: number
+  epic: EpicSummary | null
 }
 
 export interface IssueComment {
@@ -121,6 +132,8 @@ export interface UpdateIssueDto {
   priority?: Priority
   type?: IssueType
   assigneeId?: string | null
+  epicId?: string | null
+  color?: string | null
   estimatePoints?: number | null
   size?: IssueSize | null
   estimateDays?: number | null

@@ -115,7 +115,7 @@ export function WikiEditor({ pageId, projectId, initialContent, readOnly = false
       TableRow,
       TableHeader,
       TableCell,
-      Link.configure({ openOnClick: false, autolink: true }),
+      Link.configure({ openOnClick: true, autolink: true }),
       Underline,
       PanelExtension,
       buildMentionExtension(() => membersRef.current),

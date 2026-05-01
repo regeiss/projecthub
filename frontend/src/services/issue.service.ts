@@ -31,7 +31,20 @@ export function mapIssue(raw: any): Issue {
       : null,
     reporterId: raw.reporter,
     parentId: raw.parent ?? null,
-    epicId: raw.epic ?? null,
+    epicId: (raw.epic as Record<string, unknown> | null)?.id as string ?? null,
+    epic: (() => {
+      const e = raw.epic as Record<string, unknown> | null
+      if (!e) return null
+      return {
+        id: e.id as string,
+        sequenceId: e.sequence_id as number,
+        title: e.title as string,
+        color: e.color as string | null,
+      }
+    })(),
+    color: (raw.color as string | null) ?? null,
+    childCount: (raw.child_count as number) ?? 0,
+    completedCount: (raw.completed_count as number) ?? 0,
     estimatePoints: raw.estimate_points ?? null,
     size: raw.size ?? null,
     estimateDays: raw.estimate_days ?? null,
@@ -182,4 +195,11 @@ export const issueService = {
 
   createSubtask: (issueId: string, data: Record<string, unknown>) =>
     api.post<unknown>(`/issues/${issueId}/subtasks/`, data).then((r) => mapIssue(r.data)),
+
+  // Epics
+  getEpics: (projectId: string): Promise<Issue[]> =>
+    api.get<Record<string, unknown>[]>(`/projects/${projectId}/epics/`).then((r) => r.data.map(mapIssue)),
+
+  getEpicIssues: (epicId: string): Promise<Issue[]> =>
+    api.get<Record<string, unknown>[]>(`/issues/${epicId}/epic-issues/`).then((r) => r.data.map(mapIssue)),
 }

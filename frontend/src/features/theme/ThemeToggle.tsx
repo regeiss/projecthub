@@ -21,7 +21,7 @@ export function ThemeToggle() {
       {options.map(({ mode: m, icon: Icon, label }) => (
         <Tooltip key={m} content={label} side="bottom">
           <button
-            onClick={() => setMode(m)}
+            onClick={(e) => { setMode(m); (e.currentTarget as HTMLButtonElement).blur() }}
             aria-label={label}
             aria-pressed={mode === m}
             className={cn(

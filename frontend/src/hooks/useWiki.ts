@@ -2,6 +2,20 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { wikiService } from '@/services/wiki.service'
 import type { WikiPage } from '@/types'
 
+/** Fetches ALL pages in a project's wiki space (no parent filter). */
+export function useAllWikiPages(projectId: string | undefined) {
+  const { data: spaces = [] } = useQuery({
+    queryKey: ['wiki-spaces'],
+    queryFn: () => wikiService.spaces(),
+  })
+  const space = spaces.find((s) => s.projectId === projectId)
+  return useQuery({
+    queryKey: ['wiki-pages-all', space?.id],
+    queryFn: () => wikiService.pages(space!.id, undefined),
+    enabled: !!space?.id,
+  })
+}
+
 export function useWikiSpaces() {
   return useQuery({
     queryKey: ['wiki-spaces'],
