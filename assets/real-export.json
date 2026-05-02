@@ -4,7 +4,7 @@
   "displayName": "ProjectHub",
   "displayNameHtml": "<strong>ProjectHub</strong>",
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,

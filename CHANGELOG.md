@@ -7,6 +7,9 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- **CPM Network — conectores ausentes (2026-05-01)**: `CpmNode` não tinha componentes `Handle` do React Flow, o que impedia qualquer aresta de renderizar. Adicionados `<Handle type="target" position={Position.Left}/>` e `<Handle type="source" position={Position.Right}/>`. Corrigido também o mapeamento de `isCritical` → `is_critical` (snake_case enviado pelo backend) para que o estilo do caminho crítico funcione corretamente nos nós e arestas.
+
 ### Added
 - **Keycloak realm export** (`assets/real-export.json`): realm `projecthub` com clientes
   `projecthub-frontend` (public, PKCE) e `projecthub-backend` (confidential, service account),
