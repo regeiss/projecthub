@@ -197,7 +197,14 @@
       "Bash(wsl ls:*)",
       "Bash(wsl:*)",
       "Bash(rsync -av /mnt/d/projecthub/frontend/src/ /home/robertogeiss/projecthub/frontend/src/)",
-      "Bash(wsl.exe *)"
+      "Bash(wsl.exe *)",
+      "Bash(docker restart projecthub_keycloak *)",
+      "Bash(awk '{print $2}')",
+      "Bash(node *)",
+      "Bash(kill -9 29487 29486)",
+      "Bash(npm run *)",
+      "Read(//tmp/**)",
+      "Bash(lsof -ti:5173)"
     ]
   }
 }

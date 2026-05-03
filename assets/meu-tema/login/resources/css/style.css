@@ -31,26 +31,93 @@ body {
     background-color: transparent !important;
 }
 
+/* 3. NAVBAR FLUTUANTE */
 #kc-header {
-    display: none;
+    position: fixed !important;
+    top: 16px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: calc(100% - 24px) !important;
+    max-width: none !important;
+    height: 60px !important;
+    background: rgba(50, 50, 50, 0.45) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 16px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 0 28px !important;
+    z-index: 999 !important;
+    margin: 0 !important;
+    text-align: left !important;
 }
 
-/* 3. O CARD DE LOGIN (VIDRO FUMÊ CLARO) */
+/* Esquerda: nome da organização (flex item do header) */
+#kc-header::before {
+    content: "Prefeitura de Novo Hamburgo" !important;
+    flex-shrink: 0 !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.01em !important;
+    line-height: 1 !important;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
+    white-space: nowrap !important;
+}
+
+/* Direita: sigla (empurrada pelo margin-left: auto) */
+#kc-header::after {
+    content: "CTIBD" !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.14em !important;
+    color: rgba(255, 255, 255, 0.55) !important;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+}
+
+/* Centro: produto — wrapper posicionado absolutamente no meio do header */
+#kc-header-wrapper {
+    position: absolute !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    pointer-events: none !important;
+}
+
+#kc-header-wrapper::before {
+    content: "Controle de portfolios e projetos" !important;
+    display: block !important;
+    font-size: 1.25rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.03em !important;
+    line-height: 1 !important;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
+    white-space: nowrap !important;
+}
+
+/* 4. O CARD DE LOGIN */
 .card-pf {
     margin-top: 0 !important;
     background: rgba(50, 50, 50, 0.45) !important;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 20px !important;
-    /* Cantos do Card */
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2) !important;
-    padding: 40px !important;
-    max-width: 420px;
+    padding: 32px 60px !important;
+    max-width: 760px;
     width: 100%;
 }
 
-/* 4. TEXTOS E LABELS */
+/* 5. TEXTOS E LABELS */
 .login-pf label,
 .login-pf .control-label,
 #kc-registration,
@@ -69,9 +136,7 @@ body {
     font-size: 0.9em;
 }
 
-/* 5. INPUTS E CAMPOS DE TEXTO - CORREÇÃO DEFINITIVA SENHA */
-
-/* 5.1 Usuário (Simples) */
+/* 6. INPUTS */
 #username,
 .pf-c-form-control:not(.pf-m-search) {
     border-radius: 12px !important;
@@ -80,31 +145,25 @@ body {
     background-color: rgba(255, 255, 255, 0.95) !important;
 }
 
-/* 5.2 Senha (O Container do Grupo) */
-/* Atacamos o container que envolve o input e o botão do olho */
 .input-group,
 .pf-c-input-group {
     border-radius: 12px !important;
     overflow: hidden !important;
-    /* Corta as quinas dos filhos */
     background-color: rgba(255, 255, 255, 0.95) !important;
     border: none !important;
     display: flex !important;
     height: 50px !important;
 }
 
-/* 5.3 O Campo de texto da senha em si */
 #password,
 .pf-c-input-group__text-control .pf-c-form-control {
     border-radius: 12px 0 0 12px !important;
     border: none !important;
     background-color: transparent !important;
-    /* Usa o fundo do pai */
     height: 100% !important;
     flex-grow: 1 !important;
 }
 
-/* 5.4 O Botão do "Olho" (Addon) */
 .input-group-addon,
 .pf-c-input-group__addon,
 .pf-c-button.pf-m-control {
@@ -117,14 +176,13 @@ body {
     padding: 0 15px !important;
 }
 
-/* 5.5 Remove sombras de foco que denunciam o formato quadrado original */
 .form-control:focus,
 .input-group:focus-within {
     box-shadow: 0 0 0 2px #007aff !important;
     outline: none !important;
 }
 
-/* 6. CORREÇÃO DO SELETOR DE IDIOMAS */
+/* 7. SELETOR DE IDIOMAS */
 #kc-locale-dropdown ul {
     display: none;
     position: absolute;
@@ -142,7 +200,7 @@ body {
     display: block;
 }
 
-/* 7. BOTÃO DE LOGIN (IMPONENTE E ARREDONDADO) */
+/* 8. BOTÃO DE LOGIN */
 #kc-login {
     margin-top: 30px !important;
 }
@@ -154,16 +212,12 @@ button#kc-login,
     background-color: #007aff !important;
     border: none !important;
     border-radius: 15px !important;
-    /* Cantos bem arredondados no botão */
-
     height: 60px !important;
     min-height: 60px !important;
     line-height: 60px !important;
-
     font-size: 18px !important;
     font-weight: 700 !important;
     color: #ffffff !important;
-
     box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3) !important;
     transition: all 0.2s ease;
     cursor: pointer;
@@ -175,5 +229,48 @@ button#kc-login,
 input#kc-login:hover {
     background-color: #0063cf !important;
     transform: scale(1.02);
-    /* Leve pulsação ao passar o mouse */
+}
+
+/* 9. MENSAGENS DE ERRO */
+.pf-c-form__helper-text,
+#input-error,
+.kc-feedback-text,
+[id$="-error"],
+.pf-c-form__helper-text-text {
+    color: #fca5a5 !important;
+    font-size: 0.82em !important;
+    font-weight: 500 !important;
+    margin-top: 6px !important;
+    display: block !important;
+    text-shadow: none !important;
+}
+
+.pf-c-form__helper-text.pf-m-error,
+span.pf-m-error {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-radius: 8px !important;
+    padding: 5px 10px !important;
+}
+
+/* 10. OPÇÕES DO FORMULÁRIO (mantenha-me + esqueceu senha) */
+#kc-form-options {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 4px !important;
+}
+
+#kc-form-options .checkbox {
+    margin: 0 !important;
+}
+
+#kc-form-options>div:last-child {
+    text-align: left !important;
+}
+
+#kc-form-options a {
+    color: #93c5fd !important;
+    text-decoration: underline !important;
+    font-size: 0.88em !important;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5) !important;
 }
