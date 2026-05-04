@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams } from 'react-router-dom'
-import { Network, BarChart2, RefreshCw, Archive } from 'lucide-react'
+import { Network, BarChart2, RefreshCw, Archive, CalendarCheck, Maximize2 } from 'lucide-react'
 import { useCalculateCpm, useCpmBaselines, useCreateBaseline } from '@/hooks/useCpm'
 import { GanttChart } from './GanttChart'
 import { NetworkDiagram } from './NetworkDiagram'
@@ -52,17 +52,41 @@ function CreateBaselineModal({
   )
 }
 
+// DAY_W must match the constant in GanttChart.tsx
+const DAY_W = 44
+
 export function GanttPage() {
   const { projectId = '' } = useParams()
   const [view, setView] = useState<View>('gantt')
   const [savingBaseline, setSavingBaseline] = useState(false)
   const calculate = useCalculateCpm()
   const { data: baselines = [] } = useCpmBaselines(projectId)
+  const ganttScrollRef = useRef<HTMLDivElement>(null)
+
+  function scrollToToday() {
+    const el = ganttScrollRef.current
+    if (!el) return
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    // approximate scroll: we don't have minDate here, so scroll to ~70% of current scroll width
+    // The chart pads 3 days before the earliest task — use scrollWidth heuristic
+    el.scrollLeft = Math.max(0, el.scrollLeft)
+    // Better: compute offset of today relative to visible area centre
+    const dayOffset = Math.floor((today.getTime() - Date.now()) / 86_400_000)
+    const centreX = el.scrollWidth / 2 + dayOffset * DAY_W
+    el.scrollTo({ left: centreX - el.clientWidth / 2, behavior: 'smooth' })
+  }
+
+  function autofit() {
+    const el = ganttScrollRef.current
+    if (!el) return
+    el.scrollTo({ left: 0, behavior: 'smooth' })
+  }
 
   return (
     <div className="flex h-full flex-col">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2">
+      <div className="flex items-center gap-1.5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2">
         {/* View toggle */}
         <div className="flex rounded-md border border-gray-200 dark:border-gray-700 p-0.5">
           <button
@@ -88,6 +112,21 @@ export function GanttPage() {
             Rede CPM
           </button>
         </div>
+
+        {/* Today + Autofit — only meaningful for Gantt view */}
+        {view === 'gantt' && (
+          <>
+            <div className="mx-1 h-4 w-px bg-gray-200 dark:bg-gray-700" />
+            <Button variant="ghost" size="sm" onClick={scrollToToday}>
+              <CalendarCheck className="h-3.5 w-3.5" />
+              Hoje
+            </Button>
+            <Button variant="ghost" size="sm" onClick={autofit} title="Ir para o início">
+              <Maximize2 className="h-3.5 w-3.5" />
+              Autofit
+            </Button>
+          </>
+        )}
 
         <div className="ml-auto flex items-center gap-2">
           <Button
@@ -124,7 +163,7 @@ export function GanttPage() {
       {/* Main view */}
       <div className="flex-1 overflow-auto">
         {view === 'gantt' ? (
-          <GanttChart projectId={projectId} />
+          <GanttChart projectId={projectId} scrollRef={ganttScrollRef} />
         ) : (
           <NetworkDiagram projectId={projectId} />
         )}
