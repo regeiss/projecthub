@@ -24,6 +24,7 @@ import { ModulesPage } from './features/modules/ModulesPage'
 import { EpicsPage } from './features/epics/EpicsPage'
 import { ResourcesPage } from './features/resources/ResourcesPage'
 import { ProjectResourcesPage } from './features/resources/ProjectResourcesPage'
+import { UserSettingsPage } from './features/user/UserSettingsPage'
 
 export default function App() {
   return (
@@ -59,6 +60,7 @@ export default function App() {
             <Route path="/portfolio" element={<PortfolioPage />} />
             <Route path="/workspace/resources" element={<ResourcesPage />} />
             <Route path="/workspace/settings" element={<WorkspaceSettings />} />
+            <Route path="/settings" element={<UserSettingsPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

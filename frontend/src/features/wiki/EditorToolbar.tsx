@@ -3,7 +3,7 @@ import {
   Heading1, Heading2, Heading3,
   List, ListOrdered, CheckSquare,
   Code2, Table, Minus,
-  Bold, Italic, Underline, Strikethrough, Highlighter, Code, Link,
+  Bold, Italic, Underline, Strikethrough, Highlighter, Code, Link, BookOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -42,9 +42,11 @@ function Divider() {
 interface EditorToolbarProps {
   editor: Editor
   onSetLink?: () => void
+  /** When provided, shows a "Link wiki" button that opens the [[ suggestion */
+  onInsertWikiLink?: () => void
 }
 
-export function EditorToolbar({ editor, onSetLink }: EditorToolbarProps) {
+export function EditorToolbar({ editor, onSetLink, onInsertWikiLink }: EditorToolbarProps) {
   function insertTable() {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
   }
@@ -110,12 +112,20 @@ export function EditorToolbar({ editor, onSetLink }: EditorToolbarProps) {
         <Code className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton
-        title="Link"
+        title="Link externo"
         active={editor.isActive('link')}
         onClick={handleSetLink}
       >
         <Link className="h-4 w-4" />
       </ToolbarButton>
+      {onInsertWikiLink && (
+        <ToolbarButton
+          title="Link para página wiki (ou digite [[)"
+          onClick={onInsertWikiLink}
+        >
+          <BookOpen className="h-4 w-4" />
+        </ToolbarButton>
+      )}
 
       <Divider />
 

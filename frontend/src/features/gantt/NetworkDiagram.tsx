@@ -187,18 +187,57 @@ export function NetworkDiagram({ projectId }: NetworkDiagramProps) {
             background: 'rgba(15,23,42,0.88)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: 8,
-            padding: '7px 12px',
+            padding: '8px 12px',
             fontSize: 10,
-            color: '#64748b',
-            lineHeight: 1.8,
+            color: '#94a3b8',
           }}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '0 4px', marginBottom: 5 }}>
-              <span style={{ color: '#93c5fd', fontWeight: 700 }}>ES</span><span>Início mais cedo</span>
-              <span style={{ color: '#93c5fd', fontWeight: 700 }}>EF</span><span>Término mais cedo</span>
-              <span style={{ color: '#93c5fd', fontWeight: 700 }}>LS</span><span>Início mais tarde</span>
-              <span style={{ color: '#93c5fd', fontWeight: 700 }}>LF</span><span>Término mais tarde</span>
+            {/* Visual diagram of the 2x2 data box */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 8 }}>
+              {/* Left labels */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0, textAlign: 'right', fontSize: 9, color: '#64748b', lineHeight: 1 }}>
+                <span style={{ height: 22, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>início</span>
+                <span style={{ height: 22, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>término</span>
+              </div>
+              {/* Grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gridTemplateRows: '1fr 1fr',
+                border: '1px solid rgba(147,197,253,0.4)',
+                borderRadius: 4,
+                overflow: 'hidden',
+                width: 88,
+                height: 44,
+              }}>
+                {[
+                  { label: 'ES', desc: 'mais cedo' },
+                  { label: 'EF', desc: 'mais cedo' },
+                  { label: 'LS', desc: 'mais tarde' },
+                  { label: 'LF', desc: 'mais tarde' },
+                ].map(({ label }, i) => (
+                  <div key={label} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRight: i % 2 === 0 ? '1px solid rgba(147,197,253,0.4)' : undefined,
+                    borderBottom: i < 2 ? '1px solid rgba(147,197,253,0.4)' : undefined,
+                    background: 'rgba(10,20,40,0.55)',
+                    fontWeight: 700,
+                    fontSize: 10,
+                    color: '#93c5fd',
+                  }}>
+                    {label}
+                  </div>
+                ))}
+              </div>
+              {/* Right labels */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: 9, color: '#64748b', lineHeight: 1 }}>
+                <span style={{ height: 22, display: 'flex', alignItems: 'center' }}>cedo</span>
+                <span style={{ height: 22, display: 'flex', alignItems: 'center' }}>tarde</span>
+              </div>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            {/* Critical path legend */}
+            <div style={{ display: 'flex', gap: 12, fontSize: 10 }}>
               <span><span style={{ color: '#ef4444' }}>●</span> Caminho crítico</span>
               <span><span style={{ color: '#3b82f6' }}>●</span> Com folga</span>
             </div>

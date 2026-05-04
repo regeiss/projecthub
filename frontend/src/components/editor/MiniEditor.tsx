@@ -1,4 +1,5 @@
 import { forwardRef, useImperativeHandle, useMemo, useRef, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
@@ -67,6 +68,7 @@ function BubbleButton({
 
 export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
   function MiniEditor({ onChange, placeholder, className, initialContent, projectId }, ref) {
+    const navigate = useNavigate()
     const containerRef = useRef<HTMLDivElement>(null)
     const STORAGE_KEY = 'mini-editor-height'
     const [height, setHeight] = useState(() => {
@@ -138,7 +140,7 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
         TableRow,
         TableHeader,
         TableCell,
-        Link.configure({ openOnClick: true, autolink: true }),
+        Link.configure({ openOnClick: false, autolink: true }),
         Underline,
         ...(pageLinkExtension ? [pageLinkExtension] : []),
       ],
@@ -150,7 +152,7 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
           class: cn(
             'prose prose-sm max-w-none focus:outline-none min-h-[160px] px-3 py-2',
             'prose-headings:font-semibold prose-headings:text-gray-900 dark:prose-headings:text-gray-100',
-            'prose-a:text-indigo-600 prose-a:underline',
+            'prose-a:text-indigo-600 prose-a:underline prose-a:bg-blue-100 dark:prose-a:bg-blue-900/30 prose-a:rounded prose-a:px-0.5',
             'prose-code:bg-gray-100 dark:prose-code:bg-gray-800 prose-code:rounded prose-code:px-1',
             'prose-pre:bg-gray-900 prose-pre:text-gray-100',
             'dark:text-gray-100',
@@ -189,16 +191,25 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
       }
     })()
 
+    // Wiki links (/projects/…) navigate on regular click — the link name is
+    // auto-set from the page title so in-place editing isn't needed.
+    // External links leave the cursor in place (openOnClick: false); Ctrl/Cmd+click opens them.
     function handleEditorClick(e: React.MouseEvent<HTMLDivElement>) {
-      const target = e.target as HTMLElement
-      const anchor = target.closest('a') as HTMLAnchorElement | null
-      if (anchor?.href) {
-        const href = anchor.getAttribute('href')
-        if (href && href.startsWith('/')) {
-          e.preventDefault()
-          window.location.href = href
-        }
+      const anchor = (e.target as HTMLElement).closest('a')
+      if (!anchor) return
+      const href = anchor.getAttribute('href')
+      if (!href) return
+      if (href.startsWith('/projects/')) {
+        e.preventDefault()
+        navigate(href)
+      } else if (e.ctrlKey || e.metaKey) {
+        e.preventDefault()
+        window.open(href, '_blank', 'noopener,noreferrer')
       }
+    }
+
+    function handleInsertWikiLink() {
+      editor?.chain().focus().insertContent('[[').run()
     }
 
     return (
@@ -213,7 +224,13 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
           className,
         )}
       >
-        {editor && <EditorToolbar editor={editor} onSetLink={handleSetLink} />}
+        {editor && (
+          <EditorToolbar
+            editor={editor}
+            onSetLink={handleSetLink}
+            onInsertWikiLink={projectId ? handleInsertWikiLink : undefined}
+          />
+        )}
 
         {editor && (
           <BubbleMenu

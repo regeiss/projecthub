@@ -134,7 +134,7 @@ export function WikiEditor({ pageId, projectId, initialContent, readOnly = false
         class: cn(
           'prose prose-sm max-w-none focus:outline-none min-h-[300px] px-6 py-4',
           'prose-headings:font-semibold prose-headings:text-gray-900',
-          'prose-a:text-indigo-600 prose-a:underline',
+          'prose-a:text-indigo-600 prose-a:underline prose-a:bg-blue-100 dark:prose-a:bg-blue-900/30 prose-a:rounded prose-a:px-0.5',
           'prose-code:bg-gray-100 prose-code:rounded prose-code:px-1',
           'prose-pre:bg-gray-900 prose-pre:text-gray-100',
         ),
