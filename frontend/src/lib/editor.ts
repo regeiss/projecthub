@@ -40,7 +40,7 @@ export function tiptapToHtml(json: Record<string, unknown> | null | undefined): 
       TableRow,
       TableHeader,
       TableCell,
-      Link,
+      Link.configure({ openOnClick: false, HTMLAttributes: { target: '_self', rel: 'noopener' } }),
       Underline,
     ])
   } catch {

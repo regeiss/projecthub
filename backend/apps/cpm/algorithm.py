@@ -229,7 +229,7 @@ def build_react_flow_graph(cpm_result: dict, issues_map: dict) -> dict:
 
     for node_id, data in cpm_result["nodes"].items():
         layer = data["es"]
-        pos_y = layer_count.get(layer, 0) * 120
+        pos_y = layer_count.get(layer, 0) * 260
         layer_count[layer] = layer_count.get(layer, 0) + 1
 
         issue = issues_map.get(node_id, {})

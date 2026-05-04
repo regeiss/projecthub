@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import keycloak, { initKeycloak } from '@/lib/keycloak'
+import keycloak, { initKeycloak, IS_KC_CALLBACK } from '@/lib/keycloak'
 import { useAuthStore } from '@/stores/authStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { workspaceService } from '@/services/workspace.service'
@@ -11,18 +11,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setWorkspace = useWorkspaceStore((s) => s.setWorkspace)
 
   useEffect(() => {
-    // Snapshot whether this page load is a redirect callback from Keycloak
-    // (KC sets ?code=&session_state= before init() has a chance to clean them).
-    // If init() still returns authenticated=false on a callback load, the PKCE
-    // exchange failed — calling login() again would create an infinite loop.
-    const isKcCallback =
-      new URLSearchParams(window.location.search).has('code') ||
-      new URLSearchParams(window.location.search).has('session_state')
-
     initKeycloak()
       .then(async (authenticated) => {
         if (!authenticated) {
-          if (isKcCallback) {
+          if (IS_KC_CALLBACK) {
             // Code exchange failed on a callback — break the potential loop.
             // Clear any stale KC state and let the user retry manually.
             keycloak.clearToken()
@@ -48,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         // If init() threw on a callback load, the session is broken — don't loop.
-        if (isKcCallback) {
+        if (IS_KC_CALLBACK) {
           keycloak.clearToken()
           setReady(true)
         } else {

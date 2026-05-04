@@ -34,15 +34,15 @@ export function IssueDetailPage() {
   const [commentEmpty, setCommentEmpty] = useState(true)
   const commentEditorRef = useRef<MiniEditorHandle>(null)
 
-  // Handle clicks on links in rendered HTML (dangerouslySetInnerHTML)
+  // Handle clicks on links in rendered HTML (dangerouslySetInnerHTML).
+  // Use closest('a') so clicks on text nodes inside <a> are caught too.
   const handleContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const target = e.target as HTMLElement
-    if (target.tagName === 'A' && target.getAttribute('href')) {
-      const href = target.getAttribute('href')
-      if (href?.startsWith('/')) {
-        e.preventDefault()
-        navigate(href)
-      }
+    const anchor = (e.target as HTMLElement).closest('a')
+    if (!anchor) return
+    const href = anchor.getAttribute('href')
+    if (href?.startsWith('/')) {
+      e.preventDefault()
+      navigate(href)
     }
   }
 
@@ -116,7 +116,7 @@ export function IssueDetailPage() {
           {issue.description ? (
             <div
               onClick={handleContentClick}
-              className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300 prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer"
+              className="prose prose-sm dark:prose-invert mb-6 max-w-none text-gray-700 dark:text-gray-300 prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer prose-a:bg-blue-100 dark:prose-a:bg-blue-900/30 prose-a:rounded prose-a:px-0.5"
               dangerouslySetInnerHTML={{ __html: tiptapToHtml(issue.description) }}
             />
           ) : (
@@ -157,7 +157,7 @@ export function IssueDetailPage() {
                   </div>
                   <div
                     onClick={handleContentClick}
-                    className="prose prose-sm max-w-none text-sm text-gray-700 dark:text-gray-300 dark:prose-invert prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer"
+                    className="prose prose-sm max-w-none text-sm text-gray-700 dark:text-gray-300 dark:prose-invert prose-a:text-indigo-600 prose-a:underline hover:prose-a:text-indigo-700 prose-a:cursor-pointer prose-a:bg-blue-100 dark:prose-a:bg-blue-900/30 prose-a:rounded prose-a:px-0.5"
                     dangerouslySetInnerHTML={{ __html: tiptapToHtml(c.content) }}
                   />
                 </div>

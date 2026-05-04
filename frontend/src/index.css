@@ -50,6 +50,40 @@
   --color-border:     153 234 214;     /* teal-200 borders */
 }
 
+/* =============================================================================
+   Wiki page link chip — targets links whose href starts with /projects/
+   Applies inside both the TipTap editor (.ProseMirror) and the read-only
+   rendered output (.prose). Attribute selector beats generic prose-a rules.
+   ============================================================================= */
+.ProseMirror a[href^="/projects/"],
+.prose a[href^="/projects/"] {
+  display: inline;
+  background-color: #dbeafe;       /* blue-100 */
+  color: #1d4ed8 !important;       /* blue-700 */
+  border-radius: 4px;
+  padding: 1px 6px;
+  text-decoration: none !important;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.dark .ProseMirror a[href^="/projects/"],
+.dark .prose a[href^="/projects/"] {
+  background-color: rgba(30, 58, 138, 0.35); /* blue-900/35 */
+  color: #93c5fd !important;                  /* blue-300 */
+}
+
+.ProseMirror a[href^="/projects/"]:hover,
+.prose a[href^="/projects/"]:hover {
+  background-color: #bfdbfe; /* blue-200 */
+}
+
+.dark .ProseMirror a[href^="/projects/"]:hover,
+.dark .prose a[href^="/projects/"]:hover {
+  background-color: rgba(30, 58, 138, 0.55);
+}
+
 @layer base {
   *, *::before, *::after {
     box-sizing: border-box;

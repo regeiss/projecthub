@@ -20,6 +20,12 @@ export const workspaceService = {
   me: () =>
     api.get<WorkspaceMember>('/auth/me/').then((r) => r.data),
 
+  updateMe: (data: { name?: string; avatarUrl?: string | null }) =>
+    api.patch<WorkspaceMember>('/auth/me/', {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.avatarUrl !== undefined && { avatar_url: data.avatarUrl }),
+    }).then((r) => r.data),
+
   keycloakUsers: (slug: string, search: string): Promise<KeycloakUser[]> =>
     api
       .get<KeycloakUser[]>(`/workspaces/${slug}/keycloak-users/`, { params: { search } })

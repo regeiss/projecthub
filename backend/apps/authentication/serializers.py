@@ -28,3 +28,9 @@ class WorkspaceMemberSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+
+class WorkspaceMemberUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkspaceMember
+        fields = ["name", "avatar_url"]
