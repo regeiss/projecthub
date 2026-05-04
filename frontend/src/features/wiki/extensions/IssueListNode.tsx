@@ -92,7 +92,7 @@ function ConfigPanel({
 function IssueRow({ issue }: { issue: Issue }) {
   const prio = PRIORITY_CONFIG[issue.priority] ?? PRIORITY_CONFIG.none
   return (
-    <li className="flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800/30">
+    <li className="list-none m-0 p-0 flex items-center gap-2 px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800/30">
       <span
         className={cn('text-xs font-bold w-3 text-center shrink-0', prio.className)}
         title={issue.priority}
@@ -158,7 +158,7 @@ function IssueListView({ node, updateAttributes, editor }: NodeViewProps) {
   return (
     <NodeViewWrapper>
       <div
-        className="my-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden select-none"
+        className="not-prose my-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden select-none"
         contentEditable={false}
       >
         {/* Header */}
@@ -199,31 +199,31 @@ function IssueListView({ node, updateAttributes, editor }: NodeViewProps) {
 
         {/* Body */}
         {!projectId && !configOpen && (
-          <p className="px-3 py-4 text-xs text-gray-400 text-center">
+          <div className="px-3 py-4 text-xs text-gray-400 text-center">
             Nenhum projeto selecionado — clique em ⚙ para configurar
-          </p>
+          </div>
         )}
 
         {projectId && isLoading && (
-          <p className="px-3 py-4 text-xs text-gray-400 text-center animate-pulse">
+          <div className="px-3 py-4 text-xs text-gray-400 text-center animate-pulse">
             Carregando issues…
-          </p>
+          </div>
         )}
 
         {projectId && isError && (
-          <p className="px-3 py-4 text-xs text-red-400 text-center">
+          <div className="px-3 py-4 text-xs text-red-400 text-center">
             Erro ao carregar issues
-          </p>
+          </div>
         )}
 
         {projectId && !isLoading && !isError && issues.length === 0 && (
-          <p className="px-3 py-4 text-xs text-gray-400 text-center">
+          <div className="px-3 py-4 text-xs text-gray-400 text-center">
             Nenhuma issue encontrada
-          </p>
+          </div>
         )}
 
         {projectId && !isLoading && issues.length > 0 && (
-          <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+          <ul className="list-none m-0 p-0 divide-y divide-gray-100 dark:divide-gray-800">
             {issues.map(issue => (
               <IssueRow key={issue.id} issue={issue} />
             ))}
