@@ -1,12 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Node, mergeAttributes } from '@tiptap/core'
 import { NodeViewWrapper, ReactNodeViewRenderer } from '@tiptap/react'
 import type { NodeViewProps } from '@tiptap/react'
 import { Settings } from 'lucide-react'
-import { useIssues } from '@/hooks/useIssues'
-import { useProjects } from '@/hooks/useProjects'
+import api from '@/lib/axios'
+import { mapIssue } from '@/services/issue.service'
 import type { Issue, StateCategory } from '@/types'
 import { cn } from '@/lib/utils'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface ProjectOption {
+  id: string
+  name: string
+}
 
 // ─── Priority display ─────────────────────────────────────────────────────────
 
@@ -41,7 +48,7 @@ function ConfigPanel({
 }: {
   draftProject: string
   draftCategory: string
-  projects: { id: string; name: string }[]
+  projects: ProjectOption[]
   onProjectChange: (v: string) => void
   onCategoryChange: (v: string) => void
   onApply: () => void
@@ -134,16 +141,40 @@ function IssueListView({ node, updateAttributes, editor }: NodeViewProps) {
   const [draftProject, setDraftProject] = useState(projectId)
   const [draftCategory, setDraftCategory] = useState(stateCategory)
 
-  const { data: projects = [] } = useProjects()
-  const { data, isLoading, isError } = useIssues(projectId, {})
+  const [projects, setProjects] = useState<ProjectOption[]>([])
+  const [allIssues, setAllIssues] = useState<Issue[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isError, setIsError] = useState(false)
 
-  const issues = (data?.results ?? [])
-    .filter(i => !stateCategory || i.stateCategory === stateCategory)
-    .slice(0, limit)
+  // Load projects list once
+  useEffect(() => {
+    api.get<{ results?: unknown[]; [k: string]: unknown }>('/projects/')
+      .then(r => {
+        const raw = (r.data.results ?? r.data) as { id: string; name: string }[]
+        setProjects(raw.map(p => ({ id: p.id, name: p.name })))
+      })
+      .catch(() => {/* projects list failing is non-critical */})
+  }, [])
 
-  const totalFiltered = (data?.results ?? []).filter(
+  // Load issues whenever projectId changes
+  useEffect(() => {
+    if (!projectId) { setAllIssues([]); return }
+    setIsLoading(true)
+    setIsError(false)
+    api.get<{ results?: unknown[]; count?: number }>('/issues/', {
+      params: { project_id: projectId },
+    })
+      .then(r => {
+        setAllIssues((r.data.results ?? []).map(mapIssue))
+      })
+      .catch(() => setIsError(true))
+      .finally(() => setIsLoading(false))
+  }, [projectId])
+
+  const filtered = allIssues.filter(
     i => !stateCategory || i.stateCategory === stateCategory,
-  ).length
+  )
+  const issues = filtered.slice(0, limit)
 
   const selectedProject = projects.find(p => p.id === projectId)
   const categoryLabel = CATEGORY_OPTIONS.find(c => c.value === stateCategory)?.label
@@ -231,9 +262,9 @@ function IssueListView({ node, updateAttributes, editor }: NodeViewProps) {
         )}
 
         {/* Footer */}
-        {projectId && !isLoading && totalFiltered > limit && (
+        {projectId && !isLoading && filtered.length > limit && (
           <div className="px-3 py-1.5 text-[10px] text-gray-400 border-t border-gray-100 dark:border-gray-800">
-            Mostrando {limit} de {totalFiltered} issues
+            Mostrando {limit} de {filtered.length} issues
           </div>
         )}
       </div>
