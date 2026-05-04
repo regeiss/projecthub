@@ -52,7 +52,6 @@ export function useWikiPageVersions(pageId: string) {
     queryKey: ['wiki-versions', pageId],
     queryFn: () => wikiService.versions(pageId),
     enabled: !!pageId,
-    staleTime: 10_000,
   })
 }
 
@@ -90,6 +89,7 @@ export function useUpdateWikiPage() {
     onSuccess: (page) => {
       qc.invalidateQueries({ queryKey: ['wiki-page', page.id] })
       qc.invalidateQueries({ queryKey: ['wiki-pages', page.spaceId] })
+      qc.invalidateQueries({ queryKey: ['wiki-versions', page.id] })
     },
   })
 }
