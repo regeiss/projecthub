@@ -93,7 +93,7 @@ export function WikiEditor({ pageId, projectId, initialContent, readOnly = false
     const wsUrl = import.meta.env.VITE_WS_URL ?? 'ws://localhost/ws'
     const token = (window as unknown as Record<string, string>).__kc_token ?? ''
     const provider = new WebsocketProvider(
-      `${wsUrl}/wiki/${pageId}/?token=${token}`,
+      `${wsUrl}/wiki/pages/${pageId}/?token=${token}`,
       `wiki-${pageId}`,
       ydoc,
     )
