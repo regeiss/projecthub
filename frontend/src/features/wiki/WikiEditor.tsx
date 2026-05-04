@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import type { ProjectMember } from '@/types'
 import { useProjectMembers } from '@/hooks/useProjects'
 import { PanelExtension } from './extensions/Panel'
+import { IssueListExtension } from './extensions/IssueListNode'
 import { buildMentionExtension } from './extensions/Mention'
 import { SlashCommandExtension } from './extensions/SlashCommand'
 import { DateExtension } from './extensions/DateNode'
@@ -124,6 +125,7 @@ export function WikiEditor({ pageId, projectId, initialContent, readOnly = false
       StatusExtension,
       VideoExtension,
       FileExtension,
+      IssueListExtension,
     ],
     editable: !readOnly,
     onUpdate: ({ editor }) => {
