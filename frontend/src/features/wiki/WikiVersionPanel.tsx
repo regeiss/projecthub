@@ -1,11 +1,18 @@
 import { useState } from 'react'
 import { X, RotateCcw, Clock } from 'lucide-react'
 import { useWikiPageVersions, useRestoreWikiVersion } from '@/hooks/useWiki'
-import { tiptapToText } from '@/lib/editor'
 import { relativeTime, cn } from '@/lib/utils'
 import type { WikiPageVersion } from '@/types'
 
-// ─── LCS line diff ────────────────────────────────────────────────────────────
+// ─── Text extraction (inline to avoid heavy editor imports in this panel) ─────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractText(node: any): string {
+  if (!node) return ''
+  if (node.type === 'text') return node.text ?? ''
+  if (Array.isArray(node.content)) return node.content.map(extractText).join('\n')
+  return ''
+}
 
 type DiffLine = { type: 'equal' | 'added' | 'removed'; text: string }
 
@@ -61,8 +68,8 @@ function DiffStats({ lines }: { lines: DiffLine[] }) {
 // ─── Diff view ────────────────────────────────────────────────────────────────
 
 function DiffView({ version, currentContent }: { version: WikiPageVersion; currentContent: object | null }) {
-  const versionText = tiptapToText(version.content as Record<string, unknown>)
-  const currentText = tiptapToText((currentContent ?? {}) as Record<string, unknown>)
+  const versionText = extractText(version.content)
+  const currentText = extractText(currentContent ?? {})
   const lines = lineDiff(versionText, currentText)
 
   const hasChanges = lines.some(l => l.type !== 'equal')
