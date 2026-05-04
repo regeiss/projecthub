@@ -114,10 +114,15 @@ export function useUpdateIssue() {
       if (data.sort_order !== undefined) payload.sort_order = data.sort_order
       return issueService.update(issueId, payload as Parameters<typeof issueService.update>[1])
     },
-    onSuccess: (issue, { issueId }) => {
+    onSuccess: (issue, { projectId, issueId }) => {
       qc.invalidateQueries({ queryKey: ['issues'] })
       qc.invalidateQueries({ queryKey: ['issue', issueId] })
       qc.invalidateQueries({ queryKey: ['epics'] })
+      if (projectId) {
+        qc.invalidateQueries({ queryKey: ['cpm-gantt', projectId] })
+        qc.invalidateQueries({ queryKey: ['cpm-network', projectId] })
+        qc.invalidateQueries({ queryKey: ['cpm-data', projectId] })
+      }
     },
   })
 }
