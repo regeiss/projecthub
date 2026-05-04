@@ -148,7 +148,14 @@ class WikiPageDetailView(generics.RetrieveUpdateDestroyAPIView):
         return _get_page(self.kwargs["pk"], self.request.user, require_write=require_write)
 
     def perform_update(self, serializer):
+        content_changing = "content" in serializer.validated_data
         serializer.save(updated_by=self.request.user)
+        if content_changing:
+            from .tasks import create_page_version
+            create_page_version.delay(
+                str(serializer.instance.pk),
+                str(self.request.user.pk),
+            )
 
     def destroy(self, request, *args, **kwargs):
         page = self.get_object()

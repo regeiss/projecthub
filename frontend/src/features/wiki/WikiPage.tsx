@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
-import { Save } from 'lucide-react'
+import { Save, History } from 'lucide-react'
 import { useWikiPage, useWikiPageComments, useUpdateWikiPage, useWikiSpaces } from '@/hooks/useWiki'
 import { WikiEditor } from './WikiEditor'
 import { WikiBreadcrumb } from './WikiBreadcrumb'
+import { WikiVersionPanel } from './WikiVersionPanel'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
 import { PageSpinner } from '@/components/ui/Spinner'
@@ -20,6 +21,7 @@ export function WikiPage() {
   const [title, setTitle] = useState('')
   const [isDirty, setIsDirty] = useState(false)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const latestContent = useRef<object | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
 
@@ -121,6 +123,16 @@ export function WikiPage() {
             )}
             <Button
               size="sm"
+              variant={historyOpen ? 'secondary' : 'ghost'}
+              onClick={() => setHistoryOpen(v => !v)}
+              title="Histórico de versões"
+              aria-label="Histórico de versões"
+            >
+              <History className="h-3.5 w-3.5" />
+              Histórico
+            </Button>
+            <Button
+              size="sm"
               variant={isDirty ? 'primary' : 'ghost'}
               disabled={!isDirty || updatePage.isPending}
               onClick={handleSave}
@@ -137,15 +149,24 @@ export function WikiPage() {
         </p>
       </div>
 
-      <WikiEditor
-        key={page.id}
-        pageId={page.id}
-        projectId={projectId}
-        initialContent={page.content}
-        className="flex-1 rounded-none border-0"
-        onContentChange={handleContentChange}
-        onEditorReady={setEditor}
-      />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        <WikiEditor
+          key={page.id}
+          pageId={page.id}
+          projectId={projectId}
+          initialContent={page.content}
+          className="flex-1 rounded-none border-0"
+          onContentChange={handleContentChange}
+          onEditorReady={setEditor}
+        />
+        {historyOpen && (
+          <WikiVersionPanel
+            pageId={page.id}
+            currentContent={latestContent.current ?? page.content}
+            onClose={() => setHistoryOpen(false)}
+          />
+        )}
+      </div>
 
       {/* Comments */}
       {comments.length > 0 && (

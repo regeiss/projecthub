@@ -2,6 +2,21 @@ import api from '@/lib/axios'
 import type { PaginatedResponse, WikiPage, WikiPageComment, WikiPageListItem, WikiPageVersion, WikiSpace } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapVersion(raw: any): WikiPageVersion {
+  return {
+    id: raw.id,
+    pageId: raw.page,
+    versionNumber: raw.version_number,
+    title: raw.title,
+    content: raw.content ?? {},
+    changeSummary: raw.change_summary ?? null,
+    createdById: raw.created_by,
+    createdByName: raw.created_by_detail?.name ?? raw.created_by_name ?? null,
+    createdAt: raw.created_at,
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapSpace(raw: any): WikiSpace {
   return {
     id: raw.id,
@@ -101,10 +116,11 @@ export const wikiService = {
 
   // Versions
   versions: (pageId: string) =>
-    api.get<PaginatedResponse<WikiPageVersion>>(`/wiki/pages/${pageId}/versions/`).then((r) => r.data),
+    api.get<PaginatedResponse<unknown>>(`/wiki/pages/${pageId}/versions/`)
+      .then((r) => (r.data.results as unknown[]).map(mapVersion)),
 
   restoreVersion: (pageId: string, versionId: string) =>
-    api.post<WikiPage>(`/wiki/pages/${pageId}/versions/${versionId}/restore/`).then((r) => r.data),
+    api.post<unknown>(`/wiki/pages/${pageId}/versions/${versionId}/restore/`).then((r) => mapPage(r.data as Record<string, unknown>)),
 
   // Comments
   comments: (pageId: string) =>

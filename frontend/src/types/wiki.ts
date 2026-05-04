@@ -68,5 +68,6 @@ export interface WikiPageVersion {
   content: object
   changeSummary: string | null
   createdById: string
+  createdByName: string | null
   createdAt: string
 }
