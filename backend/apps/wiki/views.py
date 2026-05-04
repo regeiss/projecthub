@@ -151,21 +151,11 @@ class WikiPageDetailView(generics.RetrieveUpdateDestroyAPIView):
         content_changing = "content" in serializer.validated_data
         serializer.save(updated_by=self.request.user)
         if content_changing:
-            self._snapshot_version(serializer.instance)
-
-    def _snapshot_version(self, page):
-        from .models import WikiPageVersion
-        last = WikiPageVersion.objects.filter(page=page).order_by("-version_number").first()
-        if last and last.content == page.content:
-            return  # conteúdo idêntico — não cria duplicata
-        next_num = (last.version_number + 1) if last else 1
-        WikiPageVersion.objects.create(
-            page=page,
-            version_number=next_num,
-            title=page.title,
-            content=page.content or {},
-            created_by=self.request.user,
-        )
+            from .tasks import create_page_version
+            create_page_version.delay(
+                str(serializer.instance.pk),
+                str(self.request.user.pk),
+            )
 
     def destroy(self, request, *args, **kwargs):
         page = self.get_object()
