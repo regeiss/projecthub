@@ -7,12 +7,13 @@ import { cn } from '@/lib/utils'
 // ─── Layout constants ─────────────────────────────────────────────────────────
 
 const DAY_W    = 44   // px per day column
-const ROW_H    = 64   // px per task row
+const ROW_H    = 72   // px per task row
 const WEEK_H   = 28   // header: week-range row
 const DAY_H    = 24   // header: day-numbers row
 const HEADER_H = WEEK_H + DAY_H
-const BAR_H    = 34   // height of the pill bar
-const BAR_TOP  = (ROW_H - BAR_H) / 2   // vertical offset so bar is centred
+const BAR_H    = 32   // height of the pill bar
+const LABEL_H  = 16   // reserved height for date labels above bar
+const BAR_TOP  = LABEL_H + 4   // bar starts below the date label area
 
 // ─── Colours ──────────────────────────────────────────────────────────────────
 
@@ -82,7 +83,7 @@ function groupByWeek(days: Date[]): WeekGroup[] {
 // ─── Dependency arrow (SVG) ───────────────────────────────────────────────────
 
 function DepArrow({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: number }) {
-  const mid = x1 + 14
+  const mid = x1 + 16
   const d = `M${x1},${y1} H${mid} V${y2} H${x2}`
   return (
     <path
@@ -91,7 +92,7 @@ function DepArrow({ x1, y1, x2, y2 }: { x1: number; y1: number; x2: number; y2: 
       stroke="#cbd5e1"
       strokeWidth={1.5}
       strokeDasharray="4 3"
-      markerEnd="url(#dep-arrow)"
+      markerStart="url(#dep-arrow)"
     />
   )
 }
@@ -255,11 +256,11 @@ export function GanttChart({ projectId, scrollRef: externalRef }: GanttChartProp
                 id="dep-arrow"
                 markerWidth="6"
                 markerHeight="6"
-                refX="5"
+                refX="1"
                 refY="3"
                 orient="auto"
               >
-                <path d="M0,0 L0,6 L6,3 z" fill="#94a3b8" />
+                <path d="M6,0 L6,6 L0,3 z" fill="#94a3b8" />
               </marker>
             </defs>
 
@@ -269,13 +270,13 @@ export function GanttChart({ projectId, scrollRef: externalRef }: GanttChartProp
               const tIdx = taskIdxMap.get(task.id) ?? -1
               if (tIdx === -1) return null
               const { x: tx } = metrics(task)
-              const ty = tIdx * ROW_H + ROW_H / 2
+              const ty = tIdx * ROW_H + BAR_TOP + BAR_H / 2
 
               return deps.map((depId) => {
                 const sIdx = taskIdxMap.get(depId) ?? -1
                 if (sIdx === -1) return null
                 const src = metrics(tasks[sIdx])
-                const sy  = sIdx * ROW_H + ROW_H / 2
+                  const sy  = sIdx * ROW_H + BAR_TOP + BAR_H / 2
                 return (
                   <DepArrow
                     key={`${depId}->${task.id}`}
@@ -303,27 +304,27 @@ export function GanttChart({ projectId, scrollRef: externalRef }: GanttChartProp
               >
                 {/* Start date label */}
                 <span
-                  className="absolute text-[9px] font-medium text-gray-400 dark:text-gray-500 select-none"
-                  style={{ left: x, top: 5 }}
+                  className="absolute text-[9px] font-medium text-gray-400 dark:text-gray-500 select-none whitespace-nowrap"
+                  style={{ left: x, top: 2 }}
                 >
                   {fmtDay(start)}
                 </span>
 
                 {/* End date label */}
                 <span
-                  className="absolute text-[9px] font-medium text-gray-400 dark:text-gray-500 select-none"
-                  style={{ left: x + w, top: 5, transform: 'translateX(-100%)' }}
+                  className="absolute text-[9px] font-medium text-gray-400 dark:text-gray-500 select-none whitespace-nowrap"
+                  style={{ left: x + w, top: 2, transform: 'translateX(-100%)' }}
                 >
                   {fmtDay(end)}
                 </span>
 
                 {/* Pill bar */}
                 <div
-                  className="absolute flex items-center px-3 rounded-full shadow-sm select-none overflow-hidden"
+                  className="absolute flex items-center px-3 rounded-2xl shadow-sm select-none overflow-hidden"
                   style={{
-                    left: x,
+                    left: x + 2,
                     top: BAR_TOP,
-                    width: w,
+                    width: w - 4,
                     height: BAR_H,
                     background: `linear-gradient(135deg, ${from}, ${to})`,
                   }}
