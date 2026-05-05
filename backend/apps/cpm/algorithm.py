@@ -26,26 +26,16 @@ CPM_RELATION_TYPES = frozenset(
 def _build_graph(project_id: str):
     """
     Constrói um DiGraph NetworkX com as issues e relações CPM do projeto.
-    Retorna (G, durations) onde durations = {issue_id_str: int}.
+    Duração de cada nó vem de Issue.estimate_days (mínimo 1 dia).
     """
-    from apps.cpm.models import CpmIssueData
     from apps.issues.models import Issue, IssueRelation
 
     issues = list(Issue.objects.filter(project_id=project_id).values("id", "estimate_days"))
 
-    # duration_days in CpmIssueData is a manual override; estimate_days on Issue is the default
-    cpm_overrides = {
-        str(d.issue_id): d.duration_days
-        for d in CpmIssueData.objects.filter(
-            issue__project_id=project_id,
-            duration_days__isnull=False,
-        )
-    }
-
     G = nx.DiGraph()
     for issue in issues:
         iid = str(issue["id"])
-        duration = cpm_overrides.get(iid) or max(1, int(issue["estimate_days"] or 1))
+        duration = max(1, int(issue["estimate_days"] or 1))
         G.add_node(iid, duration=duration)
 
     relations = IssueRelation.objects.filter(
