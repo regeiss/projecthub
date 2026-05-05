@@ -46,8 +46,15 @@ function isoWeek(d: Date) {
   return Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
 }
 
+// Parse "YYYY-MM-DD" (or "YYYY-MM-DDTHH:mm:ssZ") as a local date, avoiding
+// UTC-midnight → previous-day shift in negative-offset timezones (e.g. UTC-3).
+function parseLocalDate(s: string): Date {
+  const [y, m, d] = s.split('T')[0].split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 function fmtMonDay(d: Date) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  return d.toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' })
 }
 
 function fmtDay(d: Date) {
@@ -55,7 +62,7 @@ function fmtDay(d: Date) {
 }
 
 function fmtMonAbbr(d: Date) {
-  return d.toLocaleDateString('en-US', { month: 'short' })
+  return d.toLocaleDateString('pt-BR', { month: 'short' })
 }
 
 function daysBetween(a: Date, b: Date) {
@@ -105,7 +112,7 @@ export function GanttChart({ projectId }: GanttChartProps) {
   const derived = useMemo(() => {
     if (!tasks || tasks.length === 0) return null
 
-    const allDates = tasks.flatMap((t: GanttTask) => [new Date(t.start), new Date(t.end)])
+    const allDates = tasks.flatMap((t: GanttTask) => [parseLocalDate(t.start), parseLocalDate(t.end)])
     const rawMin = startOfDay(new Date(Math.min(...allDates.map((d) => d.getTime()))))
     const rawMax = startOfDay(new Date(Math.max(...allDates.map((d) => d.getTime()))))
     // Pad 1 day each side
@@ -132,8 +139,8 @@ export function GanttChart({ projectId }: GanttChartProps) {
           const depRow = taskMap.get(depId)
           if (depRow === undefined) return
           const depTask = tasks[depRow]
-          const depEndDay = daysBetween(minDate, startOfDay(new Date(depTask.end)))
-          const taskStartDay = daysBetween(minDate, startOfDay(new Date(task.start)))
+          const depEndDay = daysBetween(minDate, parseLocalDate(depTask.end))
+          const taskStartDay = daysBetween(minDate, parseLocalDate(task.start))
           const x1 = (depEndDay + 1) * DAY_WIDTH
           const y1 = depRow * ROW_HEIGHT + ROW_HEIGHT / 2
           const x2 = taskStartDay * DAY_WIDTH
@@ -302,15 +309,15 @@ export function GanttChart({ projectId }: GanttChartProps) {
             {/* Task bars */}
             {(tasks as GanttTask[]).map((task, rowIdx) => {
               const color = PALETTE[rowIdx % PALETTE.length]
-              const startDay = daysBetween(minDate, startOfDay(new Date(task.start)))
-              const endDay = daysBetween(minDate, startOfDay(new Date(task.end)))
+              const startDay = daysBetween(minDate, parseLocalDate(task.start))
+              const endDay = daysBetween(minDate, parseLocalDate(task.end))
               const durationDays = endDay - startDay + 1
               const barLeft = startDay * DAY_WIDTH
               const barWidth = durationDays * DAY_WIDTH
               const barTop = rowIdx * ROW_HEIGHT + BAR_TOP
               const initial = task.name.charAt(0).toUpperCase()
-              const startLabel = fmtMonDay(new Date(task.start))
-              const endLabel = fmtMonDay(new Date(task.end))
+              const startLabel = fmtMonDay(parseLocalDate(task.start))
+              const endLabel = fmtMonDay(parseLocalDate(task.end))
 
               return (
                 <div key={task.id}>
