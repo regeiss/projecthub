@@ -143,6 +143,25 @@ def notify_assignee_change(sender, instance, created, **kwargs):
         logger.exception("Falha ao criar notificação de atribuição")
 
 
+@receiver(post_save, sender=Issue)
+def trigger_cpm_on_issue_change(sender, instance, created, **kwargs):
+    """Recalcula CPM quando estimate_days, start_date ou due_date mudam numa issue."""
+    if created:
+        return
+    original = getattr(instance, "_original", None)
+    if original is None:
+        return
+    watched = ("estimate_days", "start_date", "due_date")
+    if not any(getattr(original, f) != getattr(instance, f) for f in watched):
+        return
+    try:
+        from apps.cpm.tasks import recalculate_cpm
+
+        recalculate_cpm.apply_async(args=[str(instance.project_id)], queue="cpm")
+    except Exception:
+        logger.exception("Falha ao disparar recálculo CPM após mudança de issue")
+
+
 @receiver(post_save, sender=IssueRelation)
 def trigger_cpm_on_relation(sender, instance, created, **kwargs):
     """Recalcula CPM quando uma relação do tipo CPM é criada."""

@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { Network, BarChart2, RefreshCw, Archive } from 'lucide-react'
 import { useCalculateCpm, useCpmBaselines, useCreateBaseline } from '@/hooks/useCpm'
+import keycloak from '@/lib/keycloak'
 import { GanttChart } from './GanttChart'
 import { NetworkDiagram } from './NetworkDiagram'
 import { Button } from '@/components/ui/Button'
@@ -58,6 +60,28 @@ export function GanttPage() {
   const [savingBaseline, setSavingBaseline] = useState(false)
   const calculate = useCalculateCpm()
   const { data: baselines = [] } = useCpmBaselines(projectId)
+  const qc = useQueryClient()
+
+  // Auto-refresh Gantt when CPM is recalculated (triggered by issue changes)
+  useEffect(() => {
+    if (!projectId) return
+    const wsBase = import.meta.env.VITE_WS_URL ?? 'ws://localhost/ws'
+    const token = keycloak.token ?? ''
+    const ws = new WebSocket(`${wsBase}/projects/${projectId}/board/?token=${token}`)
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg.type === 'cpm.updated') {
+          qc.invalidateQueries({ queryKey: ['cpm-gantt', projectId] })
+          qc.invalidateQueries({ queryKey: ['cpm-data', projectId] })
+          qc.invalidateQueries({ queryKey: ['cpm-network', projectId] })
+        }
+      } catch {
+        // ignore malformed messages
+      }
+    }
+    return () => ws.close()
+  }, [projectId, qc])
 
   return (
     <div className="flex h-full flex-col">
