@@ -256,11 +256,11 @@ export function GanttChart({ projectId, scrollRef: externalRef }: GanttChartProp
                 id="dep-arrow"
                 markerWidth="6"
                 markerHeight="6"
-                refX="1"
+                refX="6"
                 refY="3"
                 orient="auto"
               >
-                <path d="M6,0 L6,6 L0,3 z" fill="#94a3b8" />
+                <path d="M0,0 L0,6 L6,3 z" fill="#94a3b8" />
               </marker>
             </defs>
 
