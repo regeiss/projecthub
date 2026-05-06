@@ -23,7 +23,10 @@ export function WikiPage() {
   const latestContent = useRef<object | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
 
-  const space = spaces.find((s) => s.projectId === projectId)
+  // When projectId is empty (workspace wiki route), look for the workspace-level space (projectId=null)
+  const space = spaces.find((s) =>
+    projectId ? s.projectId === projectId : s.projectId === null
+  )
 
   useEffect(() => {
     if (page) {

@@ -58,12 +58,19 @@ export function useWikiPageVersions(pageId: string) {
 export function useCreateWikiSpace() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ projectId, name }: { projectId: string; name: string }) =>
+    mutationFn: ({ projectId, name }: { projectId: string | null; name: string }) =>
       wikiService.createSpace(projectId, name),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wiki-spaces'] })
     },
   })
+}
+
+/** Returns the workspace-level wiki space (projectId === null). */
+export function useWorkspaceWikiSpace() {
+  const { data: spaces = [], isLoading } = useWikiSpaces()
+  const space = spaces.find((s) => s.projectId === null) ?? null
+  return { space, isLoading }
 }
 
 export function useCreateWikiPage() {

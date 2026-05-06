@@ -14,6 +14,7 @@ import { IssueDetailPage } from './features/issues/IssueDetailPage'
 import { ProjectReportsPage } from './features/projects/ProjectReportsPage'
 import { WikiLayout } from './features/wiki/WikiLayout'
 import { WikiPage } from './features/wiki/WikiPage'
+import { WorkspaceWikiLayout } from './features/wiki/WorkspaceWikiLayout'
 import { GanttPage } from './features/gantt/GanttPage'
 import { PortfolioPage } from './features/portfolio/PortfolioPage'
 import { ProjectSettings } from './features/projects/ProjectSettings'
@@ -58,6 +59,10 @@ export default function App() {
             </Route>
 
             <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/wiki" element={<WorkspaceWikiLayout />}>
+              <Route index element={<WikiPage />} />
+              <Route path=":pageId" element={<WikiPage />} />
+            </Route>
             <Route path="/workspace/resources" element={<ResourcesPage />} />
             <Route path="/workspace/settings" element={<WorkspaceSettings />} />
             <Route path="/settings" element={<UserSettingsPage />} />
