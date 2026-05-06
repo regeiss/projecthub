@@ -54,7 +54,7 @@ def _get_issues_map(project_id: str) -> dict:
     from apps.issues.models import Issue
 
     qs = Issue.objects.filter(project_id=project_id).select_related("state").values(
-        "id", "title", "sequence_id", "due_date", "state__category"
+        "id", "title", "sequence_id", "due_date", "start_date", "estimate_days", "state__category"
     )
     return {str(row["id"]): row for row in qs}
 
