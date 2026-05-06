@@ -31,7 +31,7 @@ body {
     background-color: transparent !important;
 }
 
-/* 3. NAVBAR FLUTUANTE */
+/* 3. NAVBAR FLUTUANTE — três cápsulas individuais */
 #kc-header {
     position: fixed !important;
     top: 16px !important;
@@ -39,66 +39,93 @@ body {
     transform: translateX(-50%) !important;
     width: calc(100% - 24px) !important;
     max-width: none !important;
-    height: 60px !important;
+    height: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 !important;
+    gap: 12px !important;
+    z-index: 999 !important;
+    margin: 0 !important;
+}
+
+/* Cápsula esquerda: nome da organização */
+#kc-header::before {
+    content: "Prefeitura de Novo Hamburgo" !important;
+    display: flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    padding: 0 20px !important;
     background: rgba(50, 50, 50, 0.45) !important;
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
-    border-radius: 16px !important;
+    border-radius: 22px !important;
     border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25) !important;
-    display: flex !important;
-    align-items: center !important;
-    padding: 0 28px !important;
-    z-index: 999 !important;
-    margin: 0 !important;
-    text-align: left !important;
-}
-
-/* Esquerda: nome da organização (flex item do header) */
-#kc-header::before {
-    content: "Prefeitura de Novo Hamburgo" !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
     flex-shrink: 0 !important;
     font-size: 1rem !important;
     font-weight: 700 !important;
     color: #ffffff !important;
     letter-spacing: -0.01em !important;
-    line-height: 1 !important;
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
     white-space: nowrap !important;
 }
 
-/* Direita: sigla (empurrada pelo margin-left: auto) */
+/* Cápsula direita: sigla */
 #kc-header::after {
     content: "CTIBD" !important;
-    margin-left: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    padding: 0 20px !important;
+    background: rgba(50, 50, 50, 0.45) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 22px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
     flex-shrink: 0 !important;
     font-size: 0.82rem !important;
     font-weight: 700 !important;
     letter-spacing: 0.14em !important;
-    color: rgba(255, 255, 255, 0.55) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
     white-space: nowrap !important;
-    line-height: 1 !important;
 }
 
-/* Centro: produto — wrapper posicionado absolutamente no meio do header */
+/* Cápsula central: produto */
 #kc-header-wrapper {
-    position: absolute !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    position: static !important;
+    transform: none !important;
     font-size: 0 !important;
     line-height: 0 !important;
-    pointer-events: none !important;
 }
 
 #kc-header-wrapper::before {
     content: "Controle de portfolios e projetos" !important;
-    display: block !important;
-    font-size: 1.25rem !important;
+    display: flex !important;
+    align-items: center !important;
+    height: 44px !important;
+    padding: 0 24px !important;
+    background: rgba(50, 50, 50, 0.45) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    border-radius: 22px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+    font-size: 1.15rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     letter-spacing: 0.03em !important;
-    line-height: 1 !important;
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.45) !important;
     white-space: nowrap !important;
 }
