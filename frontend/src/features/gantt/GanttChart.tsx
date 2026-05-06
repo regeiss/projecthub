@@ -106,33 +106,50 @@ interface Arrow {
   y2: number
 }
 
-// Gera um caminho ortogonal com cantos arredondados:
-// saída horizontal → vertical → entrada horizontal (nunca sobrepõe barras)
+// Gera caminho ortogonal com cantos arredondados, sem sobrepor barras:
+// - Forward (x2 > x1 + 2*STUB): L-shape → direita, vertical, direita
+// - Tight/backward: degrau → direita, vertical até meio, esquerda, vertical, direita
 function arrowPath(x1: number, y1: number, x2: number, y2: number): string {
-  const STUB = 14  // distância horizontal antes de virar
-  const R = 5      // raio do canto
+  const STUB = 14
+  const R = 5
 
   if (Math.abs(y1 - y2) < 1) return `M ${x1} ${y1} H ${x2}`
 
-  // Se há espaço, vira logo após x1; senão, vira antes de x2 (rota em Z)
-  const viaX = x2 > x1 + 2 * STUB ? x1 + STUB : x2 - STUB
-  const vs = y2 > y1 ? 1 : -1   // sinal vertical: +1 para baixo, -1 para cima
-  const hr1 = viaX >= x1 ? 1 : -1   // sinal do 1º segmento horizontal
-  const hr2 = x2 >= viaX ? 1 : -1   // sinal do 2º segmento horizontal
+  const vs = y2 > y1 ? 1 : -1  // +1 = para baixo, -1 = para cima
+  // arcos: sw_cw=1 vira sentido horário, sw_cc=0 anti-horário
+  const sw_cw = vs > 0 ? 1 : 0
+  const sw_cc = vs > 0 ? 0 : 1
 
-  // sweep do arco 1 (horizontal→vertical): 1 quando hr1 e vs têm mesmo sinal
-  const sw1 = hr1 * vs > 0 ? 1 : 0
-  // sweep do arco 2 (vertical→horizontal): 1 quando vs e hr2 têm sinais opostos
-  const sw2 = vs * hr2 < 0 ? 1 : 0
+  if (x2 > x1 + 2 * STUB) {
+    // L-shape simples: sai direita, vira, chega direita
+    return [
+      `M ${x1} ${y1}`,
+      `H ${x1 + STUB - R}`,
+      `a ${R},${R} 0 0,${sw_cw} ${R},${vs * R}`,   // direita → vertical
+      `V ${y2 - vs * R}`,
+      `a ${R},${R} 0 0,${sw_cc} ${R},${vs * R}`,   // vertical → direita
+      `H ${x2}`,
+    ].join(' ')
+  } else {
+    // Degrau: sai DIREITA de x1, desce até o meio das linhas,
+    // volta ESQUERDA até x2-STUB, desce até y2, entra DIREITA em x2
+    const midY = (y1 + y2) / 2
+    const exitX = x1 + STUB
+    const approachX = x2 - STUB
 
-  return [
-    `M ${x1} ${y1}`,
-    `H ${viaX - hr1 * R}`,
-    `a ${R},${R} 0 0,${sw1} ${hr1 * R},${vs * R}`,
-    `V ${y2 - vs * R}`,
-    `a ${R},${R} 0 0,${sw2} ${hr2 * R},${vs * R}`,
-    `H ${x2}`,
-  ].join(' ')
+    return [
+      `M ${x1} ${y1}`,
+      `H ${exitX - R}`,
+      `a ${R},${R} 0 0,${sw_cw} ${R},${vs * R}`,    // direita → vertical
+      `V ${midY - vs * R}`,
+      `a ${R},${R} 0 0,${sw_cw} ${-R},${vs * R}`,   // vertical → esquerda
+      `H ${approachX + R}`,
+      `a ${R},${R} 0 0,${sw_cc} ${-R},${vs * R}`,   // esquerda → vertical
+      `V ${y2 - vs * R}`,
+      `a ${R},${R} 0 0,${sw_cc} ${R},${vs * R}`,    // vertical → direita
+      `H ${x2}`,
+    ].join(' ')
+  }
 }
 
 export function GanttChart({ projectId }: GanttChartProps) {
