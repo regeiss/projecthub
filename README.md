@@ -11,19 +11,24 @@ Sistema integrado de gestão de projetos, wiki, CPM e portfolio — Prefeitura d
 O **Workspace** é o tenant raiz do sistema. Todos os dados pertencem a um único workspace (a prefeitura). Os usuários do sistema são **WorkspaceMembers** — criados automaticamente na primeira autenticação via Keycloak.
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Workspace  (ex: "Prefeitura de Novo Hamburgo")             │
-│                                                             │
-│  ┌──────────────────────────────────────────────┐           │
-│  │  WorkspaceMember  (papel: admin/member/guest)│           │
-│  │  • Criado automaticamente no 1º login        │           │
-│  │  • Vinculado ao Keycloak via keycloak_sub    │           │
-│  └──────────────────────────────────────────────┘           │
-│                                                             │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐    │
-│  │ Project  │  │ Project  │  │ Project  │  │ Portfolio │    │
-│  └──────────┘  └──────────┘  └──────────┘  └───────────┘    │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│  Workspace  (ex: "Prefeitura de Novo Hamburgo")                 │
+│                                                                 │
+│  ┌──────────────────────────────────────────────┐               │
+│  │  WorkspaceMember  (papel: admin/member/guest)│               │
+│  │  • Criado automaticamente no 1º login        │               │
+│  │  • Vinculado ao Keycloak via keycloak_sub    │               │
+│  └──────────────────────────────────────────────┘               │
+│                                                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌───────────┐       │
+│  │ Project  │  │ Project  │  │ Project  │  │ Portfolio │       │
+│  └──────────┘  └──────────┘  └──────────┘  └───────────┘       │
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  WikiSpace (workspace)  — documentação geral /wiki       │   │
+│  │  └── WikiPage  (hierárquico, colaborativo Yjs)           │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### Projeto
@@ -102,11 +107,16 @@ Workspace
 │       │       └── ModuleIssue
 │       ├── Milestone
 │       ├── ProjectRisk (Risk Register)
-│       ├── WikiSpace
+│       ├── WikiSpace  (project)
 │       │       └── WikiPage
 │       │               ├── WikiPageVersion
 │       │               └── WikiPageComment
 │       └── CpmBaseline
+│
+├── WikiSpace  (workspace — project=null)  /wiki
+│       └── WikiPage
+│               ├── WikiPageVersion
+│               └── WikiPageComment
 │
 └── Portfolio
         ├── PortfolioProject ──▶ Project
@@ -291,20 +301,21 @@ projecthub/
 
 ### Funcionalidades por módulo
 
-| Módulo            | Backend | Frontend | Observações                              |
-| ----------------- | ------- | -------- | ---------------------------------------- |
-| Auth (Keycloak)   | ✅      | ✅       | JWT local via JWKS, cache Redis 1h       |
-| Workspaces        | ✅      | ✅       | CRUD + membros                           |
-| Projects          | ✅      | ✅       | CRUD + estados + labels + membros        |
-| Issues            | ✅      | ✅       | Board Kanban + Backlog + Detail          |
-| Wiki              | ✅      | ✅       | TipTap + Yjs colaboração em tempo real   |
-| Cycles            | ✅      | ✅       | Sprints com progresso                    |
-| Modules           | ✅      | ✅       | Agrupamento temático + progress bar      |
-| Milestones        | ✅      | ✅       | Cards com progresso por issues           |
-| Risk Register     | ✅      | ✅       | Matriz 5×5, score, workflow de status    |
-| CPM / Gantt       | ✅      | ✅       | NetworkX AON, 4 tipos relação, baselines |
-| Portfolio         | ✅      | ✅       | Dashboard EVM+RAG, Roadmap, OKRs         |
-| Notifications     | ✅      | ✅       | In-app + email + WebSocket               |
+| Módulo                | Backend | Frontend | Observações                                        |
+| --------------------- | ------- | -------- | -------------------------------------------------- |
+| Auth (Keycloak)       | ✅      | ✅       | JWT local via JWKS, cache Redis 1h                 |
+| Workspaces            | ✅      | ✅       | CRUD + membros                                     |
+| Projects              | ✅      | ✅       | CRUD + estados + labels + membros                  |
+| Issues                | ✅      | ✅       | Board Kanban + Backlog + Detail                    |
+| Wiki de projeto       | ✅      | ✅       | TipTap + Yjs colaboração em tempo real, por projeto|
+| Wiki do workspace     | ✅      | ✅       | Documentação geral em `/wiki`, independente de projeto (estilo Confluence) |
+| Cycles                | ✅      | ✅       | Sprints com progresso                              |
+| Modules               | ✅      | ✅       | Agrupamento temático + progress bar                |
+| Milestones            | ✅      | ✅       | Cards com progresso por issues                     |
+| Risk Register         | ✅      | ✅       | Matriz 5×5, score, workflow de status              |
+| CPM / Gantt           | ✅      | ✅       | NetworkX AON, 4 tipos relação, baselines, setas SVG|
+| Portfolio             | ✅      | ✅       | Dashboard EVM+RAG, Roadmap, OKRs                   |
+| Notifications         | ✅      | ✅       | In-app + email + WebSocket                         |
 
 ---
 
