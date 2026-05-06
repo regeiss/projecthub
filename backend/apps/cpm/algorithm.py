@@ -30,7 +30,7 @@ def _build_graph(project_id: str):
     """
     from apps.issues.models import Issue, IssueRelation
 
-    issues = list(Issue.objects.filter(project_id=project_id).values("id", "estimate_days"))
+    issues = list(Issue.objects.filter(project_id=project_id).exclude(type="epic").values("id", "estimate_days"))
 
     G = nx.DiGraph()
     for issue in issues:
