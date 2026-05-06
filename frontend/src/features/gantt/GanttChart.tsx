@@ -106,6 +106,35 @@ interface Arrow {
   y2: number
 }
 
+// Gera um caminho ortogonal com cantos arredondados:
+// saída horizontal → vertical → entrada horizontal (nunca sobrepõe barras)
+function arrowPath(x1: number, y1: number, x2: number, y2: number): string {
+  const STUB = 14  // distância horizontal antes de virar
+  const R = 5      // raio do canto
+
+  if (Math.abs(y1 - y2) < 1) return `M ${x1} ${y1} H ${x2}`
+
+  // Se há espaço, vira logo após x1; senão, vira antes de x2 (rota em Z)
+  const viaX = x2 > x1 + 2 * STUB ? x1 + STUB : x2 - STUB
+  const vs = y2 > y1 ? 1 : -1   // sinal vertical: +1 para baixo, -1 para cima
+  const hr1 = viaX >= x1 ? 1 : -1   // sinal do 1º segmento horizontal
+  const hr2 = x2 >= viaX ? 1 : -1   // sinal do 2º segmento horizontal
+
+  // sweep do arco 1 (horizontal→vertical): 1 quando hr1 e vs têm mesmo sinal
+  const sw1 = hr1 * vs > 0 ? 1 : 0
+  // sweep do arco 2 (vertical→horizontal): 1 quando vs e hr2 têm sinais opostos
+  const sw2 = vs * hr2 < 0 ? 1 : 0
+
+  return [
+    `M ${x1} ${y1}`,
+    `H ${viaX - hr1 * R}`,
+    `a ${R},${R} 0 0,${sw1} ${hr1 * R},${vs * R}`,
+    `V ${y2 - vs * R}`,
+    `a ${R},${R} 0 0,${sw2} ${hr2 * R},${vs * R}`,
+    `H ${x2}`,
+  ].join(' ')
+}
+
 export function GanttChart({ projectId }: GanttChartProps) {
   const { data: tasks, isLoading } = useCpmGantt(projectId)
 
@@ -289,21 +318,18 @@ export function GanttChart({ projectId }: GanttChartProps) {
                   <path d="M0,0 L0,6 L6,3 z" fill="#9ca3af" />
                 </marker>
               </defs>
-              {arrows.map((a, i) => {
-                const cx = (a.x1 + a.x2) / 2
-                return (
-                  <g key={i}>
-                    <path
-                      d={`M ${a.x1} ${a.y1} C ${cx} ${a.y1} ${cx} ${a.y2} ${a.x2} ${a.y2}`}
-                      fill="none"
-                      stroke="#9ca3af"
-                      strokeWidth="1.5"
-                      markerEnd="url(#arrow-head)"
-                    />
-                    <circle cx={a.x1} cy={a.y1} r={3} fill="none" stroke="#9ca3af" strokeWidth="1.5" />
-                  </g>
-                )
-              })}
+              {arrows.map((a, i) => (
+                <g key={i}>
+                  <path
+                    d={arrowPath(a.x1, a.y1, a.x2, a.y2)}
+                    fill="none"
+                    stroke="#9ca3af"
+                    strokeWidth="1.5"
+                    markerEnd="url(#arrow-head)"
+                  />
+                  <circle cx={a.x1} cy={a.y1} r={3} fill="none" stroke="#9ca3af" strokeWidth="1.5" />
+                </g>
+              ))}
             </svg>
 
             {/* Task bars */}
