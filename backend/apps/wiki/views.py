@@ -148,7 +148,14 @@ class WikiPageDetailView(generics.RetrieveUpdateDestroyAPIView):
         return _get_page(self.kwargs["pk"], self.request.user, require_write=require_write)
 
     def perform_update(self, serializer):
+        should_version = "content" in serializer.validated_data or "title" in serializer.validated_data
         serializer.save(updated_by=self.request.user)
+        if should_version:
+            from .tasks import create_page_version
+            create_page_version.delay(
+                str(serializer.instance.pk),
+                str(self.request.user.pk),
+            )
 
     def destroy(self, request, *args, **kwargs):
         page = self.get_object()
@@ -246,6 +253,14 @@ class WikiPageVersionRestoreView(APIView):
             page.content = version.content
             page.updated_by = request.user
             page.save(update_fields=["title", "content", "updated_by", "updated_at"])
+
+        # Snapshot the restored state so it appears in the history
+        from .tasks import create_page_version
+        create_page_version.delay(
+            str(page.pk),
+            str(request.user.pk),
+            change_summary=f"Restaurado para v{version.version_number}",
+        )
 
         return Response(WikiPageDetailSerializer(page).data)
 

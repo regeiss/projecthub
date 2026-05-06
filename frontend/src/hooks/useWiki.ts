@@ -52,6 +52,7 @@ export function useWikiPageVersions(pageId: string) {
     queryKey: ['wiki-versions', pageId],
     queryFn: () => wikiService.versions(pageId),
     enabled: !!pageId,
+    staleTime: 0,
   })
 }
 
@@ -116,8 +117,9 @@ export function useRestoreWikiVersion() {
   return useMutation({
     mutationFn: ({ pageId, versionId }: { pageId: string; versionId: string }) =>
       wikiService.restoreVersion(pageId, versionId),
-    onSuccess: (page) => {
+    onSuccess: (page, { pageId }) => {
       qc.invalidateQueries({ queryKey: ['wiki-page', page.id] })
+      qc.invalidateQueries({ queryKey: ['wiki-versions', pageId] })
     },
   })
 }
