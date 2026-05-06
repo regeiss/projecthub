@@ -307,7 +307,7 @@ projecthub/
 | Workspaces            | ✅      | ✅       | CRUD + membros                                     |
 | Projects              | ✅      | ✅       | CRUD + estados + labels + membros                  |
 | Issues                | ✅      | ✅       | Board Kanban + Backlog + Detail                    |
-| Wiki de projeto       | ✅      | ✅       | TipTap + Yjs colaboração em tempo real, por projeto|
+| Wiki de projeto       | ✅      | ✅       | TipTap + Yjs, histórico de versões com diff palavra-a-palavra, por projeto |
 | Wiki do workspace     | ✅      | ✅       | Documentação geral em `/wiki`, independente de projeto (estilo Confluence) |
 | Cycles                | ✅      | ✅       | Sprints com progresso                              |
 | Modules               | ✅      | ✅       | Agrupamento temático + progress bar                |
