@@ -98,6 +98,11 @@ export const wikiService = {
       params: parentId !== undefined ? { parent: parentId ?? 'null' } : {},
     }).then((r) => (r.data.results as unknown[]).map(mapPageListItem)),
 
+  searchPages: (spaceId: string, query: string) =>
+    api.get<PaginatedResponse<unknown>>(`/wiki/spaces/${spaceId}/pages/`, {
+      params: { search: query },
+    }).then((r) => (r.data.results as unknown[]).map(mapPageListItem)),
+
   getPage: (pageId: string) =>
     api.get<unknown>(`/wiki/pages/${pageId}/`).then((r) => mapPage(r.data)),
 

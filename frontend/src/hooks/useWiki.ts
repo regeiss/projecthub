@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { wikiService } from '@/services/wiki.service'
+import { useDebounce } from '@/hooks/useDebounce'
 import type { WikiPage } from '@/types'
 
 /** Fetches ALL pages in a project's wiki space (no parent filter). */
@@ -20,6 +21,16 @@ export function useWikiSpaces() {
   return useQuery({
     queryKey: ['wiki-spaces'],
     queryFn: () => wikiService.spaces(),
+  })
+}
+
+export function useWikiSearch(spaceId: string, query: string) {
+  const debouncedQuery = useDebounce(query, 300)
+  return useQuery({
+    queryKey: ['wiki-search', spaceId, debouncedQuery],
+    queryFn: () => wikiService.searchPages(spaceId, debouncedQuery),
+    enabled: !!spaceId && debouncedQuery.trim().length >= 2,
+    staleTime: 30_000,
   })
 }
 

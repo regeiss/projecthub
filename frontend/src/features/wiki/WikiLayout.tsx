@@ -5,7 +5,7 @@ import type { Editor } from '@tiptap/react'
 import { useWikiSpaces, useCreateWikiSpace } from '@/hooks/useWiki'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Button } from '@/components/ui/Button'
-import { PageTree } from './PageTree'
+import { WikiSidebar } from './WikiSidebar'
 import { WikiTOC } from './WikiTOC'
 import { PageSpinner } from '@/components/ui/Spinner'
 
@@ -62,16 +62,8 @@ export function WikiLayout() {
 
   return (
     <div className="flex h-full overflow-hidden">
-      {/* Left: page tree sidebar */}
-      <aside
-        className="w-56 shrink-0 overflow-y-auto border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
-        aria-label="Páginas da wiki"
-      >
-        <div className="border-b border-gray-100 dark:border-gray-800 px-4 py-3">
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{space.name}</p>
-        </div>
-        <PageTree spaceId={space.id} />
-      </aside>
+      {/* Left: sidebar with search + page tree */}
+      <WikiSidebar space={space} basePath={`/projects/${projectId}/wiki`} />
 
       {/* Centre: page content */}
       <main className="flex-1 overflow-y-auto bg-white dark:bg-gray-900 min-w-0">

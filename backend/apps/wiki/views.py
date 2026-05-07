@@ -3,6 +3,7 @@ import secrets
 from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -104,9 +105,13 @@ class WikiSpaceDetailView(generics.RetrieveUpdateDestroyAPIView):
 # ---------------------------------------------------------------------------
 
 class WikiPageListCreateView(generics.ListCreateAPIView):
-    """GET/POST /wiki/spaces/{space_pk}/pages/"""
+    """GET/POST /wiki/spaces/{space_pk}/pages/
+    Supports ?search=<query> to filter pages by title (case-insensitive).
+    """
     permission_classes = [IsAuthenticated]
     pagination_class = StandardPagination
+    filter_backends = [SearchFilter]
+    search_fields = ["title"]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
