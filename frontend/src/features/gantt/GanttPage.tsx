@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Network, BarChart2, RefreshCw, Archive } from 'lucide-react'
+import { Network, BarChart2, RefreshCw, Archive, CalendarCheck, Expand } from 'lucide-react'
 import { useCalculateCpm, useCpmBaselines, useCreateBaseline } from '@/hooks/useCpm'
 import keycloak from '@/lib/keycloak'
-import { GanttChart } from './GanttChart'
+import { GanttChart, type GanttChartHandle } from './GanttChart'
 import { NetworkDiagram } from './NetworkDiagram'
 import { Button } from '@/components/ui/Button'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
@@ -58,6 +58,7 @@ export function GanttPage() {
   const { projectId = '' } = useParams()
   const [view, setView] = useState<View>('gantt')
   const [savingBaseline, setSavingBaseline] = useState(false)
+  const ganttRef = useRef<GanttChartHandle>(null)
   const calculate = useCalculateCpm()
   const { data: baselines = [] } = useCpmBaselines(projectId)
   const qc = useQueryClient()
@@ -114,6 +115,28 @@ export function GanttPage() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
+          {view === 'gantt' && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => ganttRef.current?.scrollToToday()}
+                title="Ir para hoje"
+              >
+                <CalendarCheck className="h-3.5 w-3.5" />
+                Hoje
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => ganttRef.current?.zoomToFit()}
+                title="Ajustar ao tamanho da tela"
+              >
+                <Expand className="h-3.5 w-3.5" />
+                Ajustar tela
+              </Button>
+            </>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -148,7 +171,7 @@ export function GanttPage() {
       {/* Main view */}
       <div className="flex-1 overflow-auto">
         {view === 'gantt' ? (
-          <GanttChart projectId={projectId} />
+          <GanttChart ref={ganttRef} projectId={projectId} />
         ) : (
           <NetworkDiagram projectId={projectId} />
         )}
