@@ -5,7 +5,7 @@ import { Network, BarChart2, RefreshCw, Archive, CalendarCheck, Expand } from 'l
 import { useCalculateCpm, useCpmBaselines, useCreateBaseline } from '@/hooks/useCpm'
 import keycloak from '@/lib/keycloak'
 import { GanttChart, type GanttChartHandle } from './GanttChart'
-import { NetworkDiagram } from './NetworkDiagram'
+import { NetworkDiagram, type NetworkDiagramHandle } from './NetworkDiagram'
 import { Button } from '@/components/ui/Button'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
@@ -59,6 +59,7 @@ export function GanttPage() {
   const [view, setView] = useState<View>('gantt')
   const [savingBaseline, setSavingBaseline] = useState(false)
   const ganttRef = useRef<GanttChartHandle>(null)
+  const networkRef = useRef<NetworkDiagramHandle>(null)
   const calculate = useCalculateCpm()
   const { data: baselines = [] } = useCpmBaselines(projectId)
   const qc = useQueryClient()
@@ -137,6 +138,17 @@ export function GanttPage() {
               </Button>
             </>
           )}
+          {view === 'network' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => networkRef.current?.fitView()}
+              title="Ajustar ao tamanho da tela"
+            >
+              <Expand className="h-3.5 w-3.5" />
+              Ajustar tela
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -173,7 +185,7 @@ export function GanttPage() {
         {view === 'gantt' ? (
           <GanttChart ref={ganttRef} projectId={projectId} />
         ) : (
-          <NetworkDiagram projectId={projectId} />
+          <NetworkDiagram ref={networkRef} projectId={projectId} />
         )}
       </div>
 
