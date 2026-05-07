@@ -622,3 +622,6 @@ CREATE TRIGGER set_updated_at_project_risks
 -- =============================================================================
 
 COMMENT ON DATABASE dev_projecthub IS 'ProjectHub — Sistema integrado de gestão de projetos, wiki, CPM e portfolio';
+
+
+
