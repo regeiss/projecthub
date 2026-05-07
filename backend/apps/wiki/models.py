@@ -52,6 +52,7 @@ class WikiPage(models.Model):
     )
     title = models.CharField(max_length=500)
     content = models.JSONField(null=True, blank=True)  # TipTap / Yjs state
+    content_text = models.TextField(blank=True, default="")
     yjs_state = models.BinaryField(null=True, blank=True)
     emoji = models.CharField(max_length=10, blank=True, null=True)
     cover_url = models.TextField(blank=True, null=True)

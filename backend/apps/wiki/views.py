@@ -11,6 +11,7 @@ from rest_framework.views import APIView
 from core.pagination import StandardPagination
 
 from .models import WikiIssueLink, WikiPage, WikiPageComment, WikiPageVersion, WikiSpace
+from .utils import extract_text_from_tiptap
 from .permissions import can_admin_space, can_read_space, can_write_space
 from .serializers import (
     WikiIssueLinkSerializer,
@@ -111,7 +112,7 @@ class WikiPageListCreateView(generics.ListCreateAPIView):
     permission_classes = [IsAuthenticated]
     pagination_class = StandardPagination
     filter_backends = [SearchFilter]
-    search_fields = ["title"]
+    search_fields = ["title", "content_text"]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -123,22 +124,26 @@ class WikiPageListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         space = self._get_space()
-        parent_id = self.request.query_params.get("parent")
         qs = WikiPage.objects.filter(space=space, is_archived=False)
-        if parent_id == "null" or parent_id == "":
-            qs = qs.filter(parent__isnull=True)
-        elif parent_id:
-            qs = qs.filter(parent_id=parent_id)
+        # When searching, return all pages in the space (ignore parent filter)
+        if not self.request.query_params.get("search"):
+            parent_id = self.request.query_params.get("parent")
+            if parent_id == "null" or parent_id == "":
+                qs = qs.filter(parent__isnull=True)
+            elif parent_id:
+                qs = qs.filter(parent_id=parent_id)
         return qs.order_by("sort_order")
 
     def perform_create(self, serializer):
         space = self._get_space()
         if not can_write_space(self.request.user, space):
             raise PermissionDenied("Sem permissão para criar páginas neste space.")
+        content = serializer.validated_data.get("content")
         serializer.save(
             space=space,
             created_by=self.request.user,
             updated_by=self.request.user,
+            content_text=extract_text_from_tiptap(content),
         )
 
 
@@ -154,7 +159,10 @@ class WikiPageDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         should_version = "content" in serializer.validated_data or "title" in serializer.validated_data
-        serializer.save(updated_by=self.request.user)
+        extra = {"updated_by": self.request.user}
+        if "content" in serializer.validated_data:
+            extra["content_text"] = extract_text_from_tiptap(serializer.validated_data["content"])
+        serializer.save(**extra)
         if should_version:
             from .tasks import create_page_version
             create_page_version.delay(
@@ -256,8 +264,9 @@ class WikiPageVersionRestoreView(APIView):
         with transaction.atomic():
             page.title = version.title
             page.content = version.content
+            page.content_text = extract_text_from_tiptap(version.content)
             page.updated_by = request.user
-            page.save(update_fields=["title", "content", "updated_by", "updated_at"])
+            page.save(update_fields=["title", "content", "content_text", "updated_by", "updated_at"])
 
         # Snapshot the restored state so it appears in the history
         from .tasks import create_page_version
