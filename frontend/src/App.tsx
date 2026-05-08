@@ -26,6 +26,7 @@ import { EpicsPage } from './features/epics/EpicsPage'
 import { ResourcesPage } from './features/resources/ResourcesPage'
 import { ProjectResourcesPage } from './features/resources/ProjectResourcesPage'
 import { ProjectDashboardPage } from './features/projects/ProjectDashboardPage'
+import { ProjectActivityPage } from './features/activity/ProjectActivityPage'
 import { UserSettingsPage } from './features/user/UserSettingsPage'
 
 export default function App() {
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="/projects/:projectId" element={<ProjectProvider />}>
               <Route index element={<Navigate to="overview" replace />} />
               <Route path="overview" element={<ProjectDashboardPage />} />
+              <Route path="activity" element={<ProjectActivityPage />} />
               <Route path="board" element={<BoardPage />} />
               <Route path="backlog" element={<BacklogPage />} />
               <Route path="epics" element={<EpicsPage />} />

@@ -25,7 +25,8 @@ import {
 } from './extensions/PageLink'
 import { WikiPageLinkList, type WikiPageLinkListHandle } from './WikiPageLinkList'
 import { useAllWikiPages } from '@/hooks/useWiki'
-import type { WikiPageListItem } from '@/types'
+import { buildMentionExtension } from '@/features/wiki/extensions/Mention'
+import type { ProjectMember, WikiPageListItem } from '@/types'
 
 interface MiniEditorProps {
   onChange?: (html: string, isEmpty: boolean, json: Record<string, unknown>) => void
@@ -34,6 +35,8 @@ interface MiniEditorProps {
   initialContent?: string | Record<string, unknown>
   /** When provided, typing `[[` opens a wiki page search dropdown */
   projectId?: string
+  /** When provided, typing `@` triggers member mention suggestions */
+  members?: ProjectMember[]
 }
 
 export interface MiniEditorHandle {
@@ -67,7 +70,7 @@ function BubbleButton({
 }
 
 export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
-  function MiniEditor({ onChange, placeholder, className, initialContent, projectId }, ref) {
+  function MiniEditor({ onChange, placeholder, className, initialContent, projectId, members }, ref) {
     const navigate = useNavigate()
     const containerRef = useRef<HTMLDivElement>(null)
     const STORAGE_KEY = 'mini-editor-height'
@@ -104,6 +107,14 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
           : null,
       // eslint-disable-next-line react-hooks/exhaustive-deps
       [projectId],
+    )
+
+    const membersRef = useRef<ProjectMember[]>(members ?? [])
+    membersRef.current = members ?? []
+    const mentionExtension = useMemo(
+      () => (members !== undefined ? buildMentionExtension(() => membersRef.current) : null),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [members !== undefined],
     )
 
     // ── Resize handle ─────────────────────────────────────────────────────────
@@ -143,6 +154,7 @@ export const MiniEditor = forwardRef<MiniEditorHandle, MiniEditorProps>(
         Link.configure({ openOnClick: false, autolink: true }),
         Underline,
         ...(pageLinkExtension ? [pageLinkExtension] : []),
+        ...(mentionExtension ? [mentionExtension] : []),
       ],
       onUpdate: ({ editor }) => {
         onChange?.(editor.getHTML(), editor.isEmpty, editor.getJSON() as Record<string, unknown>)

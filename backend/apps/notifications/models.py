@@ -11,6 +11,9 @@ class Notification(models.Model):
         CPM_CRITICAL_ALERT = "cpm_critical_alert", "Alerta CPM crítico"
         PORTFOLIO_RAG_CHANGED = "portfolio_rag_changed", "RAG do portfolio alterado"
         WIKI_MENTIONED = "wiki_mentioned", "Mencionado em wiki"
+        ISSUE_MENTIONED = "issue_mentioned", "Mencionado em issue"
+        ISSUE_UPDATED = "issue_updated", "Issue atualizada (watcher)"
+        WIKI_UPDATED = "wiki_updated", "Página wiki atualizada (watcher)"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recipient = models.ForeignKey(

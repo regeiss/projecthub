@@ -7,20 +7,20 @@ class NotificationsConfig(AppConfig):
 
     def ready(self):
         from django.db.models.signals import post_save
+        from django.apps import apps
 
         from apps.notifications.signals import (
             notify_issue_assigned_on_create,
             notify_issue_commented,
             notify_issue_state_changed,
             notify_wiki_mentioned,
+            notify_wiki_page_updated,
         )
-
-        # Importa modelos via apps registry para evitar circular imports
-        from django.apps import apps
 
         Issue = apps.get_model("issues", "Issue")
         IssueComment = apps.get_model("issues", "IssueComment")
         WikiPageComment = apps.get_model("wiki", "WikiPageComment")
+        WikiPage = apps.get_model("wiki", "WikiPage")
 
         post_save.connect(
             notify_issue_assigned_on_create,
@@ -41,4 +41,9 @@ class NotificationsConfig(AppConfig):
             notify_wiki_mentioned,
             sender=WikiPageComment,
             dispatch_uid="notifications.wiki_mentioned",
+        )
+        post_save.connect(
+            notify_wiki_page_updated,
+            sender=WikiPage,
+            dispatch_uid="notifications.wiki_page_updated",
         )

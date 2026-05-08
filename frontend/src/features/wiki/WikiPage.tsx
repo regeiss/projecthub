@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useOutletContext } from 'react-router-dom'
 import { Save, History } from 'lucide-react'
 import { useWikiPage, useWikiPageComments, useUpdateWikiPage, useWikiSpaces } from '@/hooks/useWiki'
+import { usePageWatchStatus, useTogglePageWatch } from '@/hooks/useWatch'
+import { WatchButton } from '@/components/ui/WatchButton'
 import { WikiEditor } from './WikiEditor'
 import { WikiBreadcrumb } from './WikiBreadcrumb'
 import { WikiVersionPanel } from './WikiVersionPanel'
@@ -18,6 +20,8 @@ export function WikiPage() {
   const { data: spaces = [] } = useWikiSpaces()
   const { setEditor } = useOutletContext<WikiOutletContext>()
   const updatePage = useUpdateWikiPage()
+  const { data: watchStatus } = usePageWatchStatus(pageId ?? '')
+  const toggleWatch = useTogglePageWatch(pageId ?? '')
   const [title, setTitle] = useState('')
   const [isDirty, setIsDirty] = useState(false)
   const [savedAt, setSavedAt] = useState<Date | null>(null)
@@ -126,6 +130,11 @@ export function WikiPage() {
                   Salvo
                 </span>
               )}
+              <WatchButton
+                watching={watchStatus?.watching ?? false}
+                loading={toggleWatch.isPending}
+                onToggle={() => toggleWatch.mutate(watchStatus?.watching ?? false)}
+              />
               <Button
                 size="sm"
                 variant={showHistory ? 'secondary' : 'ghost'}

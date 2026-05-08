@@ -12,6 +12,7 @@ from .views import (
     IssueRelationListCreateView,
     IssueSubtaskListCreateView,
     IssueViewSet,
+    IssueWatchToggleView,
 )
 
 router = DefaultRouter()
@@ -63,6 +64,11 @@ urlpatterns = [
         "<uuid:issue_pk>/epic-issues/",
         EpicIssuesView.as_view(),
         name="epic-issues",
+    ),
+    path(
+        "<uuid:issue_pk>/watch/",
+        IssueWatchToggleView.as_view(),
+        name="issue-watch",
     ),
     # Router do IssueViewSet (deve vir por último para não capturar os nested)
     path("", include(router.urls)),

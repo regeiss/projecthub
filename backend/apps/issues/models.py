@@ -227,3 +227,19 @@ class IssueAttachment(models.Model):
         managed = True
         db_table = "issue_attachments"
         ordering = ["-created_at"]
+
+
+class IssueWatcher(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    issue = models.ForeignKey(Issue, on_delete=models.CASCADE, related_name="watchers")
+    member = models.ForeignKey(
+        "workspaces.WorkspaceMember",
+        on_delete=models.CASCADE,
+        related_name="watched_issues",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "issue_watchers"
+        unique_together = [("issue", "member")]

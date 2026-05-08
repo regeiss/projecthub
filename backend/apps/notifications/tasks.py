@@ -66,6 +66,12 @@ def create_notification(
         logger.info(
             "Notificação criada: type=%s recipient=%s", notification_type, recipient_id
         )
+
+        # Send email asynchronously if enabled
+        from django.conf import settings
+        if getattr(settings, "NOTIFICATIONS_EMAIL_ENABLED", False):
+            send_email_notification.delay(str(notification.pk))
+
         return str(notification.pk)
 
     except Exception as exc:
