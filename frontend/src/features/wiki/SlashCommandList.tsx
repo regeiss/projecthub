@@ -11,6 +11,7 @@ export type SlashCommandAction =
   | { type: 'image' }
   | { type: 'video' }
   | { type: 'file' }
+  | { type: 'issueList' }
 
 export interface SlashCommandItem {
   type: 'item'
@@ -48,6 +49,8 @@ export const SLASH_COMMANDS: SlashCommandEntry[] = [
   { type: 'item', label: 'Bloqueado',      subtitle: 'Marcador de status vermelho',   filterKey: 'bloqueado',    icon: '🔴',  action: { type: 'status', status: 'blocked',     label: 'Bloqueado'    } },
   { type: 'item', label: 'Em revisão',     subtitle: 'Marcador de status amarelo',    filterKey: 'em-revisao',   icon: '🟡',  action: { type: 'status', status: 'in-review',   label: 'Em revisão'   } },
   { type: 'item', label: 'Pendente',       subtitle: 'Marcador de status cinza',      filterKey: 'pendente',     icon: '⚪',  action: { type: 'status', status: 'pending',     label: 'Pendente'     } },
+  { type: 'header', label: 'Integrações' },
+  { type: 'item', label: 'Lista de Issues', subtitle: 'Bloco com issues filtradas por projeto/status', filterKey: 'issues lista tarefas', icon: '📋', action: { type: 'issueList' } },
   { type: 'header', label: 'Mídia' },
   { type: 'item', label: 'Imagem',         subtitle: 'Insere imagem por URL',         filterKey: 'imagem',       icon: '🖼️',  action: { type: 'image' }                              },
   { type: 'item', label: 'Vídeo',          subtitle: 'YouTube, Vimeo ou URL direta',  filterKey: 'video',        icon: '🎬',  action: { type: 'video' }                              },

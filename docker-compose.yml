@@ -236,20 +236,28 @@ services:
     image: nginx:1.25-alpine
     container_name: projecthub_nginx
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    labels:
+      - "traefik.enable=true"
+      # HTTP → redireciona para HTTPS
+      - "traefik.http.routers.projecthub-http.rule=Host(`dev-projecthub.novohamburgo.rs.gov.br`)"
+      - "traefik.http.routers.projecthub-http.entrypoints=web"
+      - "traefik.http.routers.projecthub-http.middlewares=redirect-https@file"
+      # HTTPS
+      - "traefik.http.routers.projecthub.rule=Host(`dev-projecthub.novohamburgo.rs.gov.br`)"
+      - "traefik.http.routers.projecthub.entrypoints=websecure"
+      - "traefik.http.routers.projecthub.tls=true"
+      - "traefik.http.services.projecthub.loadbalancer.server.port=80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_files:/var/www/static:ro
       - media_files:/var/www/media:ro
       - frontend_build:/var/www/html:ro
-      - ./nginx/certs:/etc/nginx/certs:ro   # Certificados SSL
     depends_on:
       - api
       - frontend
     networks:
+      - traefik_net
       - projecthub_net
 
   # ---------------------------------------------------------------------------
@@ -299,5 +307,7 @@ volumes:
     driver: local
 
 networks:
+  traefik_net:
+    external: true
   projecthub_net:
     driver: bridge

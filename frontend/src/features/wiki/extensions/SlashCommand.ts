@@ -132,6 +132,14 @@ export const SlashCommandExtension = Extension.create({
               break
             }
 
+            case 'issueList': {
+              editor.chain().focus().insertContentAt(insertPos, {
+                type: 'issueList',
+                attrs: { projectId: '', stateCategory: '', limit: 10 },
+              }).run()
+              break
+            }
+
             case 'file': {
               const href = window.prompt('URL do arquivo:')
               if (href?.trim()) {
