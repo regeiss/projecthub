@@ -13,10 +13,11 @@ import {
 import { PageSpinner } from '@/components/ui/Spinner'
 import { WorkloadGrid } from './WorkloadGrid'
 import { TimeEntriesTab } from './TimeEntriesTab'
+import { TimeByIssueReport } from './TimeByIssueReport'
 import { cn } from '@/lib/utils'
 import type { MemberWorkload } from '@/types'
 
-type Tab = 'workload' | 'time-entries'
+type Tab = 'workload' | 'time-entries' | 'report'
 
 function PeriodPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -163,7 +164,7 @@ export function ProjectResourcesPage() {
         : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
     )
 
-  if (isLoading) return <PageSpinner />
+  if (isLoading && activeTab === 'workload') return <PageSpinner />
 
   return (
     <div className="p-6">
@@ -174,6 +175,9 @@ export function ProjectResourcesPage() {
           </button>
           <button className={tabCls('time-entries')} onClick={() => setActiveTab('time-entries')}>
             Apontamentos
+          </button>
+          <button className={tabCls('report')} onClick={() => setActiveTab('report')}>
+            Relatório
           </button>
         </div>
         {activeTab === 'workload' && (
@@ -200,6 +204,8 @@ export function ProjectResourcesPage() {
       )}
 
       {activeTab === 'time-entries' && <TimeEntriesTab />}
+
+      {activeTab === 'report' && <TimeByIssueReport />}
     </div>
   )
 }

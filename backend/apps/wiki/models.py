@@ -52,6 +52,7 @@ class WikiPage(models.Model):
     )
     title = models.CharField(max_length=500)
     content = models.JSONField(null=True, blank=True)  # TipTap / Yjs state
+    content_text = models.TextField(blank=True, default="")
     yjs_state = models.BinaryField(null=True, blank=True)
     emoji = models.CharField(max_length=10, blank=True, null=True)
     cover_url = models.TextField(blank=True, null=True)
@@ -156,3 +157,42 @@ class WikiPageComment(models.Model):
         managed = True
         db_table = "wiki_page_comments"
         ordering = ["created_at"]
+
+
+class WikiPageWatcher(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    page = models.ForeignKey(WikiPage, on_delete=models.CASCADE, related_name="watchers")
+    member = models.ForeignKey(
+        "workspaces.WorkspaceMember",
+        on_delete=models.CASCADE,
+        related_name="watched_wiki_pages",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "wiki_page_watchers"
+        unique_together = [("page", "member")]
+
+
+class WikiActivity(models.Model):
+    VERB_CREATED = "created"
+    VERB_UPDATED = "updated"
+    VERB_COMMENTED = "commented"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    page = models.ForeignKey(WikiPage, on_delete=models.CASCADE, related_name="activities")
+    actor = models.ForeignKey(
+        "workspaces.WorkspaceMember",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="wiki_activities",
+    )
+    verb = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        managed = True
+        db_table = "wiki_activities"
+        ordering = ["-created_at"]

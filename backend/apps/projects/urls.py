@@ -9,6 +9,7 @@ from .views import (
     IssueStateListCreateView,
     LabelDetailView,
     LabelListCreateView,
+    ProjectActivityView,
     ProjectDetailView,
     ProjectListCreateView,
     ProjectMemberDestroyView,
@@ -70,4 +71,7 @@ urlpatterns = [
 
     # Epics
     path("<uuid:project_id>/epics/", EpicListView.as_view(), name="project-epics"),
+
+    # Activity feed
+    path("<uuid:project_pk>/activity/", ProjectActivityView.as_view(), name="project-activity"),
 ]

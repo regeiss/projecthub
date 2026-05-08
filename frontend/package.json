@@ -45,9 +45,11 @@
     "@tiptap/react": "^2.10.3",
     "@tiptap/starter-kit": "^2.10.3",
     "@tiptap/suggestion": "^2.10.3",
+    "@types/diff": "^7.0.2",
     "axios": "^1.7.9",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "diff": "^9.0.0",
     "keycloak-js": "^26.0.6",
     "lowlight": "^3.1.0",
     "lucide-react": "^0.468.0",
@@ -61,9 +63,8 @@
     "zustand": "^5.0.2"
   },
   "overrides": {
-    "is-extglob": "2.1.1",
-    "is-glob": "4.0.3",
-    "glob-parent": "6.0.2"
+    "@types/react": "^18.3.14",
+    "@types/react-dom": "^18.3.5"
   },
   "resolutions": {
     "is-extglob": "2.1.1",

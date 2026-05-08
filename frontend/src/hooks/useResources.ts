@@ -1,7 +1,7 @@
 // frontend/src/hooks/useResources.ts
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { resourceService } from '@/services/resource.service'
-import type { CreateResourceProfileDto, CreateTimeEntryDto, UpsertCapacityDto, WorkloadParams } from '@/types'
+import type { CreateResourceProfileDto, CreateTimeEntryDto, TimeReportParams, UpsertCapacityDto, WorkloadParams } from '@/types'
 
 // ---- Profiles ----
 export function useResourceProfiles(projectId?: string) {
@@ -108,6 +108,15 @@ export function useProjectWorkload(projectId: string, params: WorkloadParams) {
   return useQuery({
     queryKey: ['workload', 'project', projectId, params],
     queryFn: () => resourceService.getProjectWorkload(projectId, params),
+    enabled: !!projectId,
+  })
+}
+
+// ---- Time Report ----
+export function useTimeReport(projectId: string, params: TimeReportParams) {
+  return useQuery({
+    queryKey: ['time-report', projectId, params],
+    queryFn: () => resourceService.getTimeReport(projectId, params),
     enabled: !!projectId,
   })
 }

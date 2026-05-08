@@ -13,6 +13,7 @@ from .views import (
     WikiPagePublishView,
     WikiPageVersionListView,
     WikiPageVersionRestoreView,
+    WikiPageWatchToggleView,
     WikiSpaceDetailView,
     WikiSpaceListCreateView,
 )
@@ -29,6 +30,7 @@ urlpatterns = [
     path("pages/<uuid:pk>/", WikiPageDetailView.as_view(), name="wiki-page-detail"),
     path("pages/<uuid:pk>/move/", WikiPageMoveView.as_view(), name="wiki-page-move"),
     path("pages/<uuid:pk>/publish/", WikiPagePublishView.as_view(), name="wiki-page-publish"),
+    path("pages/<uuid:page_pk>/watch/", WikiPageWatchToggleView.as_view(), name="wiki-page-watch"),
 
     # Versões
     path("pages/<uuid:page_pk>/versions/", WikiPageVersionListView.as_view(), name="wiki-page-versions"),

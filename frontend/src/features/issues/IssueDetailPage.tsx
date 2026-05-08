@@ -3,6 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { ArrowLeft, Edit2, Trash2, MessageSquare, Flag } from 'lucide-react'
 import { useIssue, useUpdateIssue, useDeleteIssue, useIssueComments, useAddComment, useEpics } from '@/hooks/useIssues'
 import { useProjectStates, useProjectMembers, useProjectLabels } from '@/hooks/useProjects'
+import { useIssueWatchStatus, useToggleIssueWatch } from '@/hooks/useWatch'
+import { WatchButton } from '@/components/ui/WatchButton'
 import { EpicBadge } from './EpicBadge'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -24,10 +26,13 @@ export function IssueDetailPage() {
   const { data: issue, isLoading } = useIssue(projectId, issueId)
   const { data: states = [] } = useProjectStates(projectId)
   const { data: comments = [] } = useIssueComments(projectId, issueId)
+  const { data: members = [] } = useProjectMembers(projectId)
   const { data: epics = [] } = useEpics(projectId)
   const deleteIssue = useDeleteIssue()
   const updateIssue = useUpdateIssue()
   const addComment = useAddComment()
+  const { data: watchStatus } = useIssueWatchStatus(issueId)
+  const toggleWatch = useToggleIssueWatch(issueId)
   const [editing, setEditing] = useState(false)
   const [editingEpic, setEditingEpic] = useState(false)
   const [commentJson, setCommentJson] = useState<Record<string, unknown>>({})
@@ -110,6 +115,11 @@ export function IssueDetailPage() {
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
               </Button>
+              <WatchButton
+                watching={watchStatus?.watching ?? false}
+                loading={toggleWatch.isPending}
+                onToggle={() => toggleWatch.mutate(watchStatus?.watching ?? false)}
+              />
             </div>
           </div>
 
@@ -168,7 +178,8 @@ export function IssueDetailPage() {
               <MiniEditor
                 ref={commentEditorRef}
                 projectId={projectId}
-                placeholder="Escreva um comentário…"
+                members={members}
+                placeholder="Escreva um comentário… (use @ para mencionar alguém)"
                 onChange={(html, isEmpty, json) => {
                   setCommentJson(json)
                   setCommentEmpty(isEmpty)

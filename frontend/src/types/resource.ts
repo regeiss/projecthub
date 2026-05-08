@@ -75,3 +75,22 @@ export interface WorkloadParams {
   period?: string    // 'YYYY-MM'
   cycleId?: string
 }
+
+export interface TimeReportRow {
+  issueId: string
+  issueSequenceId: number
+  issueTitle: string
+  stateName: string
+  stateColor: string
+  assigneeName: string
+  assigneeAvatar: string | null
+  estimateDays: number
+  totalHours: number
+  entriesCount: number
+}
+
+export interface TimeReportParams {
+  dateFrom?: string
+  dateTo?: string
+  member?: string
+}

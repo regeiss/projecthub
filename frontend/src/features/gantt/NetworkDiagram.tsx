@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useImperativeHandle, forwardRef } from 'react'
 import ReactFlow, {
   Background,
   Controls,
@@ -9,6 +9,7 @@ import ReactFlow, {
   Position,
   type Edge,
   type Node,
+  type ReactFlowInstance,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useCpmNetwork } from '@/hooks/useCpm'
@@ -16,6 +17,10 @@ import { PageSpinner } from '@/components/ui/Spinner'
 
 interface NetworkDiagramProps {
   projectId: string
+}
+
+export interface NetworkDiagramHandle {
+  fitView: () => void
 }
 
 interface NodeData {
@@ -131,8 +136,14 @@ function CpmNode({ data }: { data: NodeData }) {
 
 const nodeTypes = { cpmNode: CpmNode }
 
-export function NetworkDiagram({ projectId }: NetworkDiagramProps) {
+export const NetworkDiagram = forwardRef<NetworkDiagramHandle, NetworkDiagramProps>(
+function NetworkDiagram({ projectId }, ref) {
   const { data: network, isLoading } = useCpmNetwork(projectId)
+  const [rfInstance, setRfInstance] = useState<ReactFlowInstance | null>(null)
+
+  useImperativeHandle(ref, () => ({
+    fitView: () => rfInstance?.fitView({ duration: 300 }),
+  }), [rfInstance])
 
   if (isLoading) return <PageSpinner />
   if (!network) return (
@@ -176,7 +187,7 @@ export function NetworkDiagram({ projectId }: NetworkDiagramProps) {
 
   return (
     <div className="h-full w-full">
-      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.1}>
+      <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView minZoom={0.1} onInit={setRfInstance}>
         <Background gap={24} color="#1e293b" />
         <Controls />
         <MiniMap
@@ -246,4 +257,4 @@ export function NetworkDiagram({ projectId }: NetworkDiagramProps) {
       </ReactFlow>
     </div>
   )
-}
+})

@@ -3,13 +3,15 @@ import secrets
 from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.filters import SearchFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.pagination import StandardPagination
 
-from .models import WikiIssueLink, WikiPage, WikiPageComment, WikiPageVersion, WikiSpace
+from .models import WikiIssueLink, WikiPage, WikiPageComment, WikiPageVersion, WikiSpace, WikiPageWatcher
+from .utils import extract_text_from_tiptap
 from .permissions import can_admin_space, can_read_space, can_write_space
 from .serializers import (
     WikiIssueLinkSerializer,
@@ -104,9 +106,13 @@ class WikiSpaceDetailView(generics.RetrieveUpdateDestroyAPIView):
 # ---------------------------------------------------------------------------
 
 class WikiPageListCreateView(generics.ListCreateAPIView):
-    """GET/POST /wiki/spaces/{space_pk}/pages/"""
+    """GET/POST /wiki/spaces/{space_pk}/pages/
+    Supports ?search=<query> to filter pages by title (case-insensitive).
+    """
     permission_classes = [IsAuthenticated]
     pagination_class = StandardPagination
+    filter_backends = [SearchFilter]
+    search_fields = ["title", "content_text"]
 
     def get_serializer_class(self):
         if self.request.method == "POST":
@@ -118,22 +124,26 @@ class WikiPageListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         space = self._get_space()
-        parent_id = self.request.query_params.get("parent")
         qs = WikiPage.objects.filter(space=space, is_archived=False)
-        if parent_id == "null" or parent_id == "":
-            qs = qs.filter(parent__isnull=True)
-        elif parent_id:
-            qs = qs.filter(parent_id=parent_id)
+        # When searching, return all pages in the space (ignore parent filter)
+        if not self.request.query_params.get("search"):
+            parent_id = self.request.query_params.get("parent")
+            if parent_id == "null" or parent_id == "":
+                qs = qs.filter(parent__isnull=True)
+            elif parent_id:
+                qs = qs.filter(parent_id=parent_id)
         return qs.order_by("sort_order")
 
     def perform_create(self, serializer):
         space = self._get_space()
         if not can_write_space(self.request.user, space):
             raise PermissionDenied("Sem permissão para criar páginas neste space.")
+        content = serializer.validated_data.get("content")
         serializer.save(
             space=space,
             created_by=self.request.user,
             updated_by=self.request.user,
+            content_text=extract_text_from_tiptap(content),
         )
 
 
@@ -148,7 +158,17 @@ class WikiPageDetailView(generics.RetrieveUpdateDestroyAPIView):
         return _get_page(self.kwargs["pk"], self.request.user, require_write=require_write)
 
     def perform_update(self, serializer):
-        serializer.save(updated_by=self.request.user)
+        should_version = "content" in serializer.validated_data or "title" in serializer.validated_data
+        extra = {"updated_by": self.request.user}
+        if "content" in serializer.validated_data:
+            extra["content_text"] = extract_text_from_tiptap(serializer.validated_data["content"])
+        serializer.save(**extra)
+        if should_version:
+            from .tasks import create_page_version
+            create_page_version.delay(
+                str(serializer.instance.pk),
+                str(self.request.user.pk),
+            )
 
     def destroy(self, request, *args, **kwargs):
         page = self.get_object()
@@ -244,8 +264,17 @@ class WikiPageVersionRestoreView(APIView):
         with transaction.atomic():
             page.title = version.title
             page.content = version.content
+            page.content_text = extract_text_from_tiptap(version.content)
             page.updated_by = request.user
-            page.save(update_fields=["title", "content", "updated_by", "updated_at"])
+            page.save(update_fields=["title", "content", "content_text", "updated_by", "updated_at"])
+
+        # Snapshot the restored state so it appears in the history
+        from .tasks import create_page_version
+        create_page_version.delay(
+            str(page.pk),
+            str(request.user.pk),
+            change_summary=f"Restaurado para v{version.version_number}",
+        )
 
         return Response(WikiPageDetailSerializer(page).data)
 
@@ -268,7 +297,17 @@ class WikiPageCommentListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         page = self._get_page()
-        serializer.save(page=page, author=self.request.user)
+        instance = serializer.save(page=page, author=self.request.user)
+        # Extract @mentions from comment content and attach for signal
+        from apps.notifications.utils import extract_tiptap_mentions
+        content = request_body_mentions = getattr(self, '_request_body', None)
+        # Comment content is plain text in wiki, parse from request data
+        raw_content = self.request.data.get("content", "")
+        # Try to extract from JSON if content is a dict/list
+        if isinstance(raw_content, (dict, list)):
+            instance._mentioned_ids = extract_tiptap_mentions(raw_content)
+        else:
+            instance._mentioned_ids = []
 
 
 class WikiPageCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -340,3 +379,36 @@ class WikiIssueLinkDestroyView(generics.DestroyAPIView):
         if not can_write_space(self.request.user, link.page.space):
             raise PermissionDenied("Sem permissão.")
         return link
+
+
+# ---------------------------------------------------------------------------
+# Wiki page watchers
+# ---------------------------------------------------------------------------
+
+class WikiPageWatchToggleView(APIView):
+    """GET → watch status; POST → watch; DELETE → unwatch."""
+    permission_classes = [IsAuthenticated]
+
+    def _get_page(self, pk):
+        try:
+            page = WikiPage.objects.select_related("space").get(pk=pk)
+        except WikiPage.DoesNotExist:
+            raise NotFound("Página não encontrada.")
+        if not can_read_space(self.request.user, page.space):
+            raise NotFound("Página não encontrada.")
+        return page
+
+    def get(self, request, page_pk):
+        page = self._get_page(page_pk)
+        watching = WikiPageWatcher.objects.filter(page=page, member=request.user).exists()
+        return Response({"watching": watching})
+
+    def post(self, request, page_pk):
+        page = self._get_page(page_pk)
+        WikiPageWatcher.objects.get_or_create(page=page, member=request.user)
+        return Response({"watching": True})
+
+    def delete(self, request, page_pk):
+        page = self._get_page(page_pk)
+        WikiPageWatcher.objects.filter(page=page, member=request.user).delete()
+        return Response({"watching": False})

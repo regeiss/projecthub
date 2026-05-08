@@ -270,3 +270,79 @@ class ProjectWorkloadView(APIView):
             return Response(compute_workload(members, period_start, period_end, project=project))
         except ValueError as exc:
             raise ValidationError({'period': str(exc)})
+
+
+# ---------------------------------------------------------------------------
+# Time Report — grouped by issue
+# ---------------------------------------------------------------------------
+
+from django.db.models import Sum, Count
+
+
+class ProjectTimeReportView(APIView):
+    """GET /resources/projects/{project_pk}/time-report/
+    Returns time entries aggregated by issue.
+    Filters: date_from, date_to, member
+    """
+    permission_classes = [IsWorkspaceMember]
+
+    def get(self, request, project_pk):
+        from apps.projects.models import Project, ProjectMember
+
+        try:
+            project = Project.objects.get(pk=project_pk, workspace=request.user.workspace)
+        except Project.DoesNotExist:
+            raise NotFound('Projeto não encontrado.')
+
+        if request.user.role != 'admin':
+            if not ProjectMember.objects.filter(project=project, member=request.user).exists():
+                raise PermissionDenied()
+
+        qs = TimeEntry.objects.filter(issue__project=project)
+
+        date_from = request.query_params.get('date_from')
+        if date_from:
+            qs = qs.filter(date__gte=date_from)
+        date_to = request.query_params.get('date_to')
+        if date_to:
+            qs = qs.filter(date__lte=date_to)
+        member_id = request.query_params.get('member')
+        if member_id:
+            qs = qs.filter(member_id=member_id)
+
+        rows = (
+            qs.values(
+                'issue_id',
+                'issue__sequence_id',
+                'issue__title',
+                'issue__state__name',
+                'issue__state__color',
+                'issue__estimate_days',
+                'issue__assignee__name',
+                'issue__assignee__avatar_url',
+            )
+            .annotate(total_hours=Sum('hours'), entries_count=Count('id'))
+            .order_by('-total_hours')
+        )
+
+        total_hours = sum(float(r['total_hours'] or 0) for r in rows)
+
+        result = {
+            'rows': [
+                {
+                    'issue_id': str(row['issue_id']),
+                    'issue_sequence_id': row['issue__sequence_id'],
+                    'issue_title': row['issue__title'],
+                    'state_name': row['issue__state__name'] or '',
+                    'state_color': row['issue__state__color'] or '#6b7280',
+                    'assignee_name': row['issue__assignee__name'] or '',
+                    'assignee_avatar': row['issue__assignee__avatar_url'],
+                    'estimate_days': float(row['issue__estimate_days'] or 0),
+                    'total_hours': float(row['total_hours'] or 0),
+                    'entries_count': row['entries_count'],
+                }
+                for row in rows
+            ],
+            'total_hours': total_hours,
+        }
+        return Response(result)

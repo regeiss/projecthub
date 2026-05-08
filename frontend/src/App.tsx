@@ -14,6 +14,7 @@ import { IssueDetailPage } from './features/issues/IssueDetailPage'
 import { ProjectReportsPage } from './features/projects/ProjectReportsPage'
 import { WikiLayout } from './features/wiki/WikiLayout'
 import { WikiPage } from './features/wiki/WikiPage'
+import { WorkspaceWikiLayout } from './features/wiki/WorkspaceWikiLayout'
 import { GanttPage } from './features/gantt/GanttPage'
 import { PortfolioPage } from './features/portfolio/PortfolioPage'
 import { ProjectSettings } from './features/projects/ProjectSettings'
@@ -24,6 +25,8 @@ import { ModulesPage } from './features/modules/ModulesPage'
 import { EpicsPage } from './features/epics/EpicsPage'
 import { ResourcesPage } from './features/resources/ResourcesPage'
 import { ProjectResourcesPage } from './features/resources/ProjectResourcesPage'
+import { ProjectDashboardPage } from './features/projects/ProjectDashboardPage'
+import { ProjectActivityPage } from './features/activity/ProjectActivityPage'
 import { UserSettingsPage } from './features/user/UserSettingsPage'
 
 export default function App() {
@@ -38,6 +41,9 @@ export default function App() {
 
             {/* ProjectProvider sets currentProject in the global store */}
             <Route path="/projects/:projectId" element={<ProjectProvider />}>
+              <Route index element={<Navigate to="overview" replace />} />
+              <Route path="overview" element={<ProjectDashboardPage />} />
+              <Route path="activity" element={<ProjectActivityPage />} />
               <Route path="board" element={<BoardPage />} />
               <Route path="backlog" element={<BacklogPage />} />
               <Route path="epics" element={<EpicsPage />} />
@@ -58,6 +64,10 @@ export default function App() {
             </Route>
 
             <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/wiki" element={<WorkspaceWikiLayout />}>
+              <Route index element={<WikiPage />} />
+              <Route path=":pageId" element={<WikiPage />} />
+            </Route>
             <Route path="/workspace/resources" element={<ResourcesPage />} />
             <Route path="/workspace/settings" element={<WorkspaceSettings />} />
             <Route path="/settings" element={<UserSettingsPage />} />

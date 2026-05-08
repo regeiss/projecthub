@@ -17,7 +17,7 @@ from rest_framework.viewsets import ModelViewSet
 from core.pagination import ActivityCursorPagination, StandardPagination
 
 from .filters import IssueFilter
-from .models import Issue, IssueActivity, IssueAttachment, IssueComment, IssueRelation
+from .models import Issue, IssueActivity, IssueAttachment, IssueComment, IssueRelation, IssueWatcher
 from .permissions import IsIssueReporterOrProjectMember
 from .serializers import (
     EpicSerializer,
@@ -197,7 +197,13 @@ class IssueCommentListCreateView(generics.ListCreateAPIView):
         ).select_related("author")
 
     def perform_create(self, serializer):
-        serializer.save(issue=self._get_issue())
+        issue = self._get_issue()
+        instance = serializer.save(issue=issue, author=self.request.user)
+        # Extract @mentions from TipTap JSON content and attach to instance for signal
+        content = instance.content
+        if isinstance(content, dict):
+            from apps.notifications.utils import extract_tiptap_mentions
+            instance._mentioned_ids = extract_tiptap_mentions(content)
 
 
 class IssueCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -436,3 +442,38 @@ class EpicIssuesView(generics.ListAPIView):
         return Issue.objects.select_related(
             'project', 'state', 'assignee', 'reporter', 'created_by'
         ).prefetch_related('labels').filter(epic=epic).order_by('created_at')[:500]
+
+
+# ---------------------------------------------------------------------------
+# Watchers
+# ---------------------------------------------------------------------------
+
+def _get_issue_for_user(issue_pk, user):
+    try:
+        issue = Issue.objects.select_related('project').get(pk=issue_pk)
+    except Issue.DoesNotExist:
+        raise NotFound("Issue não encontrada.")
+    if (user.role != 'admin'
+            and not issue.project.members.filter(member=user).exists()):
+        raise PermissionDenied()
+    return issue
+
+
+class IssueWatchToggleView(generics.GenericAPIView):
+    """POST → watch; DELETE → unwatch. Returns {watching: bool}."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, issue_pk):
+        issue = _get_issue_for_user(issue_pk, request.user)
+        IssueWatcher.objects.get_or_create(issue=issue, member=request.user)
+        return Response({"watching": True})
+
+    def delete(self, request, issue_pk):
+        issue = _get_issue_for_user(issue_pk, request.user)
+        IssueWatcher.objects.filter(issue=issue, member=request.user).delete()
+        return Response({"watching": False})
+
+    def get(self, request, issue_pk):
+        issue = _get_issue_for_user(issue_pk, request.user)
+        watching = IssueWatcher.objects.filter(issue=issue, member=request.user).exists()
+        return Response({"watching": watching})

@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     MemberCapacityDetailView,
     MemberCapacityListCreateView,
+    ProjectTimeReportView,
     ProjectWorkloadView,
     ResourceProfileDetailView,
     ResourceProfileListCreateView,
@@ -19,4 +20,5 @@ urlpatterns = [
     path('time-entries/<uuid:pk>/', TimeEntryDestroyView.as_view(), name='time-entry-destroy'),
     path('workload/', WorkspaceWorkloadView.as_view(), name='workspace-workload'),
     path('projects/<uuid:project_pk>/workload/', ProjectWorkloadView.as_view(), name='project-workload'),
+    path('projects/<uuid:project_pk>/time-report/', ProjectTimeReportView.as_view(), name='project-time-report'),
 ]

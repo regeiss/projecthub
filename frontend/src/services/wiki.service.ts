@@ -2,6 +2,23 @@ import api from '@/lib/axios'
 import type { PaginatedResponse, WikiPage, WikiPageComment, WikiPageListItem, WikiPageVersion, WikiSpace } from '@/types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapVersion(raw: any): WikiPageVersion {
+  return {
+    id: raw.id,
+    pageId: raw.page,
+    versionNumber: raw.version_number,
+    title: raw.title,
+    content: raw.content,
+    changeSummary: raw.change_summary ?? null,
+    createdById: raw.created_by,
+    createdByDetail: raw.created_by_detail
+      ? { id: raw.created_by_detail.id, name: raw.created_by_detail.name, avatarUrl: raw.created_by_detail.avatar_url ?? null }
+      : null,
+    createdAt: raw.created_at,
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapSpace(raw: any): WikiSpace {
   return {
     id: raw.id,
@@ -66,8 +83,8 @@ export const wikiService = {
   spaces: () =>
     api.get<PaginatedResponse<unknown>>('/wiki/spaces/').then((r) => (r.data.results as unknown[]).map(mapSpace)),
 
-  createSpace: (projectId: string, name: string) =>
-    api.post<unknown>('/wiki/spaces/', { project: projectId, name }).then((r) => mapSpace(r.data)),
+  createSpace: (projectId: string | null, name: string) =>
+    api.post<unknown>('/wiki/spaces/', { project: projectId ?? null, name }).then((r) => mapSpace(r.data)),
 
   updateSpace: (spaceId: string, data: Partial<WikiSpace>) =>
     api.patch<unknown>(`/wiki/spaces/${spaceId}/`, data).then((r) => mapSpace(r.data)),
@@ -79,6 +96,11 @@ export const wikiService = {
   pages: (spaceId: string, parentId?: string | null) =>
     api.get<PaginatedResponse<unknown>>(`/wiki/spaces/${spaceId}/pages/`, {
       params: parentId !== undefined ? { parent: parentId ?? 'null' } : {},
+    }).then((r) => (r.data.results as unknown[]).map(mapPageListItem)),
+
+  searchPages: (spaceId: string, query: string) =>
+    api.get<PaginatedResponse<unknown>>(`/wiki/spaces/${spaceId}/pages/`, {
+      params: { search: query },
     }).then((r) => (r.data.results as unknown[]).map(mapPageListItem)),
 
   getPage: (pageId: string) =>
@@ -101,10 +123,11 @@ export const wikiService = {
 
   // Versions
   versions: (pageId: string) =>
-    api.get<PaginatedResponse<WikiPageVersion>>(`/wiki/pages/${pageId}/versions/`).then((r) => r.data),
+    api.get<PaginatedResponse<unknown>>(`/wiki/pages/${pageId}/versions/`)
+      .then((r) => (r.data.results as unknown[]).map(mapVersion)),
 
   restoreVersion: (pageId: string, versionId: string) =>
-    api.post<WikiPage>(`/wiki/pages/${pageId}/versions/${versionId}/restore/`).then((r) => r.data),
+    api.post<unknown>(`/wiki/pages/${pageId}/versions/${versionId}/restore/`).then((r) => mapPage(r.data)),
 
   // Comments
   comments: (pageId: string) =>

@@ -211,3 +211,75 @@ class LabelDetailView(generics.RetrieveUpdateDestroyAPIView):
             return Label.objects.get(project=project, pk=self.kwargs["pk"])
         except Label.DoesNotExist:
             raise NotFound("Label não encontrada.")
+
+
+# ---------------------------------------------------------------------------
+# Activity feed
+# ---------------------------------------------------------------------------
+
+class ProjectActivityView(APIView):
+    """
+    GET /projects/{project_pk}/activity/
+    Aggregated timeline: IssueActivity + WikiActivity, last 90 days, limit 100.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_pk):
+        from datetime import datetime, timedelta, timezone
+        from apps.issues.models import IssueActivity
+        from apps.wiki.models import WikiActivity
+
+        project = _get_project(project_pk, request.user)
+
+        cutoff = datetime.now(tz=timezone.utc) - timedelta(days=90)
+        limit = min(int(request.query_params.get("limit", 100)), 200)
+
+        # Issue activities
+        issue_qs = (
+            IssueActivity.objects.select_related("actor", "issue")
+            .filter(issue__project=project, created_at__gte=cutoff)
+            .order_by("-created_at")[:limit]
+        )
+
+        # Wiki activities (pages in spaces for this project)
+        wiki_qs = (
+            WikiActivity.objects.select_related("actor", "page")
+            .filter(page__space__project=project, created_at__gte=cutoff)
+            .order_by("-created_at")[:limit]
+        )
+
+        events = []
+
+        for a in issue_qs:
+            events.append({
+                "type": "issue_activity",
+                "verb": a.verb,
+                "actor_name": a.actor.name if a.actor else None,
+                "actor_avatar": a.actor.avatar_url if a.actor else None,
+                "entity_id": str(a.issue_id),
+                "entity_title": a.issue.title if a.issue else "",
+                "entity_sequence_id": a.issue.sequence_id if a.issue else None,
+                "project_id": str(project.pk),
+                "field": a.field,
+                "old_value": a.old_value,
+                "new_value": a.new_value,
+                "created_at": a.created_at.isoformat(),
+            })
+
+        for w in wiki_qs:
+            events.append({
+                "type": "wiki_activity",
+                "verb": w.verb,
+                "actor_name": w.actor.name if w.actor else None,
+                "actor_avatar": w.actor.avatar_url if w.actor else None,
+                "entity_id": str(w.page_id),
+                "entity_title": w.page.title if w.page else "",
+                "project_id": str(project.pk),
+                "field": None,
+                "old_value": None,
+                "new_value": None,
+                "created_at": w.created_at.isoformat(),
+            })
+
+        events.sort(key=lambda e: e["created_at"], reverse=True)
+        return Response(events[:limit])

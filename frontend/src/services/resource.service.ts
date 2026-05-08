@@ -7,6 +7,8 @@ import type {
   MemberWorkload,
   ResourceProfile,
   TimeEntry,
+  TimeReportParams,
+  TimeReportRow,
   UpsertCapacityDto,
   WorkloadParams,
 } from '@/types'
@@ -132,6 +134,32 @@ export const resourceService = {
   },
   deleteTimeEntry(id: string): Promise<void> {
     return api.delete(`/resources/time-entries/${id}/`)
+  },
+
+  // --- Time Report ---
+  getTimeReport(projectId: string, params: TimeReportParams): Promise<{ rows: TimeReportRow[]; totalHours: number }> {
+    const p: Record<string, string> = {}
+    if (params.dateFrom) p.date_from = params.dateFrom
+    if (params.dateTo) p.date_to = params.dateTo
+    if (params.member) p.member = params.member
+    return api
+      .get(`/resources/projects/${projectId}/time-report/`, { params: p })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .then(r => ({
+        totalHours: r.data.total_hours,
+        rows: r.data.rows.map((row: any): TimeReportRow => ({
+          issueId: row.issue_id,
+          issueSequenceId: row.issue_sequence_id,
+          issueTitle: row.issue_title,
+          stateName: row.state_name,
+          stateColor: row.state_color,
+          assigneeName: row.assignee_name,
+          assigneeAvatar: row.assignee_avatar ?? null,
+          estimateDays: row.estimate_days,
+          totalHours: row.total_hours,
+          entriesCount: row.entries_count,
+        })),
+      }))
   },
 
   // --- Workload ---

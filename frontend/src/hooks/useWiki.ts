@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { wikiService } from '@/services/wiki.service'
+import { useDebounce } from '@/hooks/useDebounce'
 import type { WikiPage } from '@/types'
 
 /** Fetches ALL pages in a project's wiki space (no parent filter). */
@@ -20,6 +21,16 @@ export function useWikiSpaces() {
   return useQuery({
     queryKey: ['wiki-spaces'],
     queryFn: () => wikiService.spaces(),
+  })
+}
+
+export function useWikiSearch(spaceId: string, query: string) {
+  const debouncedQuery = useDebounce(query, 300)
+  return useQuery({
+    queryKey: ['wiki-search', spaceId, debouncedQuery],
+    queryFn: () => wikiService.searchPages(spaceId, debouncedQuery),
+    enabled: !!spaceId && debouncedQuery.trim().length >= 2,
+    staleTime: 30_000,
   })
 }
 
@@ -52,18 +63,26 @@ export function useWikiPageVersions(pageId: string) {
     queryKey: ['wiki-versions', pageId],
     queryFn: () => wikiService.versions(pageId),
     enabled: !!pageId,
+    staleTime: 0,
   })
 }
 
 export function useCreateWikiSpace() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ projectId, name }: { projectId: string; name: string }) =>
+    mutationFn: ({ projectId, name }: { projectId: string | null; name: string }) =>
       wikiService.createSpace(projectId, name),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['wiki-spaces'] })
     },
   })
+}
+
+/** Returns the workspace-level wiki space (projectId === null). */
+export function useWorkspaceWikiSpace() {
+  const { data: spaces = [], isLoading } = useWikiSpaces()
+  const space = spaces.find((s) => s.projectId === null) ?? null
+  return { space, isLoading }
 }
 
 export function useCreateWikiPage() {
@@ -109,8 +128,9 @@ export function useRestoreWikiVersion() {
   return useMutation({
     mutationFn: ({ pageId, versionId }: { pageId: string; versionId: string }) =>
       wikiService.restoreVersion(pageId, versionId),
-    onSuccess: (page) => {
+    onSuccess: (page, { pageId }) => {
       qc.invalidateQueries({ queryKey: ['wiki-page', page.id] })
+      qc.invalidateQueries({ queryKey: ['wiki-versions', pageId] })
     },
   })
 }

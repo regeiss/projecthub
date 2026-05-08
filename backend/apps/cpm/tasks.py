@@ -49,6 +49,7 @@ def recalculate_cpm(self, project_id: str):
             for issue_id, node_data in result["nodes"].items():
                 if issue_id in existing:
                     obj = existing[issue_id]
+                    obj.duration_days = node_data["duration"]
                     obj.es = node_data["es"]
                     obj.ef = node_data["ef"]
                     obj.ls = node_data["ls"]
@@ -77,7 +78,7 @@ def recalculate_cpm(self, project_id: str):
             if to_update:
                 CpmIssueData.objects.bulk_update(
                     to_update,
-                    ["es", "ef", "ls", "lf", "slack", "is_critical", "calculated_at"],
+                    ["duration_days", "es", "ef", "ls", "lf", "slack", "is_critical", "calculated_at"],
                 )
 
         # Broadcast via WebSocket

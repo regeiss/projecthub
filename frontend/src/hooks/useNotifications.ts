@@ -49,3 +49,14 @@ export function useMarkAllRead() {
     },
   })
 }
+
+export function useDeleteNotification() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: string) => notificationService.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['notifications'] })
+      qc.invalidateQueries({ queryKey: ['notification-unread-count'] })
+    },
+  })
+}
