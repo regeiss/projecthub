@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import keycloak from '@/lib/keycloak'
 import { useNotificationStore } from '@/stores/notificationStore'
 import type { Notification } from '@/types'
@@ -25,6 +26,7 @@ function mapNotification(raw: any): Notification {
 
 export function useNotificationSocket() {
   const { addNotification, showToast } = useNotificationStore()
+  const qc = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
@@ -42,6 +44,8 @@ export function useNotificationSocket() {
             const n = mapNotification(msg.notification)
             addNotification(n)
             showToast({ id: n.id, title: n.title, message: n.message, actionUrl: n.actionUrl })
+            qc.invalidateQueries({ queryKey: ['inbox'] })
+            qc.invalidateQueries({ queryKey: ['notification-counts'] })
           }
         } catch {
           // ignore malformed
@@ -61,5 +65,5 @@ export function useNotificationSocket() {
     return () => {
       wsRef.current?.close(1000)
     }
-  }, [addNotification, showToast])
+  }, [addNotification, showToast, qc])
 }
