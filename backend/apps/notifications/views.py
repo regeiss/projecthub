@@ -18,9 +18,31 @@ class NotificationListView(generics.ListAPIView):
 
     def get_queryset(self):
         qs = Notification.objects.filter(recipient=self.request.user)
+
+        filter_param = self.request.query_params.get("filter")
+        if filter_param == "mentions":
+            qs = qs.filter(type__in=["issue_mentioned", "wiki_mentioned"])
+        elif filter_param == "assigned":
+            qs = qs.filter(type="issue_assigned")
+        elif filter_param == "watching":
+            qs = qs.filter(type="issue_commented")
+        elif filter_param == "archived":
+            qs = qs.filter(is_archived=True)
+        else:
+            qs = qs.filter(is_archived=False)
+
+        project_id = self.request.query_params.get("project_id")
+        if project_id:
+            from apps.issues.models import Issue
+            issue_ids = Issue.objects.filter(
+                project_id=project_id
+            ).values("id")
+            qs = qs.filter(entity_type="issue", entity_id__in=issue_ids)
+
         unread_only = self.request.query_params.get("unread")
         if unread_only in ("1", "true", "True"):
             qs = qs.filter(is_read=False)
+
         return qs
 
 
