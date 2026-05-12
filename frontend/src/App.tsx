@@ -28,6 +28,7 @@ import { ProjectResourcesPage } from './features/resources/ProjectResourcesPage'
 import { ProjectDashboardPage } from './features/projects/ProjectDashboardPage'
 import { ProjectActivityPage } from './features/activity/ProjectActivityPage'
 import { UserSettingsPage } from './features/user/UserSettingsPage'
+import { InboxPage } from './features/notifications/InboxPage'
 
 export default function App() {
   return (
@@ -71,6 +72,7 @@ export default function App() {
             <Route path="/workspace/resources" element={<ResourcesPage />} />
             <Route path="/workspace/settings" element={<WorkspaceSettings />} />
             <Route path="/settings" element={<UserSettingsPage />} />
+            <Route path="/inbox" element={<InboxPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

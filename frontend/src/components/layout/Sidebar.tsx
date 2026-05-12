@@ -8,6 +8,7 @@ import {
   Plus,
   Users,
   BookOpen,
+  Bell,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -157,6 +158,7 @@ export function Sidebar() {
         <NavItem to="/projects" icon={FolderKanban} label="Projetos" />
         <NavItem to="/portfolio" icon={BarChart3} label="Portfolio" />
         <NavItem to="/wiki" icon={BookOpen} label="Wiki" />
+        <NavItem to="/inbox" icon={Bell} label="Inbox" />
         <NavItem to="/workspace/resources" icon={Users} label="Recursos" />
       </nav>
 
