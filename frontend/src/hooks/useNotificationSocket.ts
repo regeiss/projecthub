@@ -15,6 +15,7 @@ function mapNotification(raw: any): Notification {
     actionUrl: raw.action_url ?? null,
     isRead: raw.is_read ?? false,
     readAt: raw.read_at ?? null,
+    isArchived: raw.is_archived ?? false,
     actor: raw.actor_detail
       ? { id: raw.actor_detail.id, name: raw.actor_detail.name, avatarUrl: raw.actor_detail.avatar_url ?? null }
       : null,
@@ -27,7 +28,7 @@ export function useNotificationSocket() {
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    const wsBase = import.meta.env.VITE_WS_URL ?? 'ws://localhost/ws'
+    const wsBase = import.meta.env.VITE_WS_URL || '/ws'
     const token = keycloak.token ?? ''
 
     function connect() {
