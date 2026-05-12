@@ -12,3 +12,9 @@ KEYCLOAK_VERIFY_AUDIENCE = False  # aud is projecthub-frontend; backend client i
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# Use in-memory channel layer for tests (no Redis required)
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
