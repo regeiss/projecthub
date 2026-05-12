@@ -90,3 +90,83 @@ class NotificationDeleteView(generics.DestroyAPIView):
 
     def get_queryset(self):
         return Notification.objects.filter(recipient=self.request.user)
+
+
+class NotificationCountsView(APIView):
+    """GET /notifications/counts/ — contagens por categoria para sidebar."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        base = Notification.objects.filter(recipient=user, is_archived=False)
+        archived_qs = Notification.objects.filter(recipient=user, is_archived=True)
+
+        from apps.issues.models import Issue
+
+        counts = {
+            "all": base.count(),
+            "unread": base.filter(is_read=False).count(),
+            "mentions": base.filter(
+                type__in=["issue_mentioned", "wiki_mentioned"]
+            ).count(),
+            "assigned": base.filter(type="issue_assigned").count(),
+            "watching": base.filter(type="issue_commented").count(),
+            "archived": archived_qs.count(),
+            "by_project": {},
+        }
+
+        # Unread counts per project (entity_type=issue only)
+        project_unread = (
+            base.filter(is_read=False, entity_type="issue")
+            .values("entity_id")
+        )
+        if project_unread.exists():
+            entity_ids = [r["entity_id"] for r in project_unread]
+            issue_project_map = {
+                str(i.id): str(i.project_id)
+                for i in Issue.objects.filter(id__in=entity_ids).only("id", "project_id")
+            }
+            by_project: dict[str, int] = {}
+            for r in project_unread:
+                pid = issue_project_map.get(str(r["entity_id"]))
+                if pid:
+                    by_project[pid] = by_project.get(pid, 0) + 1
+            counts["by_project"] = by_project
+
+        return Response(counts)
+
+
+class NotificationArchiveView(APIView):
+    """POST /notifications/{pk}/archive/ — arquiva uma notificação."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            notification = Notification.objects.get(pk=pk, recipient=request.user)
+        except Notification.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        notification.is_archived = True
+        notification.is_read = True
+        if not notification.read_at:
+            notification.read_at = timezone.now()
+        notification.save(update_fields=["is_archived", "is_read", "read_at"])
+
+        return Response(NotificationSerializer(notification).data)
+
+
+class NotificationMarkUnreadView(APIView):
+    """POST /notifications/{pk}/unread/ — marca uma notificação como não lida."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            notification = Notification.objects.get(pk=pk, recipient=request.user)
+        except Notification.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        notification.is_read = False
+        notification.read_at = None
+        notification.save(update_fields=["is_read", "read_at"])
+
+        return Response(NotificationSerializer(notification).data)
