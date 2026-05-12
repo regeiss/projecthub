@@ -1,0 +1,2281 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ProjectHub — Whole-app wireframes</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Kalam:wght@300;400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --paper: #f4f1ea;
+    --paper-2: #ebe7dd;
+    --ink: #1a1a1a;
+    --ink-soft: #333;
+    --ink-mid: #6b6b6b;
+    --ink-faint: #a8a39a;
+    --line: #1a1a1a;
+    --line-soft: #b8b3a8;
+    --fill: #ffffff;
+    --fill-2: #e6e2d8;
+    --accent: #c83b2a; /* cycled via tweaks */
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(ellipse at top left, #fbf9f3 0%, transparent 60%),
+      radial-gradient(ellipse at bottom right, #efece4 0%, transparent 50%),
+      var(--paper);
+    background-attachment: fixed;
+    font-family: "Kalam", "Caveat", sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 56px 64px 200px;
+  }
+
+  /* subtle paper grain */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px);
+    z-index: 0;
+  }
+
+  .doc {
+    position: relative;
+    max-width: 1760px;
+    margin: 0 auto;
+    z-index: 1;
+  }
+
+  /* ---------- title block ---------- */
+  .doc-header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .doc-title {
+    font-family: "Caveat", cursive;
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: 0.5px;
+  }
+  .doc-title span { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+  .doc-sub {
+    font-family: "Kalam";
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    max-width: 520px;
+  }
+  .doc-stamp {
+    font-family: "Kalam"; font-weight: 700;
+    font-size: 13px;
+    border: 1.5px solid var(--ink);
+    padding: 8px 14px;
+    transform: rotate(2deg);
+    background: var(--fill);
+    letter-spacing: 1px;
+  }
+  .doc-stamp small { display: block; font-weight: 400; font-size: 11px; color: var(--ink-mid); letter-spacing: 0; }
+
+  /* ---------- section heads ---------- */
+  .section {
+    margin-top: 72px;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .section-num {
+    font-family: "Caveat";
+    font-size: 42px;
+    font-weight: 700;
+    width: 60px; height: 60px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--fill);
+    transform: rotate(-3deg);
+  }
+  .section-title {
+    font-family: "Caveat";
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .section-rule {
+    flex: 1;
+    height: 0;
+    border-top: 1.5px dashed var(--ink-mid);
+    margin-bottom: 8px;
+  }
+  .section-note {
+    font-family: "Kalam";
+    font-size: 14px;
+    color: var(--ink-mid);
+    max-width: 280px;
+    line-height: 1.3;
+  }
+
+  /* ---------- frame grid ---------- */
+  .frames {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 36px 28px;
+  }
+
+  .frame { position: relative; }
+  .frame .caption {
+    font-family: "Caveat";
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .frame .caption .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1.5px solid var(--ink);
+    padding: 2px 6px;
+    transform: translateY(-2px);
+  }
+  .frame .caption .meta {
+    font-family: "Kalam";
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--ink-mid);
+    margin-left: auto;
+  }
+
+  /* the sketch card */
+  .sketch {
+    background: var(--fill);
+    border: 2px solid var(--ink);
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    box-shadow: 4px 5px 0 rgba(0,0,0,0.08);
+  }
+  .sketch::after {
+    /* slight off-axis double-line on top edge for hand-drawn vibe */
+    content: "";
+    position: absolute; inset: 2px 4px auto 2px; height: 0;
+    border-top: 1px solid rgba(0,0,0,0.18);
+    pointer-events: none;
+  }
+
+  /* col spans */
+  .span-3 { grid-column: span 3; }
+  .span-4 { grid-column: span 4; }
+  .span-5 { grid-column: span 5; }
+  .span-6 { grid-column: span 6; }
+  .span-7 { grid-column: span 7; }
+  .span-8 { grid-column: span 8; }
+  .span-12 { grid-column: span 12; }
+
+  /* ---------- shared inside-frame primitives ---------- */
+  /* every frame has a viewport with chrome */
+  .vp {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    display: grid;
+    grid-template-rows: 28px 1fr;
+    font-family: "Kalam";
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .vp.tall { aspect-ratio: 16 / 11; }
+  .vp.short { aspect-ratio: 16 / 9; }
+  .vp.square { aspect-ratio: 4 / 3; }
+
+  /* browser chrome */
+  .chrome {
+    border-bottom: 1.5px solid var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    background: var(--fill-2);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-mid);
+  }
+  .chrome .dot {
+    width: 8px; height: 8px; border: 1.2px solid var(--ink); border-radius: 50%;
+  }
+  .chrome .url {
+    flex: 1; padding: 3px 8px; background: var(--fill);
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    color: var(--ink-soft);
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+
+  /* app shell layout inside a viewport */
+  .shell {
+    display: grid;
+    grid-template-columns: 24% 1fr;
+    height: 100%;
+  }
+  .shell.with-secondary {
+    grid-template-columns: 18% 22% 1fr;
+  }
+  .col {
+    border-right: 1.5px solid var(--ink);
+    padding: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  .col:last-child { border-right: none; }
+  .col-body { padding: 12px; height: 100%; overflow: hidden; position: relative; }
+
+  /* sidebar text rows */
+  .side-title {
+    font-family: "Caveat"; font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--ink-mid);
+    margin-bottom: 8px;
+  }
+  .side-title .logo {
+    width: 14px; height: 14px;
+    background: var(--ink);
+    display: inline-block;
+    transform: rotate(45deg);
+  }
+  .side-section {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    color: var(--ink-mid);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 8px 0 4px;
+  }
+  .nav-item {
+    font-family: "Kalam";
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    display: flex; align-items: center; gap: 6px;
+    color: var(--ink-soft);
+  }
+  .nav-item .ic {
+    width: 10px; height: 10px;
+    border: 1.2px solid var(--ink-mid);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .nav-item.active {
+    background: var(--accent);
+    color: var(--paper);
+  }
+  .nav-item.active .ic { border-color: var(--paper); background: var(--paper); }
+
+  /* main column header */
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--ink-mid);
+    margin-bottom: 10px;
+  }
+  .breadcrumb {
+    font-family: "Kalam";
+    font-size: 11px;
+    color: var(--ink-mid);
+  }
+  .h1 {
+    font-family: "Caveat";
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .btn {
+    border: 1.5px solid var(--ink);
+    padding: 2px 8px;
+    font-family: "Kalam";
+    font-size: 11px;
+    background: var(--fill);
+    border-radius: 2px;
+    transform: rotate(-0.5deg);
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--ink);
+  }
+  .btn.solid { background: var(--ink); color: var(--paper); }
+  .btn.accent { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .row { display: flex; align-items: center; gap: 6px; }
+  .grow { flex: 1; }
+
+  /* squiggle (lorem placeholder line) */
+  .squiggle { display: block; height: 6px; margin: 4px 0; background-image:
+    repeating-linear-gradient(90deg, var(--ink-faint) 0 6px, transparent 6px 10px);
+    border-radius: 3px;
+  }
+  .squiggle.short { width: 55%; }
+  .squiggle.mid   { width: 75%; }
+  .squiggle.wide  { width: 92%; }
+  .squiggle.dark  { background-image: repeating-linear-gradient(90deg, var(--ink) 0 8px, transparent 8px 12px); }
+  .squiggle.tall  { height: 9px; }
+
+  /* generic placeholder card */
+  .ph {
+    border: 1.5px solid var(--ink);
+    background: var(--fill);
+    padding: 6px;
+    border-radius: 2px;
+  }
+  .ph.tinted { background: var(--paper-2); }
+  .ph.dashed { border-style: dashed; }
+
+  /* labeled "x" placeholder image */
+  .imgph {
+    border: 1.5px solid var(--ink);
+    background:
+      linear-gradient(135deg, transparent calc(50% - 0.5px), var(--ink-faint) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+      linear-gradient(45deg, transparent calc(50% - 0.5px), var(--ink-faint) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+      var(--fill-2);
+    position: relative;
+  }
+  .imgph .label {
+    position: absolute; left: 4px; bottom: 2px;
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: var(--ink-mid);
+    background: var(--fill-2);
+    padding: 0 2px;
+  }
+
+  /* avatar pile */
+  .avatars { display: flex; }
+  .avatars .av {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+    background: var(--fill);
+    margin-left: -5px;
+    font-family: "Kalam"; font-size: 9px;
+    display: grid; place-items: center;
+    color: var(--ink);
+  }
+  .avatars .av:first-child { margin-left: 0; }
+
+  /* tag chip */
+  .chip {
+    display: inline-flex; align-items: center;
+    border: 1.2px solid var(--ink);
+    padding: 0 5px;
+    border-radius: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    background: var(--fill);
+    height: 14px;
+    margin-right: 4px;
+  }
+  .chip.solid { background: var(--ink); color: var(--paper); }
+  .chip.accent { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .chip.outline { background: transparent; }
+
+  /* hotspot annotation */
+  .hotspot {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .hotspot .pin {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: rgba(255,255,255,0.85);
+    display: grid; place-items: center;
+    font-family: "Caveat"; font-weight: 700;
+    color: var(--accent);
+    font-size: 14px;
+  }
+  .hotspot .note {
+    font-family: "Caveat";
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--accent);
+    line-height: 1;
+    max-width: 160px;
+  }
+
+  /* flow arrow between frames */
+  .flow-arrow {
+    grid-column: span 12;
+    display: flex; align-items: center; gap: 12px;
+    margin: -8px 0 -10px;
+    color: var(--accent);
+    font-family: "Caveat";
+    font-weight: 700;
+    font-size: 22px;
+    padding-left: 60px;
+  }
+  .flow-arrow svg { flex-shrink: 0; }
+
+  /* ---------- Board (kanban) specific ---------- */
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    height: 100%;
+  }
+  .kcol {
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    padding: 4px;
+    display: flex; flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+  .kcol .kh {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    color: var(--ink);
+    text-transform: uppercase;
+    border-bottom: 1px dashed var(--ink-mid);
+    padding-bottom: 2px;
+    letter-spacing: 0.5px;
+  }
+  .kcard {
+    background: var(--fill);
+    border: 1.2px solid var(--ink);
+    padding: 4px;
+    border-radius: 2px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .kcard .kid { font-family: "JetBrains Mono", monospace; font-size: 8px; color: var(--ink-mid); }
+  .kcard.dragging {
+    transform: rotate(-2deg);
+    box-shadow: 3px 4px 0 rgba(0,0,0,0.12);
+    border-color: var(--accent);
+  }
+
+  /* ---------- Gantt specific ---------- */
+  .gantt {
+    display: grid;
+    grid-template-columns: 28% 1fr;
+    height: 100%;
+    border-top: 1px dashed var(--ink-mid);
+  }
+  .gantt .glist {
+    border-right: 1.5px solid var(--ink);
+    display: flex; flex-direction: column;
+  }
+  .gantt .grow1 {
+    display: grid; grid-template-columns: 18px 1fr;
+    padding: 4px 6px;
+    border-bottom: 1px dashed var(--ink-faint);
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .gantt .glabel { font-family: "Kalam"; font-size: 11px; color: var(--ink-soft); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .gantt .gtimeline { position: relative; overflow: hidden; }
+  .gantt .gscale {
+    height: 18px;
+    border-bottom: 1px dashed var(--ink-mid);
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8px;
+    color: var(--ink-mid);
+  }
+  .gantt .gscale span {
+    border-right: 1px dashed var(--ink-faint);
+    padding: 3px 4px;
+  }
+  .gantt .gtrack {
+    height: 22px;
+    border-bottom: 1px dashed var(--ink-faint);
+    position: relative;
+  }
+  .gantt .gbar {
+    position: absolute;
+    top: 5px; height: 12px;
+    background: var(--fill);
+    border: 1.5px solid var(--ink);
+    border-radius: 2px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8px;
+    color: var(--ink);
+    padding: 0 4px;
+    overflow: hidden; white-space: nowrap;
+    display: flex; align-items: center;
+  }
+  .gantt .gbar.fill { background: var(--ink); color: var(--paper); }
+  .gantt .gbar.accent { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .gantt .gdiamond {
+    position: absolute;
+    top: 7px;
+    width: 10px; height: 10px;
+    transform: rotate(45deg);
+    background: var(--ink);
+  }
+  .gantt .gdep {
+    position: absolute;
+    border-left: 1.2px dashed var(--ink-mid);
+    border-bottom: 1.2px dashed var(--ink-mid);
+    pointer-events: none;
+  }
+
+  
+  /* ---------- project topbar (was secondary sidebar) ---------- */
+  .ptabs {
+    display: flex;
+    border-bottom: 1.5px solid var(--ink);
+    margin: -12px -12px 8px;
+    padding: 0;
+    background: var(--paper);
+    font-family: "Kalam";
+    font-size: 11px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ptabs .ptab {
+    padding: 5px 8px;
+    border-right: 1px dashed var(--ink-mid);
+    color: var(--ink-soft);
+    display: flex; align-items: center; gap: 4px;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .ptabs .ptab.proj {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "Caveat"; font-weight: 700; font-size: 14px;
+    padding: 4px 10px;
+  }
+  .ptabs .ptab.active {
+    background: var(--accent);
+    color: var(--paper);
+    font-weight: 700;
+  }
+  .ptabs .ptab .ic {
+    width: 8px; height: 8px;
+    border: 1.2px solid currentColor;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+  .ptabs .ptab.proj .ic { border: none; width: 10px; height: 10px; background: var(--paper); transform: rotate(45deg); }
+  .ptabs .spill {
+    margin-left: auto;
+    padding: 5px 8px;
+    color: var(--ink-mid);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+  }
+
+  /* ---------- workspace home dashboard tiles ---------- */
+  .tiles {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 8px;
+    height: 100%;
+  }
+  .tile {
+    border: 1.5px solid var(--ink);
+    background: var(--fill);
+    padding: 8px;
+    border-radius: 2px;
+    display: flex; flex-direction: column; gap: 4px;
+    overflow: hidden;
+  }
+  .tile .th {
+    font-family: "Caveat"; font-weight: 700; font-size: 15px;
+    line-height: 1;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .tile .th small { font-family: "Kalam"; font-size: 10px; color: var(--ink-mid); font-weight: 400; }
+
+  /* bar chart */
+  .bars { display: flex; align-items: end; gap: 4px; height: 100%; padding-top: 4px; }
+  .bars div {
+    flex: 1;
+    background: var(--ink);
+    border-top: 1.5px solid var(--ink);
+  }
+  .bars div.accent { background: var(--accent); }
+
+  /* line chart */
+  .line-svg { width: 100%; height: 100%; }
+  .line-svg path { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+  .line-svg path.accent { stroke: var(--accent); stroke-width: 2; }
+
+  /* lorem helpers */
+  .lorem-block { display: flex; flex-direction: column; gap: 3px; }
+
+  /* legend / footnote */
+  .legend {
+    margin-top: 80px;
+    padding-top: 20px;
+    border-top: 1.5px dashed var(--ink-mid);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    font-family: "Kalam";
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .legend h4 {
+    font-family: "Caveat"; font-weight: 700; font-size: 20px;
+    margin: 0 0 6px;
+  }
+  .legend .key { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .legend .swatch { width: 18px; height: 14px; border: 1.5px solid var(--ink); }
+  .legend .swatch.fill { background: var(--ink); }
+  .legend .swatch.accent { background: var(--accent); border-color: var(--accent); }
+  .legend .swatch.dash { border-style: dashed; background: transparent; }
+
+  /* tweaks panel position adjustment */
+  #tweaks-mount { position: fixed; right: 16px; bottom: 16px; z-index: 100; }
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <!-- ============= TITLE ============= -->
+  <header class="doc-header">
+    <div>
+      <div class="doc-title">ProjectHub — <span>wireframes do app inteiro</span></div>
+      <div class="doc-sub">Passagem low-fi pela estrutura do workspace + telas-chave do projeto. Uma direção, densidade enxuta, escala de cinza. Pontos de destaque marcam o fluxo principal de navegação.</div>
+    </div>
+    <div class="doc-stamp">RASCUNHO v2
+11 mai 2026</div>
+  </header>
+
+  <!-- ============= SECTION 0 — ONBOARDING ============= -->
+  <section class="section" data-screen-label="05 Onboarding">
+    <div class="section-head">
+      <div class="section-num">0</div>
+      <div class="section-title">Boas-vindas</div>
+      <div class="section-rule"></div>
+      <div class="section-note">Primeira execução. Quatro passos até um projeto pronto antes do app assumir.</div>
+    </div>
+
+    <div class="frames">
+
+      <!-- O1 sign in -->
+      <div class="frame span-3" data-screen-label="O1 Sign in">
+        <div class="caption"><span class="num">O1</span> sign in</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ auth / sign-in</div></div>
+            <div style="display:grid; place-items:center; height:100%; padding:20px;">
+              <div style="width:90%; max-width:240px; display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; justify-content:center; margin-bottom:6px;">
+                  <span style="width:24px; height:24px; background:var(--ink); transform:rotate(45deg); display:inline-block;"></span>
+                </div>
+                <div style="font-family:Caveat; font-weight:700; font-size:22px; text-align:center; line-height:1;">ProjectHub</div>
+                <div style="font-family:Kalam; font-size:11px; text-align:center; color:var(--ink-mid);">entre no seu workspace</div>
+                <div style="height:6px;"></div>
+                <div class="side-section">email</div>
+                <div class="ph" style="padding:4px 6px;"><div class="squiggle mid" style="margin:0;"></div></div>
+                <div class="side-section">senha</div>
+                <div class="ph" style="padding:4px 6px;"><div class="squiggle short" style="margin:0;"></div></div>
+                <div style="height:4px;"></div>
+                <div class="btn solid" style="justify-content:center; padding:5px 8px;">continuar</div>
+                <div style="font-family:Kalam; font-size:10px; text-align:center; color:var(--ink-mid);">— or —</div>
+                <div class="btn" style="justify-content:center; padding:4px 8px;">SSO</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- O2 create workspace -->
+      <div class="frame span-3" data-screen-label="O2 Criar workspace">
+        <div class="caption"><span class="num">O2</span> criar workspace</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ onboarding / workspace</div></div>
+            <div style="padding:14px 18px; height:100%; display:flex; flex-direction:column; gap:6px;">
+              <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid);">
+                <span>● ━ ○ ━ ○</span><div class="grow"></div><span>passo 1 / 3</span>
+              </div>
+              <div style="font-family:Caveat; font-weight:700; font-size:20px; line-height:1; margin-top:4px;">nomeie seu workspace</div>
+              <div class="squiggle mid"></div>
+              <div style="height:4px;"></div>
+              <div class="side-section">nome do workspace</div>
+              <div class="ph" style="padding:4px 6px;"><div class="squiggle mid" style="margin:0;"></div></div>
+              <div class="side-section">slug da url</div>
+              <div class="ph" style="padding:4px 6px;"><div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px;"><span style="color:var(--ink-mid);">projecthub.app/</span><div class="squiggle short" style="flex:1; margin:0;"></div></div></div>
+              <div class="side-section">logo (opcional)</div>
+              <div class="imgph" style="aspect-ratio:3; height:36px;"><div class="label">arraste um arquivo</div></div>
+              <div class="grow"></div>
+              <div class="row"><div class="btn">voltar</div><div class="grow"></div><div class="btn solid">próximo →</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- O3 invite team -->
+      <div class="frame span-3" data-screen-label="O3 Invite team">
+        <div class="caption">O3
+convidar o time</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ onboarding / invite</div></div>
+            <div style="padding:14px 18px; height:100%; display:flex; flex-direction:column; gap:6px;">
+              <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid);">
+                <span>● ━ ● ━ ○</span><div class="grow"></div><span>passo 2 / 3</span>
+              </div>
+              <div style="font-family:Caveat; font-weight:700; font-size:20px; line-height:1; margin-top:4px;">convide o time</div>
+              <div class="squiggle mid"></div>
+              <div style="height:4px;"></div>
+              <div class="row"><div class="ph" style="flex:1; padding:4px 6px;"><div class="squiggle mid" style="margin:0;"></div></div><div class="chip outline">membro</div></div>
+              <div class="row"><div class="ph" style="flex:1; padding:4px 6px;"><div class="squiggle mid" style="margin:0;"></div></div><div class="chip outline">admin</div></div>
+              <div class="row"><div class="ph" style="flex:1; padding:4px 6px;"><div class="squiggle mid" style="margin:0;"></div></div><div class="chip outline">membro</div></div>
+              <div class="ph dashed" style="padding:4px 6px; color:var(--ink-mid); font-family:Caveat; font-size:14px;">+ adicionar outro</div>
+              <div style="height:4px;"></div>
+              <div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">ou compartilhe um link de convite →</div>
+              <div class="ph" style="padding:4px 6px; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">projecthub.app/i/x7k2&hellip;</div>
+              <div class="grow"></div>
+              <div class="row"><div class="btn">pular</div><div class="grow"></div><div class="btn solid">próximo →</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- O4 first project -->
+      <div class="frame span-3" data-screen-label="O4 First project">
+        <div class="caption">O4
+primeiro projeto</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ onboarding / project</div></div>
+            <div style="padding:14px 18px; height:100%; display:flex; flex-direction:column; gap:6px;">
+              <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid);">
+                <span>● ━ ● ━ ●</span><div class="grow"></div><span>passo 3 / 3</span>
+              </div>
+              <div style="font-family:Caveat; font-weight:700; font-size:20px; line-height:1; margin-top:4px;">crie seu primeiro projeto</div>
+              <div class="squiggle mid"></div>
+              <div style="height:4px;"></div>
+              <div class="side-section">comece de um modelo</div>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
+                <div class="ph" style="padding:5px; display:flex; flex-direction:column; gap:2px;"><div style="width:10px;height:10px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div><div style="font-family:Kalam; font-size:9px; color:var(--ink-mid);">software</div></div>
+                <div class="ph" style="padding:5px; display:flex; flex-direction:column; gap:2px; border-color:var(--accent);"><div style="width:10px;height:10px;background:var(--accent);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div><div style="font-family:Kalam; font-size:9px; color:var(--accent);">marketing ✓</div></div>
+                <div class="ph" style="padding:5px; display:flex; flex-direction:column; gap:2px;"><div style="width:10px;height:10px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div><div style="font-family:Kalam; font-size:9px; color:var(--ink-mid);">design</div></div>
+                <div class="ph dashed" style="padding:5px; display:grid; place-items:center; font-family:Caveat; font-size:14px; color:var(--ink-mid);">em branco</div>
+              </div>
+              <div class="side-section">nome do projeto</div>
+              <div class="ph" style="padding:4px 6px;"><div class="squiggle short" style="margin:0;"></div></div>
+              <div class="grow"></div>
+              <div class="row"><div class="btn">voltar</div><div class="grow"></div><div class="btn solid">criar →</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============= flow arrow -->
+  <div class="flow-arrow">
+    <svg width="60" height="20" viewBox="0 0 60 20">
+      <path d="M2 10 C 20 2, 40 18, 56 10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
+      <path d="M50 5 L 56 10 L 50 15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    entre no app →
+  </div>
+
+  <!-- ============= SECTION 1 — SHELL ============= -->
+  <section class="section" data-screen-label="00 Shell">
+    <div class="section-head">
+      <div class="section-num">1</div>
+      <div class="section-title">Estrutura e navegação</div>
+      <div class="section-rule"></div>
+      <div class="section-note">Sidebar do workspace sempre presente. Navegação do projeto vira um topbar dentro da view quando um projeto é selecionado.</div>
+    </div>
+
+    <div class="frames">
+
+      <!-- Frame 01 — Shell anatomy -->
+      <div class="frame span-12" data-screen-label="01 Shell anatomy">
+        <div class="caption">
+          <span class="num">01</span>
+          estrutura &mdash; sidebar do workspace + topbar do projeto + conteúdo
+          <span class="meta">vale para todas as rotas autenticadas</span>
+        </div>
+        <div class="sketch">
+          <div class="vp short">
+            <div class="chrome">
+              <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+              <div class="url">projecthub.app / projects / atlas / board</div>
+              <span>⌘K</span>
+            </div>
+            <div class="shell" style="grid-template-columns: 18% 1fr;">
+              <!-- workspace sidebar -->
+              <div class="col" style="position:relative;">
+                <div class="side-title"><span class="logo"></span> Acme</div>
+                <div class="side-section">workspace</div>
+                <div class="nav-item"><span class="ic"></span> Início</div>
+                <div class="nav-item"><span class="ic"></span> Projetos</div>
+                <div class="nav-item"><span class="ic"></span> Portfólio</div>
+                <div class="nav-item"><span class="ic"></span> Wiki</div>
+                <div class="nav-item"><span class="ic"></span> Recursos</div>
+                <div class="side-section">fixados</div>
+                <div class="nav-item active"><span class="ic"></span> Atlas</div>
+                <div class="nav-item"><span class="ic"></span> Beacon</div>
+                <div class="nav-item"><span class="ic"></span> Cygnus</div>
+                <div style="position:absolute; left:10px; right:10px; bottom:10px;">
+                  <div class="nav-item"><span class="ic"></span> Config</div>
+                  <div class="nav-item"><span class="ic"></span> ◐ Você</div>
+                </div>
+                <div class="hotspot" style="right:-22px; top:34px;">
+                  <div class="pin">A</div>
+                  <div class="note">nav<br/>workspace</div>
+                </div>
+              </div>
+
+              <!-- content with project topbar -->
+              <div class="col-body" style="position:relative;">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab active"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="hotspot" style="right:18px; top:-12px;">
+                  <div class="pin">B</div>
+                  <div class="note">tabs do projeto<br/>(antes: sidebar)</div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="breadcrumb">Atlas / Quadro</div>
+                    <div class="h1">Quadro</div>
+                  </div>
+                  <div class="grow"></div>
+                  <div class="avatars">
+                    <div class="av">A</div><div class="av">M</div><div class="av">K</div><div class="av">+4</div>
+                  </div>
+                  <div class="btn">filtrar</div>
+                  <div class="btn solid">+ tarefa</div>
+                </div>
+                <div class="row" style="gap:8px;">
+                  <div class="chip">ciclo 14</div>
+                  <div class="chip outline">todos resp.</div>
+                  <div class="chip outline">todas etiq.</div>
+                </div>
+                <div style="margin-top:8px; height:calc(100% - 130px);">
+                  <div class="kanban">
+                    <div class="kcol"><div class="kh">backlog <span>12</span></div>
+                      <div class="kcard"><div class="kid">ATL-201</div><div class="squiggle wide"></div><div class="squiggle short"></div></div>
+                      <div class="kcard"><div class="kid">ATL-204</div><div class="squiggle wide"></div></div>
+                    </div>
+                    <div class="kcol"><div class="kh">a fazer <span>5</span></div>
+                      <div class="kcard"><div class="kid">ATL-188</div><div class="squiggle wide"></div><div class="squiggle short"></div></div>
+                      <div class="kcard"><div class="kid">ATL-191</div><div class="squiggle wide"></div></div>
+                      <div class="kcard"><div class="kid">ATL-193</div><div class="squiggle wide"></div></div>
+                    </div>
+                    <div class="kcol"><div class="kh">em and. <span>3</span></div>
+                      <div class="kcard"><div class="kid">ATL-160</div><div class="squiggle wide"></div><div class="squiggle short"></div></div>
+                      <div class="kcard dragging"><div class="kid">ATL-172</div><div class="squiggle wide"></div></div>
+                    </div>
+                    <div class="kcol"><div class="kh">feito <span>21</span></div>
+                      <div class="kcard"><div class="kid">ATL-140</div><div class="squiggle wide"></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="hotspot" style="right:18px; top:60px;">
+                  <div class="pin">C</div>
+                  <div class="note">conteúdo<br/>principal</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 02 Workspace home (priority — wide) -->
+      <div class="frame span-8" data-screen-label="02 Workspace home">
+        <div class="caption">
+          <span class="num">02</span> início do workspace
+          <span class="meta">★ prioritária — pouso diário</span>
+        </div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">projecthub.app /</div></div>
+            <div class="shell">
+              <div class="col">
+                <div class="side-title"><span class="logo"></span> Acme</div>
+                <div class="nav-item active"><span class="ic"></span> Início</div>
+                <div class="nav-item"><span class="ic"></span> Projetos</div>
+                <div class="nav-item"><span class="ic"></span> Portfólio</div>
+                <div class="nav-item"><span class="ic"></span> Wiki</div>
+                <div class="nav-item"><span class="ic"></span> Recursos</div>
+                <div class="side-section">fixados</div>
+                <div class="nav-item"><span class="ic"></span> Atlas</div>
+                <div class="nav-item"><span class="ic"></span> Beacon</div>
+                <div class="nav-item"><span class="ic"></span> Cygnus</div>
+              </div>
+              <div class="col-body">
+                <div class="topbar">
+                  <div>
+                    <div class="breadcrumb">bom dia, alex</div>
+                    <div class="h1">Início</div>
+                  </div>
+                  <div class="grow"></div>
+                  <div class="btn">personalizar</div>
+                </div>
+                <div class="tiles">
+                  <div class="tile" style="grid-row: span 2;">
+                    <div class="th">meu trabalho <small>14 abertas</small></div>
+                    <div class="lorem-block" style="overflow:hidden;">
+                      <div class="ph row" style="padding:4px 6px;">
+                        <div class="chip solid">P1</div>
+                        <div class="squiggle wide" style="flex:1; margin:0;"></div>
+                      </div>
+                      <div class="ph row" style="padding:4px 6px;">
+                        <div class="chip">P2</div>
+                        <div class="squiggle wide" style="flex:1; margin:0;"></div>
+                      </div>
+                      <div class="ph row" style="padding:4px 6px;">
+                        <div class="chip">P3</div>
+                        <div class="squiggle wide" style="flex:1; margin:0;"></div>
+                      </div>
+                      <div class="ph row" style="padding:4px 6px;">
+                        <div class="chip">P3</div>
+                        <div class="squiggle wide" style="flex:1; margin:0;"></div>
+                      </div>
+                      <div class="ph row" style="padding:4px 6px;">
+                        <div class="chip">P3</div>
+                        <div class="squiggle wide" style="flex:1; margin:0;"></div>
+                      </div>
+                      <div class="ph row" style="padding:4px 6px;">
+                        <div class="chip">P4</div>
+                        <div class="squiggle wide" style="flex:1; margin:0;"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="tile">
+                    <div class="th">activity <small>hoje</small></div>
+                    <div style="flex:1; min-height:0; overflow:hidden;">
+                      <div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div><div class="squiggle wide" style="flex:1;"></div></div>
+                      <div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div><div class="squiggle wide" style="flex:1;"></div></div>
+                      <div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div><div class="squiggle wide" style="flex:1;"></div></div>
+                      <div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div><div class="squiggle mid" style="flex:1;"></div></div>
+                    </div>
+                  </div>
+                  <div class="tile">
+                    <div class="th">ciclos <small>3 ativos</small></div>
+                    <div class="lorem-block">
+                      <div class="ph row" style="padding:3px 5px;"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip outline">62%</div></div>
+                      <div class="ph row" style="padding:3px 5px;"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip outline">31%</div></div>
+                      <div class="ph row" style="padding:3px 5px;"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip outline">04%</div></div>
+                    </div>
+                  </div>
+                  <div class="tile">
+                    <div class="th">notificações <small>5 novas</small></div>
+                    <div style="flex:1; min-height:0;">
+                      <div class="row"><span class="chip accent">@</span><div class="squiggle wide" style="flex:1;"></div></div>
+                      <div class="row"><span class="chip">▸</span><div class="squiggle wide" style="flex:1;"></div></div>
+                      <div class="row"><span class="chip">▸</span><div class="squiggle wide" style="flex:1;"></div></div>
+                    </div>
+                  </div>
+                  <div class="tile">
+                    <div class="th">próximos <small>marcos</small></div>
+                    <div class="bars">
+                      <div style="height:30%"></div><div style="height:55%"></div>
+                      <div class="accent" style="height:80%"></div><div style="height:40%"></div>
+                      <div style="height:65%"></div><div style="height:25%"></div><div style="height:50%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 Projects list -->
+      <div class="frame span-4" data-screen-label="03 Projects list">
+        <div class="caption"><span class="num">03</span> projetos</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ projetos</div></div>
+            <div class="shell">
+              <div class="col">
+                <div class="side-title"><span class="logo"></span> Acme</div>
+                <div class="nav-item"><span class="ic"></span> Início</div>
+                <div class="nav-item active"><span class="ic"></span> Projetos</div>
+                <div class="nav-item"><span class="ic"></span> Portfólio</div>
+                <div class="nav-item"><span class="ic"></span> Wiki</div>
+                <div class="nav-item"><span class="ic"></span> Recursos</div>
+              </div>
+              <div class="col-body">
+                <div class="topbar">
+                  <div class="h1">Projetos</div>
+                  <div class="grow"></div>
+                  <div class="btn">grade / lista</div>
+                  <div class="btn solid">+ novo</div>
+                </div>
+                <div class="row" style="margin-bottom:6px;">
+                  <div class="ph" style="flex:1; padding:3px 6px;"><div class="squiggle short" style="margin:0; height:5px;"></div></div>
+                  <div class="chip outline">status</div>
+                  <div class="chip outline">líder</div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
+                  <div class="ph" style="aspect-ratio:1.6; padding:6px; display:flex; flex-direction:column; gap:4px;">
+                    <div class="row"><span class="logo" style="width:10px;height:10px;background:var(--ink);transform:rotate(45deg);display:inline-block;"></span><div class="squiggle short" style="margin:0;"></div></div>
+                    <div class="squiggle wide"></div>
+                    <div class="grow"></div>
+                    <div class="row"><div class="chip">ativo</div><div class="grow"></div><div class="avatars"><div class="av">A</div><div class="av">M</div></div></div>
+                  </div>
+                  <div class="ph" style="aspect-ratio:1.6; padding:6px; display:flex; flex-direction:column; gap:4px;">
+                    <div class="row"><span style="width:10px;height:10px;background:var(--accent);transform:rotate(45deg);display:inline-block;"></span><div class="squiggle short" style="margin:0;"></div></div>
+                    <div class="squiggle wide"></div>
+                    <div class="grow"></div>
+                    <div class="row"><div class="chip accent">em risco</div><div class="grow"></div><div class="avatars"><div class="av">K</div></div></div>
+                  </div>
+                  <div class="ph" style="aspect-ratio:1.6; padding:6px; display:flex; flex-direction:column; gap:4px;">
+                    <div class="row"><span class="logo" style="width:10px;height:10px;background:var(--ink);transform:rotate(45deg);display:inline-block;"></span><div class="squiggle short" style="margin:0;"></div></div>
+                    <div class="squiggle wide"></div>
+                    <div class="grow"></div>
+                    <div class="row"><div class="chip">ativo</div></div>
+                  </div>
+                  <div class="ph dashed" style="aspect-ratio:1.6; padding:6px; display:flex; flex-direction:column; gap:4px; align-items:center; justify-content:center;">
+                    <div style="font-family:Caveat; font-size:24px;">+</div>
+                    <div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">novo projeto</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 04 Portfolio -->
+      <div class="frame span-6" data-screen-label="04 Portfolio">
+        <div class="caption"><span class="num">04</span> portfólio &mdash; visão multi-projeto</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ portfolio</div></div>
+            <div class="shell">
+              <div class="col">
+                <div class="side-title"><span class="logo"></span> Acme</div>
+                <div class="nav-item"><span class="ic"></span> Início</div>
+                <div class="nav-item"><span class="ic"></span> Projetos</div>
+                <div class="nav-item active"><span class="ic"></span> Portfólio</div>
+                <div class="nav-item"><span class="ic"></span> Wiki</div>
+                <div class="nav-item"><span class="ic"></span> Recursos</div>
+              </div>
+              <div class="col-body">
+                <div class="topbar">
+                  <div class="h1">Portfólio</div>
+                  <div class="grow"></div>
+                  <div class="btn outline">T2 2026</div>
+                  <div class="btn">filtrar</div>
+                </div>
+                <!-- summary row -->
+                <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-bottom:6px;">
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1;">12</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">ativo</div></div>
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1;">3</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">em risco</div></div>
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1;">61%</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">no prazo</div></div>
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1;">8</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">marcos t2</div></div>
+                </div>
+                <!-- rollup table -->
+                <div class="ph" style="flex:1; padding:0; display:flex; flex-direction:column;">
+                  <div class="row" style="padding:4px 6px; border-bottom:1px dashed var(--ink-mid); font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid); text-transform:uppercase;">
+                    <div style="flex:2;">projeto</div><div style="flex:1;">líder</div><div style="flex:2;">progresso</div><div style="flex:1;">status</div>
+                  </div>
+                  <div class="row" style="padding:4px 6px; border-bottom:1px dashed var(--ink-faint);"><div style="flex:2;"><div class="squiggle mid" style="margin:0;"></div></div><div style="flex:1;"><div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);"></div></div><div style="flex:2;"><div class="ph" style="height:6px; padding:0;"><div style="height:100%; width:70%; background:var(--ink);"></div></div></div><div style="flex:1;"><div class="chip">ok</div></div></div>
+                  <div class="row" style="padding:4px 6px; border-bottom:1px dashed var(--ink-faint);"><div style="flex:2;"><div class="squiggle mid" style="margin:0;"></div></div><div style="flex:1;"><div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);"></div></div><div style="flex:2;"><div class="ph" style="height:6px; padding:0;"><div style="height:100%; width:42%; background:var(--accent);"></div></div></div><div style="flex:1;"><div class="chip accent">risco</div></div></div>
+                  <div class="row" style="padding:4px 6px; border-bottom:1px dashed var(--ink-faint);"><div style="flex:2;"><div class="squiggle mid" style="margin:0;"></div></div><div style="flex:1;"><div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);"></div></div><div style="flex:2;"><div class="ph" style="height:6px; padding:0;"><div style="height:100%; width:88%; background:var(--ink);"></div></div></div><div style="flex:1;"><div class="chip">ok</div></div></div>
+                  <div class="row" style="padding:4px 6px; border-bottom:1px dashed var(--ink-faint);"><div style="flex:2;"><div class="squiggle mid" style="margin:0;"></div></div><div style="flex:1;"><div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);"></div></div><div style="flex:2;"><div class="ph" style="height:6px; padding:0;"><div style="height:100%; width:24%; background:var(--ink);"></div></div></div><div style="flex:1;"><div class="chip outline">plan</div></div></div>
+                  <div class="row" style="padding:4px 6px;"><div style="flex:2;"><div class="squiggle mid" style="margin:0;"></div></div><div style="flex:1;"><div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);"></div></div><div style="flex:2;"><div class="ph" style="height:6px; padding:0;"><div style="height:100%; width:55%; background:var(--ink);"></div></div></div><div style="flex:1;"><div class="chip">ok</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 05 Workspace wiki -->
+      <div class="frame span-3" data-screen-label="05 Workspace wiki">
+        <div class="caption"><span class="num">05</span> wiki</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ wiki</div></div>
+            <div class="shell" style="grid-template-columns: 38% 1fr;">
+              <div class="col">
+                <div class="side-title">📓 Wiki</div>
+                <div class="nav-item active"><span class="ic"></span> Bem-vindo</div>
+                <div class="nav-item" style="padding-left:14px;"><span class="ic"></span> Diretrizes</div>
+                <div class="nav-item" style="padding-left:14px;"><span class="ic"></span> Boas-vindas</div>
+                <div class="nav-item"><span class="ic"></span> Processo</div>
+                <div class="nav-item" style="padding-left:14px;"><span class="ic"></span> RFCs</div>
+                <div class="nav-item" style="padding-left:14px;"><span class="ic"></span> Postmortems</div>
+                <div class="nav-item"><span class="ic"></span> Pessoas</div>
+              </div>
+              <div class="col-body">
+                <div class="topbar"><div class="h1" style="font-size:18px;">Bem-vindo</div><div class="grow"></div><div class="btn">editar</div></div>
+                <div class="squiggle dark mid"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle mid"></div>
+                <div style="height:4px;"></div>
+                <div class="squiggle dark short"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle short"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 06 Workspace resources -->
+      <div class="frame span-3" data-screen-label="06 Resources">
+        <div class="caption"><span class="num">06</span> recursos</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ workspace / recursos</div></div>
+            <div class="shell" style="grid-template-columns: 30% 1fr;">
+              <div class="col">
+                <div class="side-title"><span class="logo"></span> Acme</div>
+                <div class="nav-item"><span class="ic"></span> Início</div>
+                <div class="nav-item"><span class="ic"></span> Projetos</div>
+                <div class="nav-item active"><span class="ic"></span> Recursos</div>
+              </div>
+              <div class="col-body">
+                <div class="topbar"><div class="h1" style="font-size:18px;">Capacidade</div><div class="grow"></div><div class="btn">may</div></div>
+                <!-- person rows with load bars -->
+                <div style="display:flex; flex-direction:column; gap:5px;">
+                  <div class="row">
+                    <div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">A</div>
+                    <div class="ph" style="flex:1; height:10px; padding:0; display:flex;">
+                      <div style="width:30%; background:var(--ink);"></div>
+                      <div style="width:30%; background:var(--ink-mid);"></div>
+                      <div style="width:20%; background:var(--accent);"></div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">M</div>
+                    <div class="ph" style="flex:1; height:10px; padding:0; display:flex;">
+                      <div style="width:45%; background:var(--ink);"></div>
+                      <div style="width:25%; background:var(--ink-mid);"></div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">K</div>
+                    <div class="ph" style="flex:1; height:10px; padding:0; display:flex;">
+                      <div style="width:60%; background:var(--ink);"></div>
+                      <div style="width:35%; background:var(--accent);"></div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">J</div>
+                    <div class="ph" style="flex:1; height:10px; padding:0; display:flex;">
+                      <div style="width:25%; background:var(--ink);"></div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">S</div>
+                    <div class="ph" style="flex:1; height:10px; padding:0; display:flex;">
+                      <div style="width:50%; background:var(--ink);"></div>
+                      <div style="width:15%; background:var(--ink-mid);"></div>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">R</div>
+                    <div class="ph" style="flex:1; height:10px; padding:0; display:flex;">
+                      <div style="width:80%; background:var(--ink);"></div>
+                      <div style="width:25%; background:var(--accent);"></div>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top:auto; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid); padding-top:8px;">
+                  ▮ atlas &nbsp; ▮ beacon &nbsp; <span style="color:var(--accent);">▮ sobrecarregado</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 07 User settings -->
+      <div class="frame span-3" data-screen-label="07 User settings">
+        <div class="caption"><span class="num">07</span> configurações do usuário</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ settings</div></div>
+            <div class="shell" style="grid-template-columns: 38% 1fr;">
+              <div class="col">
+                <div class="side-title">⚙ Settings</div>
+                <div class="nav-item active"><span class="ic"></span> Perfil</div>
+                <div class="nav-item"><span class="ic"></span> Conta</div>
+                <div class="nav-item"><span class="ic"></span> Notificações</div>
+                <div class="nav-item"><span class="ic"></span> Aparência</div>
+                <div class="nav-item"><span class="ic"></span> Apps conectados</div>
+              </div>
+              <div class="col-body">
+                <div class="row" style="gap:8px;">
+                  <div class="av" style="width:36px;height:36px;border-radius:50%;border:1.5px solid var(--ink);">A</div>
+                  <div>
+                    <div style="font-family:Caveat;font-weight:700; font-size:16px; line-height:1;">Alex Doe</div>
+                    <div class="squiggle short" style="margin-top:2px;"></div>
+                  </div>
+                </div>
+                <div style="height:8px;"></div>
+                <div class="side-section">nome</div>
+                <div class="ph" style="padding:3px 6px;"><div class="squiggle short" style="margin:0;"></div></div>
+                <div class="side-section">email</div>
+                <div class="ph" style="padding:3px 6px;"><div class="squiggle mid" style="margin:0;"></div></div>
+                <div class="side-section">fuso horário</div>
+                <div class="ph" style="padding:3px 6px;"><div class="squiggle short" style="margin:0;"></div></div>
+                <div style="height:6px;"></div>
+                <div class="row"><div class="grow"></div><div class="btn solid">salvar</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 09 Notifications -->
+      <div class="frame span-3" data-screen-label="09 Notifications">
+        <div class="caption"><span class="num">09</span> notificações</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ inbox</div></div>
+            <div class="shell" style="grid-template-columns: 32% 1fr;">
+              <div class="col">
+                <div class="side-title">🔔 Inbox</div>
+                <div class="nav-item active"><span class="ic"></span> Tudo <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:9px;">12</span></div>
+                <div class="nav-item"><span class="ic"></span> Não lidas <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:9px;">5</span></div>
+                <div class="nav-item"><span class="ic"></span> @ menções</div>
+                <div class="nav-item"><span class="ic"></span> Atribuídas</div>
+                <div class="nav-item"><span class="ic"></span> Observando</div>
+                <div class="side-section">filtros</div>
+                <div class="nav-item"><span class="ic"></span> Atlas</div>
+                <div class="nav-item"><span class="ic"></span> Beacon</div>
+                <div class="grow"></div>
+                <div class="nav-item"><span class="ic"></span> Arquivadas</div>
+              </div>
+              <div class="col-body" style="padding:0;">
+                <div class="topbar" style="padding:6px 8px; border-bottom:1px dashed var(--ink-faint);">
+                  <div class="h1" style="font-size:14px;">Tudo</div>
+                  <div class="grow"></div>
+                  <div class="chip outline">marcar tudo como lido</div>
+                </div>
+                <div class="side-section" style="padding:0 8px;">hoje</div>
+                <div style="padding:0 8px;">
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                    <span class="chip accent">@</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle wide" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">ATL-172 &middot; 2m</div>
+                    </div>
+                    <div class="av" style="width:18px;height:18px;border-radius:50%;border:1.2px solid var(--ink);">K</div>
+                  </div>
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                    <span class="chip accent">▸</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle mid" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">atribuído &middot; 14m</div>
+                    </div>
+                    <div class="av" style="width:18px;height:18px;border-radius:50%;border:1.2px solid var(--ink);">M</div>
+                  </div>
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                    <span class="chip accent">✓</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle wide" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">BCN-44 &middot; 1h</div>
+                    </div>
+                    <div class="av" style="width:18px;height:18px;border-radius:50%;border:1.2px solid var(--ink);">J</div>
+                  </div>
+                </div>
+                <div class="side-section" style="padding:0 8px;">ontem</div>
+                <div style="padding:0 8px;">
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint); opacity:.7;">
+                    <span class="chip">◆</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle mid" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">marco &middot; 1d</div>
+                    </div>
+                  </div>
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint); opacity:.7;">
+                    <span class="chip">◷</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle wide" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">ciclo encerrado &middot; 1d</div>
+                    </div>
+                  </div>
+                  <div class="row" style="padding:5px 0; opacity:.6;">
+                    <span class="chip">@</span>
+                    <div style="flex:1;"><div class="squiggle short" style="margin:0;"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 08 Workspace settings -->
+      <div class="frame span-3" data-screen-label="08 Workspace settings">
+        <div class="caption"><span class="num">08</span> configurações do workspace</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ workspace / config</div></div>
+            <div class="shell" style="grid-template-columns: 38% 1fr;">
+              <div class="col">
+                <div class="side-title">⚙ Workspace</div>
+                <div class="nav-item active"><span class="ic"></span> Geral</div>
+                <div class="nav-item"><span class="ic"></span> Membros</div>
+                <div class="nav-item"><span class="ic"></span> Times</div>
+                <div class="nav-item"><span class="ic"></span> Permissões</div>
+                <div class="nav-item"><span class="ic"></span> Integrações</div>
+                <div class="nav-item"><span class="ic"></span> Faturamento</div>
+              </div>
+              <div class="col-body">
+                <div class="h1" style="font-size:18px;">Geral</div>
+                <div style="height:4px;"></div>
+                <div class="side-section">nome do workspace</div>
+                <div class="ph" style="padding:3px 6px;"><div class="squiggle mid" style="margin:0;"></div></div>
+                <div class="side-section">slug</div>
+                <div class="ph" style="padding:3px 6px;"><div class="squiggle short" style="margin:0;"></div></div>
+                <div class="side-section">logo</div>
+                <div class="imgph" style="aspect-ratio:1.6;"><div class="label">logo.svg</div></div>
+                <div style="height:6px;"></div>
+                <div class="row"><div class="grow"></div><div class="btn solid">salvar</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============= flow arrow -->
+  <div class="flow-arrow">
+    <svg width="60" height="20" viewBox="0 0 60 20">
+      <path d="M2 10 C 20 2, 40 18, 56 10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
+      <path d="M50 5 L 56 10 L 50 15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    escolha um projeto →
+  </div>
+
+  <!-- ============= SECTION 3 — PROJECT ============= -->
+  <section class="section" data-screen-label="20 Project">
+    <div class="section-head">
+      <div class="section-num">3</div>
+      <div class="section-title">Telas do projeto</div>
+      <div class="section-rule"></div>
+      <div class="section-note">Dentro de um projeto. O topbar de rotas guia a navegação. Quadro e Gantt são as telas prioritárias.</div>
+    </div>
+
+    <div class="frames">
+
+      <!-- 09 Project overview -->
+      <div class="frame span-6" data-screen-label="09 Project overview">
+        <div class="caption"><span class="num">09</span> visão geral do projeto</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ projects / atlas / overview</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab active"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="breadcrumb">Atlas</div>
+                    <div class="h1">Visão geral</div>
+                  </div>
+                  <div class="grow"></div>
+                  <div class="chip">ativo</div>
+                  <div class="avatars"><div class="av">A</div><div class="av">M</div><div class="av">K</div></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 2fr 1fr; gap:6px; height: calc(100% - 60px);">
+                  <div class="ph" style="padding:6px; display:flex; flex-direction:column; gap:4px;">
+                    <div class="side-section">sobre</div>
+                    <div class="squiggle wide"></div>
+                    <div class="squiggle wide"></div>
+                    <div class="squiggle mid"></div>
+                    <div style="height:4px;"></div>
+                    <div class="side-section">progresso</div>
+                    <div class="ph" style="height:8px; padding:0;"><div style="height:100%; width:62%; background:var(--ink);"></div></div>
+                    <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid);">62% &middot; 41 / 66 tarefas</div>
+                    <div style="height:4px;"></div>
+                    <div class="side-section">burndown</div>
+                    <svg class="line-svg" viewBox="0 0 100 30" preserveAspectRatio="none" style="height:36px;">
+                      <path d="M0,2 L100,28" stroke-dasharray="2 2" />
+                      <path class="accent" d="M0,2 L15,6 L25,8 L40,10 L55,14 L70,18 L85,23 L100,26" />
+                    </svg>
+                  </div>
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    <div class="ph" style="padding:4px;">
+                      <div class="side-section" style="margin-top:0;">marcos</div>
+                      <div class="row"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="flex:1; margin:0;"></div></div>
+                      <div class="row"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="flex:1; margin:0;"></div></div>
+                      <div class="row"><div style="width:8px;height:8px;background:var(--accent);transform:rotate(45deg);"></div><div class="squiggle short" style="flex:1; margin:0;"></div></div>
+                    </div>
+                    <div class="ph" style="padding:4px; flex:1;">
+                      <div class="side-section" style="margin-top:0;">time</div>
+                      <div class="row" style="flex-wrap:wrap; gap:3px;">
+                        <div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);">A</div>
+                        <div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);">M</div>
+                        <div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);">K</div>
+                        <div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);">J</div>
+                        <div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);">S</div>
+                        <div class="av" style="width:16px;height:16px;border-radius:50%;border:1.2px solid var(--ink);">+3</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10 Board (priority) -->
+      <div class="frame span-6" data-screen-label="10 Board">
+        <div class="caption"><span class="num">10</span> quadro <span class="meta">★ prioritária — kanban DnD</span></div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ projects / atlas / board</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body" style="position:relative;">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab active"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="breadcrumb">Atlas / Ciclo 14</div>
+                    <div class="h1">Quadro</div>
+                  </div>
+                  <div class="grow"></div>
+                  <div class="chip outline">agrupar: status</div>
+                  <div class="btn">filtrar</div>
+                  <div class="btn solid">+ tarefa</div>
+                </div>
+                <div style="height: calc(100% - 38px); padding-top:4px;">
+                  <div class="kanban">
+                    <div class="kcol">
+                      <div class="kh">backlog <span>12</span></div>
+                      <div class="kcard"><div class="kid">ATL-201</div><div class="squiggle wide"></div><div class="squiggle short"></div><div class="row"><div class="chip">P2</div><div class="grow"></div><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div></div></div>
+                      <div class="kcard"><div class="kid">ATL-204</div><div class="squiggle wide"></div><div class="row"><div class="chip outline">epic</div><div class="grow"></div></div></div>
+                      <div class="kcard"><div class="kid">ATL-206</div><div class="squiggle mid"></div></div>
+                    </div>
+                    <div class="kcol">
+                      <div class="kh">todo <span>5</span></div>
+                      <div class="kcard"><div class="kid">ATL-188</div><div class="squiggle wide"></div><div class="squiggle short"></div><div class="row"><div class="chip">P1</div><div class="grow"></div><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">M</div></div></div>
+                      <div class="kcard"><div class="kid">ATL-191</div><div class="squiggle wide"></div></div>
+                      <div class="kcard"><div class="kid">ATL-193</div><div class="squiggle wide"></div><div class="squiggle short"></div></div>
+                    </div>
+                    <div class="kcol">
+                      <div class="kh">in&nbsp;prog <span>3</span></div>
+                      <div class="kcard"><div class="kid">ATL-160</div><div class="squiggle wide"></div><div class="row"><div class="chip">P2</div><div class="grow"></div><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">A</div></div></div>
+                      <div class="kcard dragging"><div class="kid">ATL-172 ✎</div><div class="squiggle wide"></div><div class="squiggle short"></div><div class="row"><div class="chip accent">P1</div><div class="grow"></div></div></div>
+                    </div>
+                    <div class="kcol">
+                      <div class="kh">done <span>21</span></div>
+                      <div class="kcard" style="opacity:.55;"><div class="kid">ATL-140</div><div class="squiggle wide"></div></div>
+                      <div class="kcard" style="opacity:.55;"><div class="kid">ATL-138</div><div class="squiggle wide"></div></div>
+                      <div class="kcard" style="opacity:.55;"><div class="kid">ATL-135</div><div class="squiggle mid"></div></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="hotspot" style="left:46%; top:48%;">
+                  <div class="pin">D</div>
+                  <div class="note">arraste para<br/>mudar status</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 11 Backlog -->
+      <div class="frame span-6" data-screen-label="11 Backlog">
+        <div class="caption"><span class="num">11</span> backlog</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ projects / atlas / backlog</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab active"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div class="h1">Backlog</div>
+                  <div class="grow"></div>
+                  <div class="btn">filtrar</div>
+                  <div class="btn solid">+ tarefa</div>
+                </div>
+                <!-- group: cycle 14 -->
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid); padding:4px 0;">
+                  ▸ CYCLE 14 (in progress) &middot; 8 issues
+                </div>
+                <div class="ph" style="padding:3px 6px; margin-bottom:3px;"><div class="row"><div class="chip">ATL-188</div><div class="squiggle mid" style="flex:1; margin:0;"></div><div class="chip outline">a fazer</div><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div></div></div>
+                <div class="ph" style="padding:3px 6px; margin-bottom:3px;"><div class="row"><div class="chip">ATL-191</div><div class="squiggle mid" style="flex:1; margin:0;"></div><div class="chip outline">a fazer</div><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div></div></div>
+                <div class="ph" style="padding:3px 6px; margin-bottom:3px;"><div class="row"><div class="chip">ATL-172</div><div class="squiggle mid" style="flex:1; margin:0;"></div><div class="chip accent">em and.</div><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div></div></div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid); padding:4px 0;">
+                  ▸ CYCLE 15 (upcoming) &middot; 6 issues
+                </div>
+                <div class="ph" style="padding:3px 6px; margin-bottom:3px;"><div class="row"><div class="chip">ATL-201</div><div class="squiggle mid" style="flex:1; margin:0;"></div><div class="chip outline">P2</div><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);"></div></div></div>
+                <div class="ph" style="padding:3px 6px; margin-bottom:3px;"><div class="row"><div class="chip">ATL-204</div><div class="squiggle mid" style="flex:1; margin:0;"></div><div class="chip outline">P3</div></div></div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid); padding:4px 0;">
+                  ▸ NO CYCLE &middot; 21 issues
+                </div>
+                <div class="ph" style="padding:3px 6px; margin-bottom:3px;"><div class="row"><div class="chip">ATL-210</div><div class="squiggle mid" style="flex:1; margin:0;"></div><div class="chip outline">P3</div></div></div>
+                <div class="ph dashed" style="padding:3px 6px; color:var(--ink-mid);"><div class="row" style="font-family:Caveat; font-size:14px;">+ add issue</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 12 Cycles list -->
+      <div class="frame span-3" data-screen-label="12 Cycles list">
+        <div class="caption"><span class="num">12</span> ciclos</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / ciclos</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab active"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar"><div class="h1" style="font-size:18px;">Ciclos</div><div class="grow"></div><div class="btn solid">+</div></div>
+                <div class="side-section">ativo</div>
+                <div class="ph" style="padding:5px;">
+                  <div class="row"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip accent">ao vivo</div></div>
+                  <div class="ph" style="height:6px; padding:0; margin-top:4px;"><div style="height:100%; width:62%; background:var(--ink);"></div></div>
+                  <div style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid); margin-top:2px;">5d restantes &middot; 41/66</div>
+                </div>
+                <div class="side-section">em breve</div>
+                <div class="ph" style="padding:5px;"><div class="row"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip outline">em breve</div></div></div>
+                <div class="ph" style="padding:5px; margin-top:4px;"><div class="row"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip outline">em breve</div></div></div>
+                <div class="side-section">concluídos</div>
+                <div class="ph" style="padding:5px; opacity:.6;"><div class="row"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip">✓</div></div></div>
+                <div class="ph" style="padding:5px; margin-top:4px; opacity:.6;"><div class="row"><div class="squiggle short" style="margin:0;"></div><div class="grow"></div><div class="chip">✓</div></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 13 Cycle detail -->
+      <div class="frame span-3" data-screen-label="13 Cycle detail">
+        <div class="caption"><span class="num">13</span> detalhe do ciclo</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / cycles / 14</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab active"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="breadcrumb">Atlas / Ciclos</div>
+                    <div class="h1" style="font-size:18px;">Ciclo 14</div>
+                  </div>
+                  <div class="grow"></div>
+                  <div class="chip accent">ao vivo</div>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid);">1 mai — 16 mai</div>
+                <div style="height:6px;"></div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:4px;">
+                  <div class="ph" style="padding:4px;"><div style="font-family:Caveat; font-weight:700; font-size:16px; line-height:1;">41</div><div style="font-family:Kalam; font-size:9px; color:var(--ink-mid);">feito</div></div>
+                  <div class="ph" style="padding:4px;"><div style="font-family:Caveat; font-weight:700; font-size:16px; line-height:1;">3</div><div style="font-family:Kalam; font-size:9px; color:var(--ink-mid);">em and.</div></div>
+                  <div class="ph" style="padding:4px;"><div style="font-family:Caveat; font-weight:700; font-size:16px; line-height:1;">22</div><div style="font-family:Kalam; font-size:9px; color:var(--ink-mid);">a fazer</div></div>
+                </div>
+                <div style="height:6px;"></div>
+                <div class="side-section">burndown</div>
+                <svg class="line-svg" viewBox="0 0 100 40" preserveAspectRatio="none" style="height:50px;">
+                  <path d="M0,4 L100,38" stroke-dasharray="2 2" />
+                  <path class="accent" d="M0,4 L10,7 L20,10 L30,12 L40,18 L50,22 L60,26 L70,30 L80,33 L90,36" />
+                </svg>
+                <div style="height:4px;"></div>
+                <div class="side-section">top tarefas</div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle mid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 14 Gantt (priority — wide) -->
+      <div class="frame span-12" data-screen-label="14 Gantt">
+        <div class="caption"><span class="num">14</span> gantt &mdash; linha do tempo com dependências <span class="meta">★ prioritária</span></div>
+        <div class="sketch">
+          <div class="vp short">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ projects / atlas / gantt</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body" style="position:relative;">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab active"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="breadcrumb">Atlas</div>
+                    <div class="h1">Gantt</div>
+                  </div>
+                  <div class="grow"></div>
+                  <div class="chip outline">escala: semana</div>
+                  <div class="chip outline">mostrar: deps</div>
+                  <div class="btn">hoje</div>
+                  <div class="btn solid">+ tarefa</div>
+                </div>
+                <div class="gantt" style="height: calc(100% - 38px);">
+                  <div class="glist">
+                    <div class="grow1"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="glabel">Descoberta</div></div>
+                    <div class="grow1" style="padding-left:14px;"><div class="ic" style="width:8px;height:8px;border:1.2px solid var(--ink-mid);"></div><div class="glabel">Entrevistas</div></div>
+                    <div class="grow1" style="padding-left:14px;"><div class="ic" style="width:8px;height:8px;border:1.2px solid var(--ink-mid);"></div><div class="glabel">Síntese</div></div>
+                    <div class="grow1"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="glabel">Design</div></div>
+                    <div class="grow1" style="padding-left:14px;"><div class="ic" style="width:8px;height:8px;border:1.2px solid var(--ink-mid);"></div><div class="glabel">Wireframes</div></div>
+                    <div class="grow1" style="padding-left:14px;"><div class="ic" style="width:8px;height:8px;border:1.2px solid var(--ink-mid);"></div><div class="glabel">Hi-fi</div></div>
+                    <div class="grow1"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="glabel">Construção</div></div>
+                    <div class="grow1" style="padding-left:14px;"><div class="ic" style="width:8px;height:8px;border:1.2px solid var(--ink-mid);"></div><div class="glabel">API</div></div>
+                    <div class="grow1" style="padding-left:14px;"><div class="ic" style="width:8px;height:8px;border:1.2px solid var(--ink-mid);"></div><div class="glabel">Frontend</div></div>
+                    <div class="grow1" style="padding-left:14px;"><div class="ic" style="width:8px;height:8px;border:1.2px solid var(--ink-mid);"></div><div class="glabel">QA</div></div>
+                    <div class="grow1"><div style="width:8px;height:8px;background:var(--accent);transform:rotate(45deg);"></div><div class="glabel">▸ Lançamento</div></div>
+                  </div>
+                  <div class="gtimeline">
+                    <div class="gscale"><span>W18</span><span>W19</span><span>W20</span><span>W21</span><span>W22</span><span>W23</span><span>W24</span><span>W25</span></div>
+                    <!-- rows -->
+                    <div class="gtrack"><div class="gbar fill" style="left:2%; width:24%;">Descoberta</div></div>
+                    <div class="gtrack"><div class="gbar" style="left:3%; width:10%;">entrevistas</div></div>
+                    <div class="gtrack"><div class="gbar" style="left:14%; width:11%;">síntese</div></div>
+                    <div class="gtrack"><div class="gbar fill" style="left:24%; width:24%;">Design</div></div>
+                    <div class="gtrack"><div class="gbar" style="left:25%; width:11%;">wires</div></div>
+                    <div class="gtrack"><div class="gbar" style="left:36%; width:12%;">hi-fi</div></div>
+                    <div class="gtrack"><div class="gbar fill" style="left:46%; width:38%;">Construção</div></div>
+                    <div class="gtrack"><div class="gbar" style="left:47%; width:24%;">api</div></div>
+                    <div class="gtrack"><div class="gbar accent" style="left:54%; width:28%;">frontend</div></div>
+                    <div class="gtrack"><div class="gbar" style="left:72%; width:13%;">qa</div></div>
+                    <div class="gtrack"><div class="gdiamond" style="left:86%;"></div></div>
+                    <!-- dependency lines -->
+                    <div class="gdep" style="left:25%; top:62px; width:0; height:36px;"></div>
+                    <div class="gdep" style="left:48%; top:142px; width:0; height:34px;"></div>
+                    <!-- today line -->
+                    <div style="position:absolute; top:0; bottom:0; left:39%; border-left:1.5px dashed var(--accent);"></div>
+                    <div style="position:absolute; top:2px; left:39%; transform:translateX(-50%); font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--accent); background:var(--paper); padding:0 2px;">HOJE</div>
+                  </div>
+                </div>
+
+                <div class="hotspot" style="right:6%; top:34%;">
+                  <div class="pin">E</div>
+                  <div class="note">arraste extremos<br/>p/ reagendar</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 15 Milestones -->
+      <div class="frame span-4" data-screen-label="15 Milestones">
+        <div class="caption"><span class="num">15</span> marcos</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / marcos</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab active"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar"><div class="h1" style="font-size:18px;">Marcos</div><div class="grow"></div><div class="btn solid">+</div></div>
+                <!-- vertical timeline -->
+                <div style="position:relative; padding-left:20px;">
+                  <div style="position:absolute; left:6px; top:4px; bottom:4px; border-left:1.5px dashed var(--ink-mid);"></div>
+                  <div style="position:relative; margin-bottom:8px;"><div style="position:absolute; left:-18px; top:2px; width:10px; height:10px; background:var(--ink); transform:rotate(45deg);"></div><div class="squiggle dark short"></div><div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">16 mai &middot; ✓ entregue</div></div>
+                  <div style="position:relative; margin-bottom:8px;"><div style="position:absolute; left:-18px; top:2px; width:10px; height:10px; background:var(--ink); transform:rotate(45deg);"></div><div class="squiggle dark short"></div><div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">jun 02 &middot; no prazo</div></div>
+                  <div style="position:relative; margin-bottom:8px;"><div style="position:absolute; left:-18px; top:2px; width:10px; height:10px; background:var(--accent); transform:rotate(45deg);"></div><div class="squiggle dark short"></div><div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--accent);">jul 04 &middot; em risco</div></div>
+                  <div style="position:relative; margin-bottom:8px;"><div style="position:absolute; left:-18px; top:2px; width:10px; height:10px; background:var(--ink); transform:rotate(45deg);"></div><div class="squiggle dark short"></div><div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">14 ago &middot; planejamento</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 16 Risks -->
+      <div class="frame span-4" data-screen-label="16 Risks">
+        <div class="caption"><span class="num">16</span> riscos</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / riscos</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab active"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar"><div class="h1" style="font-size:18px;">Riscos</div><div class="grow"></div><div class="btn">matriz</div><div class="btn solid">+</div></div>
+                <!-- 3x3 risk matrix -->
+                <div style="display:grid; grid-template-columns: 16px repeat(3, 1fr); grid-template-rows: 16px repeat(3, 1fr); gap:0; aspect-ratio:1.3; border:1.5px solid var(--ink);">
+                  <div></div>
+                  <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">baixa</div>
+                  <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">méd</div>
+                  <div style="text-align:center; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">alta</div>
+                  <!-- row 1 high impact -->
+                  <div style="writing-mode:vertical-rl; transform:rotate(180deg); text-align:center; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">al</div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"></div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"><div style="position:absolute; top:30%; left:40%; width:10px; height:10px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div></div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"><div style="position:absolute; top:45%; left:55%; width:12px; height:12px; border:1.5px solid var(--accent); border-radius:50%; background:var(--accent);"></div></div>
+                  <!-- row 2 med -->
+                  <div style="writing-mode:vertical-rl; transform:rotate(180deg); text-align:center; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">md</div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"></div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"><div style="position:absolute; top:30%; left:30%; width:10px; height:10px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div><div style="position:absolute; top:55%; left:60%; width:10px; height:10px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div></div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"><div style="position:absolute; top:40%; left:30%; width:10px; height:10px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div></div>
+                  <!-- row 3 low -->
+                  <div style="writing-mode:vertical-rl; transform:rotate(180deg); text-align:center; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">bx</div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"><div style="position:absolute; top:30%; left:40%; width:10px; height:10px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div></div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"></div>
+                  <div style="border-top:1px dashed var(--ink-faint); border-left:1px dashed var(--ink-faint); position:relative;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 17a Epics -->
+      <div class="frame span-6" data-screen-label="17a Epics">
+        <div class="caption"><span class="num">17a</span> épicos &mdash; visão de roadmap</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / epics</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab active"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div class="h1" style="font-size:18px;">Épicos</div>
+                  <div class="grow"></div>
+                  <div class="chip outline">timeline</div>
+                  <div class="btn solid">+ épico</div>
+                </div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid); padding:2px 0;">
+                  <div style="width:30%;">epic</div><div style="flex:1; display:grid; grid-template-columns: repeat(4,1fr);"><span>Q2</span><span>Q3</span><span>Q4</span><span>Q1</span></div>
+                </div>
+                <div class="row" style="padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                  <div style="width:30%; display:flex; align-items:center; gap:4px;"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div></div>
+                  <div style="flex:1; position:relative; height:14px;"><div style="position:absolute; left:5%; width:38%; height:100%; background:var(--ink); border:1.5px solid var(--ink);"></div></div>
+                </div>
+                <div class="row" style="padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                  <div style="width:30%; display:flex; align-items:center; gap:4px;"><div style="width:8px;height:8px;background:var(--accent);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div></div>
+                  <div style="flex:1; position:relative; height:14px;"><div style="position:absolute; left:18%; width:48%; height:100%; background:var(--accent); border:1.5px solid var(--accent);"></div></div>
+                </div>
+                <div class="row" style="padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                  <div style="width:30%; display:flex; align-items:center; gap:4px;"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div></div>
+                  <div style="flex:1; position:relative; height:14px;"><div style="position:absolute; left:42%; width:30%; height:100%; background:var(--fill); border:1.5px solid var(--ink);"></div></div>
+                </div>
+                <div class="row" style="padding:4px 0; border-bottom:1px dashed var(--ink-faint);">
+                  <div style="width:30%; display:flex; align-items:center; gap:4px;"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div></div>
+                  <div style="flex:1; position:relative; height:14px;"><div style="position:absolute; left:55%; width:35%; height:100%; background:var(--fill); border:1.5px solid var(--ink); border-style:dashed;"></div></div>
+                </div>
+                <div class="row" style="padding:4px 0;">
+                  <div style="width:30%; display:flex; align-items:center; gap:4px;"><div style="width:8px;height:8px;background:var(--ink);transform:rotate(45deg);"></div><div class="squiggle short" style="margin:0;"></div></div>
+                  <div style="flex:1; position:relative; height:14px;"><div style="position:absolute; left:72%; width:22%; height:100%; background:var(--fill); border:1.5px solid var(--ink); border-style:dashed;"></div></div>
+                </div>
+                <div style="position:absolute; bottom:14px; left:32%; right:14px; border-left:1.5px dashed var(--accent); height:140px; pointer-events:none;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 17b Activity feed -->
+      <div class="frame span-6" data-screen-label="17b Activity feed">
+        <div class="caption"><span class="num">17b</span> feed de atividade</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / activity</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab active"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div class="h1" style="font-size:18px;">Atividade</div>
+                  <div class="grow"></div>
+                  <div class="chip outline">todos os tipos</div>
+                  <div class="chip outline">todas pessoas</div>
+                </div>
+                <!-- date group -->
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid); padding:4px 0 2px;">HOJE</div>
+                <div style="position:relative; padding-left:18px;">
+                  <div style="position:absolute; left:6px; top:4px; bottom:0; border-left:1.5px dashed var(--ink-mid);"></div>
+                  <div style="position:relative; padding:3px 0;"><div style="position:absolute; left:-15px; top:5px; width:8px; height:8px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div><div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">A</div><div class="squiggle wide" style="flex:1;"></div><span style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">2m</span></div></div>
+                  <div style="position:relative; padding:3px 0;"><div style="position:absolute; left:-15px; top:5px; width:8px; height:8px; border:1.5px solid var(--accent); border-radius:50%; background:var(--accent);"></div><div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">M</div><div class="squiggle wide" style="flex:1;"></div><span style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">14m</span></div></div>
+                  <div style="position:relative; padding:3px 0;"><div style="position:absolute; left:-15px; top:5px; width:8px; height:8px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div><div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">K</div><div class="squiggle mid" style="flex:1;"></div><span style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">1h</span></div></div>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--ink-mid); padding:6px 0 2px;">ONTEM</div>
+                <div style="position:relative; padding-left:18px;">
+                  <div style="position:absolute; left:6px; top:4px; bottom:0; border-left:1.5px dashed var(--ink-mid);"></div>
+                  <div style="position:relative; padding:3px 0;"><div style="position:absolute; left:-15px; top:5px; width:8px; height:8px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div><div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">J</div><div class="squiggle wide" style="flex:1;"></div></div></div>
+                  <div style="position:relative; padding:3px 0;"><div style="position:absolute; left:-15px; top:5px; width:8px; height:8px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div><div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">A</div><div class="squiggle mid" style="flex:1;"></div></div></div>
+                  <div style="position:relative; padding:3px 0;"><div style="position:absolute; left:-15px; top:5px; width:8px; height:8px; border:1.5px solid var(--ink); border-radius:50%; background:var(--fill);"></div><div class="row"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">S</div><div class="squiggle wide" style="flex:1;"></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 17c Reports -->
+      <div class="frame span-12" data-screen-label="17c Reports">
+        <div class="caption"><span class="num">17c</span> relatórios &mdash; gráficos</div>
+        <div class="sketch">
+          <div class="vp short">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / reports</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab active"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div class="h1">Relatórios</div>
+                  <div class="grow"></div>
+                  <div class="chip outline">últimos 30 dias</div>
+                  <div class="chip outline">todos os ciclos</div>
+                  <div class="btn">exportar</div>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(4,1fr); gap:6px; margin-bottom:6px;">
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1;">132</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">tarefas concluídas</div></div>
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1;">2.4d</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">tempo médio</div></div>
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1;">87%</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">entregas no prazo</div></div>
+                  <div class="ph" style="padding:6px;"><div style="font-family:Caveat; font-weight:700; font-size:22px; line-height:1; color:var(--accent);">+12%</div><div style="font-family:Kalam; font-size:10px; color:var(--ink-mid);">velocity vs ant.</div></div>
+                </div>
+                <div style="display:grid; grid-template-columns: 1.4fr 1fr 1fr; gap:6px; height: 200px;">
+                  <div class="ph" style="padding:6px; display:flex; flex-direction:column;">
+                    <div class="row" style="font-family:Caveat; font-weight:700; font-size:14px;">Velocity <div class="grow"></div><span style="font-family:Kalam; font-size:9px; color:var(--ink-mid);">últimos 6 ciclos</span></div>
+                    <div class="bars" style="flex:1;">
+                      <div style="height:40%"></div><div style="height:55%"></div><div style="height:48%"></div><div style="height:62%"></div><div style="height:58%"></div><div class="accent" style="height:75%"></div>
+                    </div>
+                  </div>
+                  <div class="ph" style="padding:6px; display:flex; flex-direction:column;">
+                    <div class="row" style="font-family:Caveat; font-weight:700; font-size:14px;">Burn-up</div>
+                    <svg class="line-svg" viewBox="0 0 100 60" preserveAspectRatio="none" style="flex:1;">
+                      <path d="M0,58 L100,8" stroke-dasharray="2 2" />
+                      <path class="accent" d="M0,55 L15,50 L25,45 L40,40 L55,30 L70,25 L85,18 L100,12" />
+                    </svg>
+                  </div>
+                  <div class="ph" style="padding:6px; display:flex; flex-direction:column;">
+                    <div class="row" style="font-family:Caveat; font-weight:700; font-size:14px;">Throughput por tipo</div>
+                    <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:8px;">
+                      <!-- donut -->
+                      <svg viewBox="0 0 36 36" style="width:60px; height:60px;">
+                        <circle cx="18" cy="18" r="14" fill="none" stroke="var(--ink-faint)" stroke-width="5"/>
+                        <circle cx="18" cy="18" r="14" fill="none" stroke="var(--ink)" stroke-width="5" stroke-dasharray="50 88" transform="rotate(-90 18 18)"/>
+                        <circle cx="18" cy="18" r="14" fill="none" stroke="var(--accent)" stroke-width="5" stroke-dasharray="20 88" stroke-dashoffset="-50" transform="rotate(-90 18 18)"/>
+                      </svg>
+                      <div style="font-family:'JetBrains Mono',monospace; font-size:8px; display:flex; flex-direction:column; gap:2px;">
+                        <div class="row"><span class="swatch fill" style="width:8px;height:8px;border:1px solid var(--ink);background:var(--ink);"></span>feature</div>
+                        <div class="row"><span class="swatch" style="width:8px;height:8px;border:1px solid var(--accent);background:var(--accent);"></span>bug</div>
+                        <div class="row"><span class="swatch" style="width:8px;height:8px;border:1px solid var(--ink-faint);"></span>tarefa</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 17 Project wiki -->
+      <div class="frame span-4" data-screen-label="17 Project wiki">
+        <div class="caption"><span class="num">17</span> wiki do projeto</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / wiki / charter</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab active"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="breadcrumb">Diretrizes / Objetivos</div>
+                <div class="h1" style="font-size:18px;">Objetivos</div>
+                <div style="height:4px;"></div>
+                <div class="squiggle dark mid"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle short"></div>
+                <div style="height:6px;"></div>
+                <div class="squiggle dark short"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle mid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============= flow arrow -->
+  <div class="flow-arrow">
+    <svg width="60" height="20" viewBox="0 0 60 20">
+      <path d="M2 10 C 20 2, 40 18, 56 10" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
+      <path d="M50 5 L 56 10 L 50 15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    clique em uma tarefa →
+  </div>
+
+  <!-- ============= SECTION 4 — DETAIL ============= -->
+  <section class="section" data-screen-label="30 Detail">
+    <div class="section-head">
+      <div class="section-num">4</div>
+      <div class="section-title">Telas de detalhe</div>
+      <div class="section-rule"></div>
+      <div class="section-note">Visões em profundidade — tarefa, padrões de modal/drawer, configurações do projeto.</div>
+    </div>
+
+    <div class="frames">
+
+      <!-- 18 Issue detail -->
+      <div class="frame span-8" data-screen-label="18 Issue detail">
+        <div class="caption"><span class="num">18</span> detalhe da tarefa</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / issues / ATL-172</div></div>
+            <div class="shell" style="grid-template-columns: 1fr 30%;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab active"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab"><span class="ic"></span>Config</div>
+                </div>
+                <div class="topbar">
+                  <div>
+                    <div class="breadcrumb">Atlas / Quadro / ATL-172</div>
+                    <div class="h1" style="font-size:18px;">Reordenar colunas arrastando ✎</div>
+                  </div>
+                  <div class="grow"></div>
+                  <div class="btn">⋯</div>
+                </div>
+                <div class="row" style="gap:6px; margin-bottom:6px;">
+                  <div class="chip accent">em and.</div>
+                  <div class="chip">P1</div>
+                  <div class="chip outline">ciclo 14</div>
+                  <div class="chip outline">epic: board</div>
+                </div>
+                <div class="side-section">descrição</div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle wide"></div>
+                <div class="squiggle mid"></div>
+                <div style="height:6px;"></div>
+                <div class="side-section">subtarefas</div>
+                <div class="ph" style="padding:3px 6px;"><div class="row"><div class="ic" style="border-color:var(--ink);"></div><div class="squiggle short" style="margin:0;"></div></div></div>
+                <div class="ph" style="padding:3px 6px; margin-top:3px;"><div class="row"><div class="ic" style="background:var(--ink); border-color:var(--ink);"></div><div class="squiggle short" style="margin:0; text-decoration:line-through; opacity:.5;"></div></div></div>
+                <div style="height:6px;"></div>
+                <div class="side-section">comentários &middot; 3</div>
+                <div class="row" style="gap:4px;"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">A</div><div class="ph" style="flex:1; padding:3px 6px;"><div class="squiggle wide" style="margin:0;"></div></div></div>
+                <div class="row" style="gap:4px; margin-top:3px;"><div class="av" style="width:14px;height:14px;border-radius:50%;border:1.2px solid var(--ink);">M</div><div class="ph" style="flex:1; padding:3px 6px;"><div class="squiggle wide" style="margin:0;"></div></div></div>
+              </div>
+              <div class="col-body" style="border-left:1.5px solid var(--ink); background:var(--paper);">
+                <div class="side-section" style="margin-top:0;">propriedades</div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 0;"><div style="width:60px; color:var(--ink-mid);">responsável</div><div class="row"><div class="av" style="width:12px;height:12px;border-radius:50%;border:1.2px solid var(--ink);">A</div><span>alex</span></div></div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 0;"><div style="width:60px; color:var(--ink-mid);">autor</div><span>maya</span></div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 0;"><div style="width:60px; color:var(--ink-mid);">prioridade</div><span>P1</span></div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 0;"><div style="width:60px; color:var(--ink-mid);">est</div><span>5 pts</span></div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 0;"><div style="width:60px; color:var(--ink-mid);">prazo</div><span>16 mai</span></div>
+                <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 0;"><div style="width:60px; color:var(--ink-mid);">etiquetas</div><div class="row"><div class="chip">ui</div><div class="chip">a11y</div></div></div>
+                <div style="height:6px;"></div>
+                <div class="side-section">vinculados</div>
+                <div class="ph" style="padding:3px 6px;"><div class="row"><div class="chip">ATL-160</div><div class="squiggle short" style="flex:1; margin:0;"></div></div></div>
+                <div class="ph" style="padding:3px 6px; margin-top:3px;"><div class="row"><div class="chip">ATL-188</div><div class="squiggle short" style="flex:1; margin:0;"></div></div></div>
+                <div style="height:6px;"></div>
+                <div class="side-section">atividade</div>
+                <div class="squiggle short"></div>
+                <div class="squiggle short"></div>
+                <div class="squiggle short"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 19 Project settings -->
+      <div class="frame span-4" data-screen-label="19 Project settings">
+        <div class="caption"><span class="num">19</span> configurações do projeto</div>
+        <div class="sketch">
+          <div class="vp">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ atlas / settings</div></div>
+            <div class="shell" style="grid-template-columns: 1fr;">
+              <div class="col-body">
+                <div class="ptabs">
+                  <div class="ptab proj"><span class="ic"></span>Atlas</div>
+                  <div class="ptab"><span class="ic"></span>Visão</div>
+                  <div class="ptab"><span class="ic"></span>Quadro</div>
+                  <div class="ptab"><span class="ic"></span>Backlog</div>
+                  <div class="ptab"><span class="ic"></span>Ciclos</div>
+                  <div class="ptab"><span class="ic"></span>Épicos</div>
+                  <div class="ptab"><span class="ic"></span>Gantt</div>
+                  <div class="ptab"><span class="ic"></span>Marcos</div>
+                  <div class="ptab"><span class="ic"></span>Riscos</div>
+                  <div class="ptab"><span class="ic"></span>Wiki</div>
+                  <div class="ptab active"><span class="ic"></span>Config</div>
+                </div>
+                <div class="h1" style="font-size:18px;">Geral</div>
+                <div class="side-section">nome</div>
+                <div class="ph" style="padding:3px 6px;"><div class="squiggle mid" style="margin:0;"></div></div>
+                <div class="side-section">chave</div>
+                <div class="ph" style="padding:3px 6px;"><div class="squiggle short" style="margin:0;"></div></div>
+                <div class="side-section">ícone</div>
+                <div class="row" style="gap:4px;">
+                  <div style="width:18px; height:18px; background:var(--ink); transform:rotate(45deg);"></div>
+                  <div style="width:18px; height:18px; border:1.5px solid var(--ink); border-radius:50%;"></div>
+                  <div style="width:18px; height:18px; border:1.5px solid var(--ink);"></div>
+                </div>
+                <div style="height:6px;"></div>
+                <div class="row"><div class="grow"></div><div class="btn solid">salvar</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============= LEGEND ============= -->
+  <div class="legend">
+    <div>
+      <h4>Como ler</h4>
+      <div>Cada frame é uma rota do app. As seções agrupam rotas pela arquitetura de informação.</div>
+    </div>
+    <div>
+      <h4>Símbolos</h4>
+      <div class="key"><span class="swatch fill"></span> ação primária / barra preenchida</div>
+      <div class="key"><span class="swatch accent"></span> destaque (selecionado, alerta, hoje)</div>
+      <div class="key"><span class="swatch dash"></span> tracejado = placeholder / opcional</div>
+    </div>
+    <div>
+      <h4>Pontos de destaque</h4>
+      <div>A nav workspace · B nav projeto · C área de conteúdo · D arrastar-p/-status · E arrastar barra p/ reagendar</div>
+    </div>
+    <div>
+      <h4>Fora do escopo (v1)</h4>
+      <div>Módulos, caixa de notificações, busca, mobile — reutilizam o mesmo padrão shell + lista/detalhe.</div>
+    </div>
+  </div>
+
+</div>
+
+<div id="tweaks-mount"></div>
+
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel">
+  const { useTweaks, TweaksPanel, TweakSection, TweakColor, TweakRadio } = window;
+
+  const DEFAULTS = /*EDITMODE-BEGIN*/{
+    "accent": "#1f6feb",
+    "paper": "frio"
+  }/*EDITMODE-END*/;
+
+  function App() {
+    const [t, setTweak] = useTweaks(DEFAULTS);
+
+    React.useEffect(() => {
+      document.documentElement.style.setProperty('--accent', t.accent);
+      const papers = {
+        quente:    { paper: '#f4f1ea', paper2: '#ebe7dd' },
+        frio:    { paper: '#eef0f3', paper2: '#e2e5ea' },
+        neutral: { paper: '#f1f1f0', paper2: '#e5e5e4' }
+      };
+      const p = papers[t.paper] || papers.quente;
+      document.documentElement.style.setProperty('--paper', p.paper);
+      document.documentElement.style.setProperty('--paper-2', p.paper2);
+    }, [t.accent, t.paper]);
+
+    return (
+      <TweaksPanel title="Tweaks" defaultPos={{right: 16, bottom: 16}}>
+        <TweakSection title="accent">
+          <TweakColor
+            label="alternar destaque"
+            value={t.accent}
+            onChange={v => setTweak('accent', v)}
+            options={['#c83b2a', '#1f6feb', '#2e7d4f', '#a25f1a', '#000000']}
+          />
+        </TweakSection>
+        <TweakSection title="tom do papel">
+          <TweakRadio
+            value={t.paper}
+            onChange={v => setTweak('paper', v)}
+            options={[
+              { value: 'quente', label: 'quente' },
+              { value: 'frio', label: 'frio' },
+              { value: 'neutral', label: 'cinza' }
+            ]}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('tweaks-mount')).render(<App />);
+</script>
+</body>
+</html>
