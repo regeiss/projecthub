@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import keycloak from '@/lib/keycloak'
 import { useNotificationStore } from '@/stores/notificationStore'
 import type { Notification } from '@/types'
@@ -15,6 +16,7 @@ function mapNotification(raw: any): Notification {
     actionUrl: raw.action_url ?? null,
     isRead: raw.is_read ?? false,
     readAt: raw.read_at ?? null,
+    isArchived: raw.is_archived ?? false,
     actor: raw.actor_detail
       ? { id: raw.actor_detail.id, name: raw.actor_detail.name, avatarUrl: raw.actor_detail.avatar_url ?? null }
       : null,
@@ -24,13 +26,15 @@ function mapNotification(raw: any): Notification {
 
 export function useNotificationSocket() {
   const { addNotification, showToast } = useNotificationStore()
+  const qc = useQueryClient()
   const wsRef = useRef<WebSocket | null>(null)
 
   useEffect(() => {
-    const wsBase = import.meta.env.VITE_WS_URL ?? 'ws://localhost/ws'
-    const token = keycloak.token ?? ''
+    const wsBase = import.meta.env.VITE_WS_URL || '/ws'
 
     function connect() {
+      const token = keycloak.token ?? ''
+      if (!token) return
       const ws = new WebSocket(`${wsBase}/notifications/?token=${token}`)
       wsRef.current = ws
 
@@ -41,6 +45,8 @@ export function useNotificationSocket() {
             const n = mapNotification(msg.notification)
             addNotification(n)
             showToast({ id: n.id, title: n.title, message: n.message, actionUrl: n.actionUrl })
+            qc.invalidateQueries({ queryKey: ['inbox'] })
+            qc.invalidateQueries({ queryKey: ['notification-counts'] })
           }
         } catch {
           // ignore malformed
@@ -48,17 +54,16 @@ export function useNotificationSocket() {
       }
 
       ws.onclose = (e) => {
-        // Reconnect on unexpected close (not normal closure)
         if (e.code !== 1000) {
           setTimeout(connect, 5000)
         }
       }
     }
 
-    if (token) connect()
+    connect()
 
     return () => {
       wsRef.current?.close(1000)
     }
-  }, [addNotification, showToast])
+  }, [addNotification, showToast, qc])
 }

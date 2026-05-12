@@ -26,12 +26,23 @@ export interface Notification {
   actionUrl: string | null
   isRead: boolean
   readAt: string | null
+  isArchived: boolean
   actor: {
     id: string
     name: string
     avatarUrl: string | null
   } | null
   createdAt: string
+}
+
+export interface NotificationCounts {
+  all: number
+  unread: number
+  mentions: number
+  assigned: number
+  watching: number
+  archived: number
+  by_project: Record<string, number>
 }
 
 export interface Cycle {

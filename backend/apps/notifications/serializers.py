@@ -13,7 +13,7 @@ class NotificationSerializer(serializers.ModelSerializer):
         fields = [
             "id", "type", "entity_type", "entity_id",
             "title", "message", "action_url",
-            "is_read", "read_at",
+            "is_read", "read_at", "is_archived",
             "actor", "actor_detail",
             "created_at",
         ]

@@ -113,9 +113,10 @@ db-restore:
 # Sync backend (workaround para volume mount lento no Docker Desktop/Windows)
 # Copia todo o backend para o container e reinicia a API
 sync-backend:
-	@echo "Sincronizando backend → container..."
+	@echo "Sincronizando backend → containers..."
 	MSYS_NO_PATHCONV=1 docker cp backend/. projecthub_api:/app/
-	docker compose restart api
+	MSYS_NO_PATHCONV=1 docker cp backend/. projecthub_celery_worker:/app/
+	docker compose restart api celery_worker celery_beat
 	@echo "Done."
 
 # Sync project to WSL (exclui node_modules, .git, arquivos gerados)
