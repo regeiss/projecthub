@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { Inbox, Circle, AtSign, UserCheck, Eye, Archive, FolderKanban } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { NotificationCounts } from '@/types'
@@ -8,7 +9,7 @@ type FilterValue = 'all' | 'unread' | 'mentions' | 'assigned' | 'watching' | 'ar
 interface FilterItem {
   value: FilterValue
   label: string
-  icon: React.ElementType
+  icon: ComponentType<{ className?: string }>
 }
 
 const FILTERS: FilterItem[] = [

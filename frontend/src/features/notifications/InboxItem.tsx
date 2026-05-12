@@ -66,7 +66,6 @@ export function InboxItem({ notification, onMarkRead, onMarkUnread, onArchive }:
           {notification.title}
         </p>
         <p className="mt-0.5 font-mono text-[11px] text-gray-400">
-          {notification.entityType === 'issue' ? `${notification.entityId.slice(0, 8)} · ` : ''}
           {new Date(notification.createdAt).toLocaleString('pt-BR', {
             day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
           })}

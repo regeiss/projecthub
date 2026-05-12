@@ -31,9 +31,10 @@ export function useNotificationSocket() {
 
   useEffect(() => {
     const wsBase = import.meta.env.VITE_WS_URL || '/ws'
-    const token = keycloak.token ?? ''
 
     function connect() {
+      const token = keycloak.token ?? ''
+      if (!token) return
       const ws = new WebSocket(`${wsBase}/notifications/?token=${token}`)
       wsRef.current = ws
 
@@ -53,14 +54,13 @@ export function useNotificationSocket() {
       }
 
       ws.onclose = (e) => {
-        // Reconnect on unexpected close (not normal closure)
         if (e.code !== 1000) {
           setTimeout(connect, 5000)
         }
       }
     }
 
-    if (token) connect()
+    connect()
 
     return () => {
       wsRef.current?.close(1000)

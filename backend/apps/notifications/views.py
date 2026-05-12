@@ -26,6 +26,8 @@ class NotificationListView(generics.ListAPIView):
             qs = qs.filter(type="issue_assigned")
         elif filter_param == "watching":
             qs = qs.filter(type="issue_commented")
+        elif filter_param == "unread":
+            qs = qs.filter(is_read=False, is_archived=False)
         elif filter_param == "archived":
             qs = qs.filter(is_archived=True)
         else:
@@ -116,19 +118,18 @@ class NotificationCountsView(APIView):
         }
 
         # Unread counts per project (entity_type=issue only)
-        project_unread = (
+        entity_ids = list(
             base.filter(is_read=False, entity_type="issue")
-            .values("entity_id")
+            .values_list("entity_id", flat=True)
         )
-        if project_unread.exists():
-            entity_ids = [r["entity_id"] for r in project_unread]
+        if entity_ids:
             issue_project_map = {
                 str(i.id): str(i.project_id)
                 for i in Issue.objects.filter(id__in=entity_ids).only("id", "project_id")
             }
             by_project: dict[str, int] = {}
-            for r in project_unread:
-                pid = issue_project_map.get(str(r["entity_id"]))
+            for eid in entity_ids:
+                pid = issue_project_map.get(str(eid))
                 if pid:
                     by_project[pid] = by_project.get(pid, 0) + 1
             counts["by_project"] = by_project

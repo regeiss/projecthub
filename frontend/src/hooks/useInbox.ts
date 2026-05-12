@@ -67,6 +67,7 @@ export function useMarkAllRead() {
     mutationFn: () => notificationService.markAllRead(),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inbox'] })
+      qc.invalidateQueries({ queryKey: ['notifications'] })
       qc.invalidateQueries({ queryKey: ['notification-counts'] })
       qc.invalidateQueries({ queryKey: ['notification-unread-count'] })
     },
