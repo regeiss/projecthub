@@ -36,6 +36,7 @@ class Notification(models.Model):
     action_url = models.TextField(blank=True, null=True)
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
+    is_archived = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

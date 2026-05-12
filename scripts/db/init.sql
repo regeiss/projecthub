@@ -282,12 +282,14 @@ CREATE TABLE notifications (
     entity_id       UUID,
     action_url      VARCHAR(500),
     is_read         BOOLEAN         NOT NULL DEFAULT FALSE,
+    is_archived     BOOLEAN         NOT NULL DEFAULT FALSE,
     read_at         TIMESTAMP,
     created_at      TIMESTAMP       NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX idx_notifications_recipient ON notifications(recipient_id, is_read, created_at DESC);
 CREATE INDEX idx_notifications_entity    ON notifications(entity_type, entity_id);
+CREATE INDEX idx_notifications_archived  ON notifications(recipient_id, is_archived, created_at DESC);
 
 
 -- =============================================================================
