@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { workspaceService } from '@/services/workspace.service'
+import type { KeycloakUser } from '@/types'
 
 export function useWorkspaces() {
   return useQuery({

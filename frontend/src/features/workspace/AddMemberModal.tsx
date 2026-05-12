@@ -56,16 +56,19 @@ export function AddMemberModal({ open, onClose, workspaceSlug }: Props) {
           onChange={(e) => { setSearch(e.target.value); setSelected(null) }}
         />
 
-        {search.length >= 2 && (
+        {(search.length >= 2 || users.length > 0) && (
           <ul
             role="list"
+            aria-label="Resultados da busca"
             className="max-h-56 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800 rounded-md border border-gray-200 dark:border-gray-700"
           >
             {isLoading && (
               <li className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">Buscando…</li>
             )}
             {!isLoading && users.length === 0 && (
-              <li className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">Nenhum usuário encontrado</li>
+              <li className="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
+                Nenhum usuário encontrado
+              </li>
             )}
             {users.map((u) => (
               <li
@@ -93,7 +96,10 @@ export function AddMemberModal({ open, onClose, workspaceSlug }: Props) {
 
         {selected && (
           <div className="flex items-center gap-2">
-            <label htmlFor="role-select" className="text-sm text-gray-700 dark:text-gray-300 shrink-0">
+            <label
+              htmlFor="role-select"
+              className="text-sm text-gray-700 dark:text-gray-300 shrink-0"
+            >
               Papel:
             </label>
             <select
@@ -103,7 +109,9 @@ export function AddMemberModal({ open, onClose, workspaceSlug }: Props) {
               className="h-8 rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 text-sm text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
             >
               {ROLES.map((r) => (
-                <option key={r.value} value={r.value}>{r.label}</option>
+                <option key={r.value} value={r.value}>
+                  {r.label}
+                </option>
               ))}
             </select>
           </div>
@@ -120,10 +128,13 @@ export function AddMemberModal({ open, onClose, workspaceSlug }: Props) {
       </div>
 
       <ModalFooter>
-        <Button variant="ghost" size="sm" onClick={handleClose}>Cancelar</Button>
+        <Button variant="ghost" size="sm" onClick={handleClose}>
+          Cancelar
+        </Button>
         <Button
           size="sm"
           disabled={!selected || addMember.isPending}
+          loading={addMember.isPending}
           onClick={handleConfirm}
           aria-label="Adicionar membro selecionado"
         >

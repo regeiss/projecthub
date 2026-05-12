@@ -1,8 +1,4 @@
-import uuid
-from unittest.mock import patch
-
 from django.test import TestCase
-from rest_framework.test import APIClient
 
 from apps.workspaces.models import Workspace, WorkspaceMember
 from apps.workspaces.serializers import WorkspaceMemberCreateSerializer
@@ -11,20 +7,6 @@ from apps.workspaces.serializers import WorkspaceMemberCreateSerializer
 def make_workspace():
   return Workspace.objects.create(name="Test", slug="test")
 
-
-def make_member(workspace, role="admin", sub=None):
-  return WorkspaceMember.objects.create(
-    workspace=workspace,
-    keycloak_sub=sub or str(uuid.uuid4()),
-    email="admin@test.com",
-    name="Admin",
-    role=role,
-  )
-
-
-# ---------------------------------------------------------------------------
-# Serializer tests
-# ---------------------------------------------------------------------------
 
 class WorkspaceMemberCreateSerializerTest(TestCase):
   def setUp(self):
@@ -51,9 +33,21 @@ class WorkspaceMemberCreateSerializerTest(TestCase):
     self.assertIn("keycloak_sub", s.errors)
 
 
-# ---------------------------------------------------------------------------
-# View tests — search
-# ---------------------------------------------------------------------------
+import uuid
+from unittest.mock import patch
+
+from rest_framework.test import APIClient
+
+
+def make_member(workspace, role="admin", sub=None):
+  return WorkspaceMember.objects.create(
+    workspace=workspace,
+    keycloak_sub=sub or str(uuid.uuid4()),
+    email="admin@test.com",
+    name="Admin",
+    role=role,
+  )
+
 
 class WorkspaceKeycloakUsersViewTest(TestCase):
   def setUp(self):
@@ -65,7 +59,6 @@ class WorkspaceKeycloakUsersViewTest(TestCase):
 
   @patch("apps.workspaces.views.search_users")
   def test_returns_filtered_list(self, mock_search):
-    # admin-sub is already a member; only new-sub should be returned
     mock_search.return_value = [
       {"sub": "admin-sub", "email": "admin@test.com", "name": "Admin"},
       {"sub": "new-sub", "email": "new@test.com", "name": "New User"},
@@ -93,10 +86,6 @@ class WorkspaceKeycloakUsersViewTest(TestCase):
     self.assertEqual(resp.status_code, 503)
     self.assertEqual(resp.data["detail"], "keycloak_unavailable")
 
-
-# ---------------------------------------------------------------------------
-# View tests — create member
-# ---------------------------------------------------------------------------
 
 class WorkspaceMemberCreateViewTest(TestCase):
   def setUp(self):

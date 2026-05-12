@@ -51,9 +51,7 @@ export function WorkspaceSettings() {
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{m.name}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
               </div>
-              <Badge
-                variant={m.role === 'admin' ? 'info' : 'default'}
-              >
+              <Badge variant={m.role === 'admin' ? 'info' : 'default'}>
                 {m.role}
               </Badge>
             </div>
