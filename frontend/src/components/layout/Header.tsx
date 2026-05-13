@@ -1,10 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import { Bell, Search } from 'lucide-react'
+import { GlobalSearch } from '@/features/search'
 import { useAuthStore } from '@/stores/authStore'
-import { useNotificationStore } from '@/stores/notificationStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Avatar } from '@/components/ui/Avatar'
-import { Tooltip } from '@/components/ui/Tooltip'
 import {
   Dropdown,
   DropdownTrigger,
@@ -15,11 +13,11 @@ import {
 import { ProjectNav } from './ProjectNav'
 import { ThemeToggle } from '@/features/theme/ThemeToggle'
 import { ColorThemeSelector } from '@/features/theme/ColorThemeSelector'
+import { NotificationBell } from '@/features/notifications/NotificationBell'
 import keycloak from '@/lib/keycloak'
 
 export function Header() {
   const { user, logout } = useAuthStore()
-  const { unreadCount } = useNotificationStore()
   const { currentProject, workspace: currentWorkspace } = useWorkspaceStore()
   const navigate = useNavigate()
 
@@ -46,30 +44,10 @@ export function Header() {
         <ColorThemeSelector />
         <ThemeToggle />
 
-        <Tooltip content="Pesquisar" side="bottom">
-          <button
-            className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
-            aria-label="Pesquisar"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </Tooltip>
+        <GlobalSearch />
 
-        {/* Notifications bell */}
-        <Tooltip content="Notificações" side="bottom">
-          <button
-            className="relative flex h-7 w-7 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
-            aria-label="Notificações"
-            onClick={() => navigate('/notifications')}
-          >
-            <Bell className="h-4 w-4" />
-            {unreadCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-        </Tooltip>
+        {/* Notifications bell — popover with panel + "Ver todas" link */}
+        <NotificationBell />
 
         {/* User menu */}
         {user && (

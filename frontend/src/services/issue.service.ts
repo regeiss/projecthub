@@ -189,6 +189,10 @@ export const issueService = {
     api.get<PaginatedResponse<unknown>>('/issues/', { params: { search: query } })
       .then((r) => (r.data.results as unknown[]).map(mapIssue)),
 
+  myWork: (memberId: string): Promise<Issue[]> =>
+    api.get<PaginatedResponse<unknown>>('/issues/', { params: { assignee_id: memberId, page_size: 50 } })
+      .then((r) => (r.data.results as unknown[]).map(mapIssue)),
+
   // Subtasks
   subtasks: (issueId: string) =>
     api.get<unknown[]>(`/issues/${issueId}/subtasks/`).then((r) => (r.data as unknown[]).map(mapIssue)),

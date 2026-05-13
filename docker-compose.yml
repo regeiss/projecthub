@@ -63,9 +63,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
     ports:
-      - "5432:5432"           # Remover em produção
+      - "5432:5432" # Remover em produção
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-projecthub} -d ${POSTGRES_DB:-projecthub}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-projecthub} -d ${POSTGRES_DB:-projecthub}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -80,17 +80,13 @@ services:
     container_name: projecthub_redis
     restart: unless-stopped
     command: >
-      redis-server
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --save 60 1000
-      --appendonly yes
+      redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save 60 1000 --appendonly yes
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"           # Remover em produção
+      - "6379:6379" # Remover em produção
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -120,14 +116,14 @@ services:
       - static_files:/app/staticfiles
       - media_files:/app/media
     ports:
-      - "8000:8000"           # Remover em produção (acessar via Nginx)
+      - "8000:8000" # Remover em produção (acessar via Nginx)
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -146,10 +142,7 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config worker
-      --loglevel=info
-      --concurrency=4
-      --queues=default,cpm,notifications,sync
+      celery -A config worker --loglevel=info --concurrency=4 --queues=default,cpm,notifications,sync
     volumes:
       - ./backend:/app
     depends_on:
@@ -171,9 +164,7 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config beat
-      --loglevel=info
-      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - ./backend:/app
     depends_on:
@@ -195,16 +186,14 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config flower
-      --port=5555
-      --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+      celery -A config flower --port=5555 --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
     ports:
       - "5555:5555"
     depends_on:
       - redis
       - celery_worker
     profiles:
-      - monitoring               # Só sobe com: docker compose --profile monitoring up
+      - monitoring # Só sobe com: docker compose --profile monitoring up
     networks:
       - projecthub_net
 
@@ -257,7 +246,7 @@ services:
       - api
       - frontend
     networks:
-      - traefik_net
+      # - traefik_net
       - projecthub_net
 
   # ---------------------------------------------------------------------------
@@ -286,7 +275,7 @@ services:
       db:
         condition: service_healthy
     profiles:
-      - keycloak                 # Só sobe com: docker compose --profile keycloak up
+      - keycloak # Só sobe com: docker compose --profile keycloak up
     networks:
       - projecthub_net
     volumes:
@@ -307,7 +296,7 @@ volumes:
     driver: local
 
 networks:
-  traefik_net:
-    external: true
+  # traefik_net:
+  #   external: true
   projecthub_net:
     driver: bridge

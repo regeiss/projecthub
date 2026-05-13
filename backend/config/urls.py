@@ -22,6 +22,7 @@ urlpatterns = [
     path("api/v1/cpm/", include("apps.cpm.urls")),
     path("api/v1/portfolio/", include("apps.portfolio.urls")),
     path("api/v1/resources/", include(("apps.resources.urls", "resources"))),
+    path("api/v1/search/", include("apps.search.urls")),
 
     # Health check
     path("api/health/", include("health_check.urls")),

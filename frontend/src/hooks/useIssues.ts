@@ -2,6 +2,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { issueService } from '@/services/issue.service'
 import type { CreateSubtaskDto, IssueFilters } from '@/types'
 
+export function useMyWork(memberId: string | undefined) {
+  return useQuery({
+    queryKey: ['my-work', memberId],
+    queryFn: () => issueService.myWork(memberId!),
+    enabled: !!memberId,
+    staleTime: 60_000,
+  })
+}
+
 export function useIssues(projectId: string, filters: IssueFilters = {}) {
   return useQuery({
     queryKey: ['issues', projectId, filters],
