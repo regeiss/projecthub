@@ -4,7 +4,19 @@
 # Uso: make <comando>
 # =============================================================================
 
-.PHONY: help up down build logs shell migrate seed test lint sync-backend sync-wsl
+# Remote server
+REMOTE_HOST := 10.13.65.37
+REMOTE_USER := robertogeiss
+REMOTE_PASS := (*3Lv1nh0*)
+REMOTE_DIR  := /opt/projecthub
+
+_SSH   := sshpass -p '$(REMOTE_PASS)' ssh -o StrictHostKeyChecking=no $(REMOTE_USER)@$(REMOTE_HOST)
+_RSYNC := sshpass -p '$(REMOTE_PASS)' rsync -avz --no-perms --no-group \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            --exclude='node_modules' --exclude='.git' --exclude='__pycache__' \
+            --exclude='*.pyc' --exclude='staticfiles' --exclude='.env'
+
+.PHONY: help up down build logs shell migrate seed test lint sync-backend sync-frontend sync-remote
 
 # Exibe ajuda
 help:
@@ -28,8 +40,9 @@ help:
 	@echo "  make keycloak     Sobe com o Keycloak local"
 	@echo "  make psql         Abre o psql no container do banco"
 	@echo "  make redis-cli    Abre o redis-cli no container"
-	@echo "  make sync-backend Copia backend/ para o container (fix volume Windows)"
-	@echo "  make sync-wsl     Sincroniza projeto inteiro para WSL"
+	@echo "  make sync-backend Sincroniza backend → remoto e reinicia containers"
+	@echo "  make sync-frontend Sincroniza frontend/src → remoto"
+	@echo "  make sync-remote  Sincroniza projeto inteiro → remoto"
 	@echo "  ─────────────────────────────────────────────────────────"
 	@echo ""
 
@@ -110,29 +123,27 @@ db-restore:
 	@read -p "Arquivo de backup (ex: backups/projecthub_20250101.sql): " f; \
 	docker compose exec -T db psql -U projecthub projecthub < $$f
 
-# Sync backend (workaround para volume mount lento no Docker Desktop/Windows)
-# Copia todo o backend para o container e reinicia a API
+# Sincroniza só o backend → remoto e reinicia os containers via SSH
 sync-backend:
-	@echo "Sincronizando backend → containers..."
-	MSYS_NO_PATHCONV=1 docker cp backend/. projecthub_api:/app/
-	MSYS_NO_PATHCONV=1 docker cp backend/. projecthub_celery_worker:/app/
-	docker compose restart api celery_worker celery_beat
+	@echo "Sincronizando backend → $(REMOTE_USER)@$(REMOTE_HOST)..."
+	$(_RSYNC) /mnt/d/projecthub/backend/ $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)/backend/
+	$(_SSH) "cd $(REMOTE_DIR) && docker compose restart api celery_worker celery_beat"
 	@echo "Done."
 
-# Sync project to WSL (exclui node_modules, .git, arquivos gerados)
-sync-wsl:
-	@echo "Sincronizando projeto → WSL (/home/robertogeiss/projecthub)..."
-	rsync -av --no-perms --no-group \
-		--exclude='node_modules' --exclude='.git' --exclude='__pycache__' \
-		--exclude='*.pyc' --exclude='staticfiles' --exclude='.env' \
-		/mnt/d/projecthub/ /home/robertogeiss/projecthub/
-	@echo "Done."
-
-# Sync só o frontend/src para WSL (mais rápido que sync-wsl completo)
+# Sincroniza só frontend/src → remoto (Vite recarrega automaticamente)
 sync-frontend:
-	@echo "Sincronizando frontend/src → WSL..."
-	rsync -av /mnt/d/projecthub/frontend/src/ /home/robertogeiss/projecthub/frontend/src/
+	@echo "Sincronizando frontend/src → $(REMOTE_USER)@$(REMOTE_HOST)..."
+	sshpass -p '$(REMOTE_PASS)' rsync -avz \
+		-e "ssh -o StrictHostKeyChecking=no" \
+		/mnt/d/projecthub/frontend/src/ \
+		$(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)/frontend/src/
 	@echo "Done. Vite irá recarregar automaticamente."
+
+# Sincroniza o projeto inteiro → remoto
+sync-remote:
+	@echo "Sincronizando projeto → $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)..."
+	$(_RSYNC) /mnt/d/projecthub/ $(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)/
+	@echo "Done."
 
 # Frontend
 frontend-install:

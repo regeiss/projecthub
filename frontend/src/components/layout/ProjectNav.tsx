@@ -29,8 +29,14 @@ export function ProjectNav({ project }: ProjectNavProps) {
 
   return (
     <div className="flex items-center gap-1">
-      <span className="mr-3 text-sm font-semibold text-gray-900 dark:text-gray-100">
-        {project.name}
+      <span
+        className="mr-3 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-semibold"
+        style={{
+          backgroundColor: (project.color ?? '#6366f1') + '22',
+          color: project.color ?? '#6366f1',
+        }}
+      >
+        {project.name.replace(/^projeto\s+/i, '')}
       </span>
       <nav className="flex items-center gap-0.5">
         {tabs.map(({ path, label, icon: Icon }) => (

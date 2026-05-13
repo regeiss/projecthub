@@ -1,21 +1,130 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Plus, FolderKanban, Search } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Diamond } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useProjects, useCreateProject } from '@/hooks/useProjects'
+import { useProjects, useCreateProject, useProjectMembers } from '@/hooks/useProjects'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
-import { Badge } from '@/components/ui/Badge'
-import { formatDate } from '@/lib/utils'
+import { AvatarGroup } from '@/components/ui/Avatar'
+import { cn } from '@/lib/utils'
+import type { Project, ProjectMember } from '@/types'
 
-function CreateProjectModal({
-  open,
-  onClose,
-}: {
-  open: boolean
-  onClose: () => void
-}) {
+// ─── Status config ────────────────────────────────────────────────────────────
+
+const STATUS: Record<Project['status'], { label: string; className: string }> = {
+  active:    { label: 'ativo',      className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  paused:    { label: 'pausado',    className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  completed: { label: 'concluído', className: 'bg-blue-100  text-blue-700  dark:bg-blue-900/30  dark:text-blue-400'  },
+  archived:  { label: 'arquivado', className: 'bg-gray-100  text-gray-500  dark:bg-gray-800     dark:text-gray-400'  },
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: Project['status'] }) {
+  const cfg = STATUS[status]
+  return (
+    <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium', cfg.className)}>
+      {cfg.label}
+    </span>
+  )
+}
+
+function ProjectMembers({ projectId }: { projectId: string }) {
+  const { data: members = [] } = useProjectMembers(projectId)
+  if (members.length === 0) return null
+  const mapped = (members as ProjectMember[]).map((m) => ({
+    id: m.memberId,
+    name: m.memberName,
+    avatarUrl: m.memberAvatar,
+  }))
+  return <AvatarGroup members={mapped} max={3} size="xs" />
+}
+
+// ─── Grid card ────────────────────────────────────────────────────────────────
+
+function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-left hover:border-primary/50 hover:shadow-md transition-all duration-150"
+    >
+      <div className="mb-3 flex items-start gap-2.5">
+        <Diamond
+          className="mt-0.5 h-4 w-4 shrink-0"
+          style={{ color: project.color ?? '#6366f1' }}
+          fill="currentColor"
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 leading-snug truncate">
+            {project.name}
+          </p>
+          <p className="mt-0.5 text-xs text-gray-400 dark:text-gray-500 truncate">
+            {project.identifier}
+          </p>
+        </div>
+      </div>
+
+      {project.description && (
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400 line-clamp-2 flex-1">
+          {project.description}
+        </p>
+      )}
+      {!project.description && <div className="flex-1" />}
+
+      <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800">
+        <StatusBadge status={project.status} />
+        <ProjectMembers projectId={project.id} />
+      </div>
+    </button>
+  )
+}
+
+// ─── New project card ─────────────────────────────────────────────────────────
+
+function NewProjectCard({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-6 text-gray-400 dark:text-gray-500 hover:border-primary/50 hover:text-primary transition-all duration-150 min-h-[140px]"
+    >
+      <Plus className="h-5 w-5" />
+      <span className="text-xs font-medium">novo projeto</span>
+    </button>
+  )
+}
+
+// ─── List row ─────────────────────────────────────────────────────────────────
+
+function ProjectRow({ project, onClick }: { project: Project; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="group flex w-full items-center gap-4 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+    >
+      <Diamond
+        className="h-4 w-4 shrink-0"
+        style={{ color: project.color ?? '#6366f1' }}
+        fill="currentColor"
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{project.name}</p>
+        {project.description && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{project.description}</p>
+        )}
+      </div>
+      <span className="shrink-0 text-xs font-mono text-gray-400 dark:text-gray-500">
+        {project.identifier}
+      </span>
+      <StatusBadge status={project.status} />
+      <ProjectMembers projectId={project.id} />
+    </button>
+  )
+}
+
+// ─── Create modal ─────────────────────────────────────────────────────────────
+
+function CreateProjectModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [name, setName] = useState('')
   const [identifier, setIdentifier] = useState('')
   const [error, setError] = useState('')
@@ -25,10 +134,7 @@ function CreateProjectModal({
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    if (!workspace) {
-      setError('Workspace não encontrado. Verifique a conexão com o servidor.')
-      return
-    }
+    if (!workspace) { setError('Workspace não encontrado.'); return }
     create.mutate(
       { workspaceId: workspace.id, data: { name, identifier } },
       {
@@ -51,17 +157,12 @@ function CreateProjectModal({
           value={name}
           onChange={(e) => {
             setName(e.target.value)
-            if (!identifier) {
-              setIdentifier(
-                e.target.value
-                  .toUpperCase()
-                  .replace(/[^A-Z0-9]/g, '')
-                  .slice(0, 6),
-              )
-            }
+            if (!identifier)
+              setIdentifier(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))
           }}
           placeholder="Ex: Sistema de Contratos"
           required
+          autoFocus
         />
         <Input
           label="Identificador"
@@ -72,89 +173,160 @@ function CreateProjectModal({
           placeholder="Ex: CONT"
           required
         />
-        {error && (
-          <p className="text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="text-sm text-red-600">{error}</p>}
         <ModalFooter>
-          <Button variant="ghost" type="button" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button type="submit" loading={create.isPending}>
-            Criar projeto
-          </Button>
+          <Button variant="ghost" type="button" onClick={onClose}>Cancelar</Button>
+          <Button type="submit" loading={create.isPending}>Criar projeto</Button>
         </ModalFooter>
       </form>
     </Modal>
   )
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+type ViewMode = 'grid' | 'list'
+type StatusFilter = Project['status'] | 'all'
+
 export function ProjectsPage() {
   const { workspace } = useWorkspaceStore()
   const navigate = useNavigate()
   const { data: projects = [], isLoading } = useProjects(workspace?.id ?? '')
   const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [view, setView] = useState<ViewMode>(() => {
+    try { return (localStorage.getItem('projects-view') as ViewMode) ?? 'grid' } catch { return 'grid' }
+  })
   const [creating, setCreating] = useState(false)
 
-  const filtered = projects.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase()),
-  )
+  function setViewMode(m: ViewMode) {
+    setView(m)
+    try { localStorage.setItem('projects-view', m) } catch {}
+  }
+
+  const filtered = projects.filter((p) => {
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (statusFilter !== 'all' && p.status !== statusFilter) return false
+    return true
+  })
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Projetos</h1>
-        <Button onClick={() => setCreating(true)}>
-          <Plus className="h-3.5 w-3.5" />
-          Novo projeto
-        </Button>
-      </div>
+    <div className="mx-auto max-w-5xl px-6 py-6">
+      {/* Header */}
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Projetos</h1>
 
-      <div className="mb-4">
-        <Input
-          leftIcon={<Search className="h-3.5 w-3.5" />}
-          placeholder="Buscar projetos…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
-        />
-      </div>
-
-      {isLoading ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Carregando…</p>
-      ) : filtered.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-10 text-center">
-          <FolderKanban className="mx-auto mb-2 h-8 w-8 text-gray-400 dark:text-gray-500" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum projeto encontrado</p>
-        </div>
-      ) : (
-        <div className="divide-y divide-gray-100 dark:divide-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          {filtered.map((p) => (
+        <div className="flex items-center gap-2">
+          {/* View toggle */}
+          <div className="flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-0.5">
             <button
-              key={p.id}
-              onClick={() => navigate(`/projects/${p.id}/board`)}
-              className="flex w-full items-center text-left hover:bg-gray-50 dark:hover:bg-gray-800 divide-x divide-gray-300 dark:divide-gray-600"
+              onClick={() => setViewMode('grid')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                view === 'grid'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
+              )}
             >
-              <div className="flex items-center justify-center px-4 py-3">
-                <div
-                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-xs font-bold text-white"
-                  style={{ backgroundColor: p.color ?? '#6366f1' }}
-                >
-                  {p.identifier}
-                </div>
-              </div>
-              <div className="min-w-0 flex-1 px-4 py-3">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{p.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Atualizado {formatDate(p.updatedAt)}
-                </p>
-              </div>
-              <div className="px-4 py-3">
-                <Badge variant={p.isPrivate ? 'outline' : 'default'}>
-                  {p.isPrivate ? 'Privado' : 'Público'}
-                </Badge>
-              </div>
+              <LayoutGrid className="h-3.5 w-3.5" />
+              grade
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={cn(
+                'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                view === 'list'
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300',
+              )}
+            >
+              <List className="h-3.5 w-3.5" />
+              lista
+            </button>
+          </div>
+
+          <Button onClick={() => setCreating(true)}>
+            <Plus className="h-3.5 w-3.5" />
+            novo
+          </Button>
+        </div>
+      </div>
+
+      {/* Filter bar */}
+      <div className="mb-5 flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar projetos…"
+            className="h-8 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 pl-8 pr-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+        </div>
+
+        {/* Status filter chips */}
+        <div className="flex items-center gap-1.5">
+          {(['all', 'active', 'paused', 'completed', 'archived'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={cn(
+                'rounded-full border px-3 py-0.5 text-xs font-medium transition-colors',
+                statusFilter === s
+                  ? 'border-primary bg-primary text-white'
+                  : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600',
+              )}
+            >
+              {s === 'all' ? 'todos' : STATUS[s].label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* Content */}
+      {isLoading ? (
+        <div
+          className={cn(
+            view === 'grid'
+              ? 'grid grid-cols-2 gap-4 sm:grid-cols-3'
+              : 'flex flex-col gap-1',
+          )}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 h-36"
+            />
+          ))}
+        </div>
+      ) : view === 'grid' ? (
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {filtered.map((p) => (
+            <ProjectCard
+              key={p.id}
+              project={p}
+              onClick={() => navigate(`/projects/${p.id}/board`)}
+            />
+          ))}
+          <NewProjectCard onClick={() => setCreating(true)} />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center text-sm text-gray-400 dark:text-gray-500">
+              Nenhum projeto encontrado
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-gray-800">
+              {filtered.map((p) => (
+                <ProjectRow
+                  key={p.id}
+                  project={p}
+                  onClick={() => navigate(`/projects/${p.id}/board`)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

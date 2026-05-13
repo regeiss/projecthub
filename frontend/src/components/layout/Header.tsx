@@ -1,10 +1,9 @@
 import { useNavigate } from 'react-router-dom'
-import { Search } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { NotificationBell } from '@/features/notifications/NotificationBell'
+import { GlobalSearch } from '@/features/search'
 import { Avatar } from '@/components/ui/Avatar'
-import { Tooltip } from '@/components/ui/Tooltip'
 import {
   Dropdown,
   DropdownTrigger,
@@ -45,16 +44,8 @@ export function Header() {
         <ColorThemeSelector />
         <ThemeToggle />
 
-        <Tooltip content="Pesquisar" side="bottom">
-          <button
-            className="flex h-7 w-7 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-700 dark:hover:text-gray-200"
-            aria-label="Pesquisar"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </Tooltip>
+        <GlobalSearch />
 
-        {/* Notifications bell */}
         <NotificationBell />
 
         {/* User menu */}

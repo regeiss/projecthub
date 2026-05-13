@@ -9,6 +9,8 @@ import {
   Users,
   BookOpen,
   Bell,
+  PanelLeft,
+  PanelLeftClose,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -29,30 +31,37 @@ function NavItem({
   to,
   icon: Icon,
   label,
+  expanded,
 }: {
   to: string
   icon: React.ElementType
   label: string
+  expanded: boolean
 }) {
   return (
-    <div className="group/nav relative">
+    <div className={cn('group/nav relative', expanded && 'w-full')}>
       <NavLink
         to={to}
         className={({ isActive }) =>
           cn(
-            'flex h-8 w-8 items-center justify-center rounded-md text-gray-500 dark:text-gray-400 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100',
-            isActive && 'bg-primary-light dark:bg-primary/20 text-primary-text dark:text-primary',
+            'flex h-8 items-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white',
+            expanded ? 'w-full gap-3 px-2' : 'w-8 justify-center',
+            isActive && 'bg-white/15 text-white',
           )
         }
         aria-label={label}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="h-4 w-4 shrink-0" />
+        {expanded && <span className="truncate text-sm">{label}</span>}
       </NavLink>
-      <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/nav:block z-50">
-        <div className="rounded bg-primary px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
-          {label}
+
+      {!expanded && (
+        <div className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 hidden group-hover/nav:block z-50">
+          <div className="rounded-md bg-black/75 px-2.5 py-1 text-xs text-white whitespace-nowrap shadow-lg">
+            {label}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -110,6 +119,15 @@ export function Sidebar() {
   const { data: projects = [] } = useProjects(workspace?.id ?? '')
   const [creatingWorkspace, setCreatingWorkspace] = useState(false)
   const [wsDropdownOpen, setWsDropdownOpen] = useState(false)
+  const [expanded, setExpanded] = useState(() => {
+    try { return localStorage.getItem('sidebar-expanded') === 'true' } catch { return false }
+  })
+
+  function toggleExpanded() {
+    const next = !expanded
+    setExpanded(next)
+    try { localStorage.setItem('sidebar-expanded', String(next)) } catch {}
+  }
 
   function selectWorkspace(ws: (typeof workspaces)[0]) {
     setWsDropdownOpen(false)
@@ -118,16 +136,31 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar-bg flex h-full w-14 flex-col border-r border-gray-200 dark:border-gray-700 dark:bg-gray-900 py-3">
+    <aside
+      className={cn(
+        'flex h-full flex-col border-r border-white/10 bg-sidebar-dark py-3 transition-all duration-200 ease-in-out',
+        expanded ? 'w-52' : 'w-14',
+      )}
+    >
       {/* Workspace selector */}
-      <div className="flex justify-center px-2 pb-3">
+      <div className={cn('flex pb-3', expanded ? 'px-3' : 'justify-center px-2')}>
         <Dropdown open={wsDropdownOpen} onOpenChange={setWsDropdownOpen}>
           <DropdownTrigger asChild>
             <button
-              className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-white text-xs font-bold hover:bg-primary-hover"
+              className={cn(
+                'flex items-center gap-2.5 rounded-md bg-primary text-white text-xs font-bold hover:bg-primary-hover transition-colors',
+                expanded ? 'w-full px-2.5 py-1.5' : 'h-8 w-8 justify-center',
+              )}
               aria-label="Selecionar workspace"
             >
-              {workspace?.name?.[0]?.toUpperCase() ?? 'W'}
+              <span className="shrink-0 text-sm font-bold">
+                {workspace?.name?.[0]?.toUpperCase() ?? 'W'}
+              </span>
+              {expanded && (
+                <span className="truncate text-sm font-semibold">
+                  {workspace?.name ?? 'Workspace'}
+                </span>
+              )}
             </button>
           </DropdownTrigger>
           <DropdownContent align="start" className="ml-2">
@@ -135,7 +168,7 @@ export function Sidebar() {
               <button
                 key={ws.id}
                 type="button"
-                className="flex w-full cursor-pointer select-none items-center px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 outline-none"
+                className="flex w-full cursor-pointer select-none items-center px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 outline-none"
                 onClick={() => selectWorkspace(ws)}
               >
                 {ws.name}
@@ -150,52 +183,109 @@ export function Sidebar() {
         </Dropdown>
       </div>
 
-      <div className="mx-2 mb-3 h-px bg-gray-200 dark:bg-gray-700" />
+      <div className="mx-2 mb-3 h-px bg-white/10" />
 
       {/* Main navigation */}
-      <nav className="flex flex-1 flex-col items-center gap-1 px-2">
-        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" />
-        <NavItem to="/projects" icon={FolderKanban} label="Projetos" />
-        <NavItem to="/portfolio" icon={BarChart3} label="Portfolio" />
-        <NavItem to="/wiki" icon={BookOpen} label="Wiki" />
-        <NavItem to="/inbox" icon={Bell} label="Inbox" />
-        <NavItem to="/workspace/resources" icon={Users} label="Recursos" />
+      <nav
+        className={cn(
+          'flex flex-1 flex-col gap-1',
+          expanded ? 'px-3' : 'items-center px-2',
+        )}
+      >
+        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" expanded={expanded} />
+        <NavItem to="/projects" icon={FolderKanban} label="Projetos" expanded={expanded} />
+        <NavItem to="/portfolio" icon={BarChart3} label="Portfolio" expanded={expanded} />
+        <NavItem to="/wiki" icon={BookOpen} label="Wiki" expanded={expanded} />
+        <NavItem to="/inbox" icon={Bell} label="Inbox" expanded={expanded} />
+        <NavItem to="/workspace/resources" icon={Users} label="Recursos" expanded={expanded} />
       </nav>
 
       {/* Projects quick list */}
       {projects.length > 0 && (
         <>
-          <div className="mx-2 my-2 h-px bg-gray-200 dark:bg-gray-700" />
-          <div className="flex flex-col items-center gap-1 px-2">
+          <div className="mx-2 my-2 h-px bg-white/10" />
+          {expanded && (
+            <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-wider text-white/40">
+              Projetos
+            </p>
+          )}
+          <div
+            className={cn(
+              'flex flex-col gap-0.5',
+              expanded ? 'px-3' : 'items-center px-2',
+            )}
+          >
             {projects.slice(0, 6).map((p) => (
-              <div key={p.id} className="group/proj relative">
+              <div key={p.id} className={cn('group/proj relative', expanded && 'w-full')}>
                 <NavLink
                   to={`/projects/${p.id}/board`}
                   className={cn(
-                    'flex h-7 w-7 items-center justify-center rounded text-xs font-semibold transition-colors',
-                    projectId === p.id
-                      ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700',
+                    'flex items-center rounded transition-colors',
+                    expanded
+                      ? cn(
+                          'w-full gap-2.5 px-2 py-1 text-sm hover:bg-white/10',
+                          projectId === p.id
+                            ? 'text-white'
+                            : 'text-white/50 hover:text-white',
+                        )
+                      : cn(
+                          'h-7 w-7 justify-center text-xs font-semibold',
+                          projectId === p.id
+                            ? 'bg-white/20 text-white'
+                            : 'bg-white/10 text-white/60 hover:bg-white/15 hover:text-white',
+                        ),
                   )}
                 >
-                  {p.identifier}
+                  <span
+                    className={cn(
+                      'shrink-0 text-xs font-semibold',
+                      expanded && 'flex h-5 w-8 items-center justify-center rounded bg-white/10 text-white/70',
+                    )}
+                  >
+                    {p.identifier}
+                  </span>
+                  {expanded && (
+                    <span className="truncate text-sm">{p.name}</span>
+                  )}
                 </NavLink>
-                <div className="pointer-events-none absolute left-full top-1/2 ml-2 -translate-y-1/2 hidden group-hover/proj:block z-50">
-                  <div className="rounded bg-primary px-2 py-1 text-xs text-white whitespace-nowrap shadow-md">
-                    {p.name}
+
+                {!expanded && (
+                  <div className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 hidden group-hover/proj:block z-50">
+                    <div className="rounded-md bg-black/75 px-2.5 py-1 text-xs text-white whitespace-nowrap shadow-lg">
+                      {p.name}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
         </>
       )}
 
-      <div className="mx-2 my-2 h-px bg-gray-200" />
+      <div className="mx-2 my-2 h-px bg-white/10" />
 
-      {/* Settings */}
-      <div className="flex flex-col items-center px-2">
-        <NavItem to="/workspace/settings" icon={Settings} label="Configurações" />
+      {/* Bottom: settings + toggle */}
+      <div
+        className={cn(
+          'flex flex-col gap-1',
+          expanded ? 'px-3' : 'items-center px-2',
+        )}
+      >
+        <NavItem to="/workspace/settings" icon={Settings} label="Configurações" expanded={expanded} />
+
+        <button
+          onClick={toggleExpanded}
+          className={cn(
+            'flex h-8 items-center rounded-md text-white/30 transition-colors hover:bg-white/10 hover:text-white/70',
+            expanded ? 'w-full gap-3 px-2' : 'w-8 justify-center',
+          )}
+          aria-label={expanded ? 'Recolher sidebar' : 'Expandir sidebar'}
+        >
+          {expanded
+            ? <PanelLeftClose className="h-4 w-4 shrink-0" />
+            : <PanelLeft className="h-4 w-4 shrink-0" />}
+          {expanded && <span className="text-sm">Recolher</span>}
+        </button>
       </div>
 
       <CreateWorkspaceModal

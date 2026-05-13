@@ -20,6 +20,8 @@
   --color-bg-card:    255 255 255;     /* white      — card surface */
   --color-bg-sidebar: 248 250 252;     /* slate-50   — sidebar      */
   --color-border:     226 232 240;     /* slate-200  — borders      */
+
+  --color-sidebar-dark: 23 37 84;      /* blue-950   — dark sidebar */
 }
 
 /* Warm Violet */
@@ -34,6 +36,8 @@
   --color-bg-card:    253 252 255;     /* near-white with violet cast */
   --color-bg-sidebar: 245 243 255;     /* violet-50 sidebar */
   --color-border:     237 233 254;     /* violet-100 borders */
+
+  --color-sidebar-dark: 46 16 101;     /* violet-950 — dark sidebar */
 }
 
 /* Teal */
@@ -48,6 +52,8 @@
   --color-bg-card:    250 255 254;     /* near-white with teal cast */
   --color-bg-sidebar: 240 253 250;     /* teal-50 sidebar */
   --color-border:     153 234 214;     /* teal-200 borders */
+
+  --color-sidebar-dark:  4 47 46;      /* teal-950  — dark sidebar */
 }
 
 /* =============================================================================
@@ -134,6 +140,10 @@ html:not(.dark) .sidebar-bg {
 
   .bg-sidebar {
     background-color: rgb(var(--color-bg-sidebar));
+  }
+
+  .bg-sidebar-dark {
+    background-color: rgb(var(--color-sidebar-dark));
   }
 
   .border-theme {

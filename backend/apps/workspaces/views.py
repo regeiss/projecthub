@@ -1,4 +1,5 @@
 from django.db import IntegrityError
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
@@ -121,6 +122,90 @@ class WorkspaceKeycloakUsersView(APIView):
         )
         filtered = [u for u in kc_users if u["sub"] not in existing_subs]
         return Response(filtered)
+
+
+class GlobalSearchView(APIView):
+    """GET /api/v1/search/?q=...&project_id=...&author_id=...&date_from=...&date_to=..."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.issues.models import Issue
+        from apps.wiki.models import WikiPage
+
+        q = request.query_params.get("q", "").strip()
+        if len(q) < 2:
+            return Response({"issues": [], "wiki_pages": [], "total": 0})
+
+        workspace = request.user.workspace
+        project_id = request.query_params.get("project_id")
+        author_id = request.query_params.get("author_id")
+        date_from = request.query_params.get("date_from")
+        date_to = request.query_params.get("date_to")
+
+        # Issues
+        issues_qs = Issue.objects.filter(
+            project__workspace=workspace,
+            title__icontains=q,
+        ).select_related("project", "state")
+        if project_id:
+            issues_qs = issues_qs.filter(project_id=project_id)
+        if author_id:
+            issues_qs = issues_qs.filter(reporter_id=author_id)
+        if date_from:
+            issues_qs = issues_qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            issues_qs = issues_qs.filter(created_at__date__lte=date_to)
+        issues_qs = issues_qs.order_by("-created_at")[:20]
+
+        issues = [
+            {
+                "id": str(i.id),
+                "sequence_id": i.sequence_id,
+                "title": i.title,
+                "created_at": i.created_at.isoformat(),
+                "headline": None,
+                "project": {"id": str(i.project_id), "identifier": i.project.identifier, "name": i.project.name},
+                "state": {"id": str(i.state_id), "name": i.state.name, "color": i.state.color} if i.state_id else None,
+                "created_by": None,
+            }
+            for i in issues_qs
+        ]
+
+        # Wiki pages
+        wiki_qs = WikiPage.objects.filter(
+            space__workspace=workspace,
+        ).filter(
+            Q(title__icontains=q) | Q(content_text__icontains=q)
+        ).select_related("space", "space__project")
+        if project_id:
+            wiki_qs = wiki_qs.filter(space__project_id=project_id)
+        if author_id:
+            wiki_qs = wiki_qs.filter(created_by_id=author_id)
+        if date_from:
+            wiki_qs = wiki_qs.filter(updated_at__date__gte=date_from)
+        if date_to:
+            wiki_qs = wiki_qs.filter(updated_at__date__lte=date_to)
+        wiki_qs = wiki_qs.order_by("-updated_at")[:20]
+
+        wiki_pages = []
+        for p in wiki_qs:
+            proj = p.space.project
+            wiki_pages.append({
+                "id": str(p.id),
+                "title": p.title,
+                "updated_at": p.updated_at.isoformat(),
+                "headline": None,
+                "space": {"id": str(p.space_id), "name": p.space.name},
+                "project": {"id": str(proj.id), "name": proj.name, "identifier": proj.identifier} if proj else None,
+                "created_by": None,
+            })
+
+        return Response({
+            "issues": issues,
+            "wiki_pages": wiki_pages,
+            "total": len(issues) + len(wiki_pages),
+        })
 
 
 class WorkspaceMemberCreateView(APIView):
