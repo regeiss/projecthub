@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const { unreadCount } = useNotificationStore()
-  useUnreadCount() // keeps count refreshed
+  useUnreadCount()
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -35,7 +35,7 @@ export function NotificationBell() {
           sideOffset={8}
           className="z-50 w-80 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg dark:shadow-gray-900/50 animate-in fade-in-0 zoom-in-95"
         >
-          <NotificationPanel />
+          <NotificationPanel onClose={() => setOpen(false)} />
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>

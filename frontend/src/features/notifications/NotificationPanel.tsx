@@ -18,7 +18,7 @@ const TYPE_LABELS: Record<string, string> = {
   portfolio_rag_changed: 'Portfolio',
 }
 
-export function NotificationPanel() {
+export function NotificationPanel({ onClose }: { onClose?: () => void }) {
   const navigate = useNavigate()
   const { data } = useNotifications()
   const notifications = data?.results ?? []
@@ -93,6 +93,15 @@ export function NotificationPanel() {
             </div>
           ))
         )}
+      </div>
+
+      <div className="border-t border-gray-200 dark:border-gray-700 px-4 py-2">
+        <button
+          onClick={() => { onClose?.(); navigate('/inbox') }}
+          className="w-full text-center text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium py-1 transition-colors"
+        >
+          Ver todas as notificações →
+        </button>
       </div>
     </div>
   )
