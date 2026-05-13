@@ -204,7 +204,8 @@
       "Bash(kill -9 29487 29486)",
       "Bash(npm run *)",
       "Read(//tmp/**)",
-      "Bash(lsof -ti:5173)"
+      "Bash(lsof -ti:5173)",
+      "Bash(make sync-remote *)"
     ]
   }
 }
