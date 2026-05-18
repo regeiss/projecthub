@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import keycloak, { initKeycloak, IS_KC_CALLBACK } from '@/lib/keycloak'
 import { useAuthStore } from '@/stores/authStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -9,19 +10,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
   const setUser = useAuthStore((s) => s.setUser)
   const setWorkspace = useWorkspaceStore((s) => s.setWorkspace)
+  const navigate = useNavigate()
 
   useEffect(() => {
     initKeycloak()
       .then(async (authenticated) => {
         if (!authenticated) {
           if (IS_KC_CALLBACK) {
-            // Code exchange failed on a callback — break the potential loop.
-            // Clear any stale KC state and let the user retry manually.
+            // Code exchange failed — clear stale KC state and show sign-in.
             keycloak.clearToken()
-            setReady(true)
-          } else {
-            keycloak.login()
           }
+          navigate('/sign-in', { replace: true })
+          setReady(true)
           return
         }
         try {
@@ -31,21 +31,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const workspaces = await workspaceService.list()
           if (workspaces.length > 0) {
             setWorkspace(workspaces[0])
+          } else {
+            navigate('/onboarding', { replace: true })
           }
         } catch {
-          // workspace not yet created — user will be redirected to onboarding
+          navigate('/onboarding', { replace: true })
         } finally {
           setReady(true)
         }
       })
       .catch(() => {
-        // If init() threw on a callback load, the session is broken — don't loop.
-        if (IS_KC_CALLBACK) {
-          keycloak.clearToken()
-          setReady(true)
-        } else {
-          keycloak.login()
-        }
+        // init() threw — clear stale state and show sign-in.
+        if (IS_KC_CALLBACK) keycloak.clearToken()
+        navigate('/sign-in', { replace: true })
+        setReady(true)
       })
 
     // Token refresh — 60 s before expiry

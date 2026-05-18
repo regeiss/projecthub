@@ -205,7 +205,10 @@
       "Bash(npm run *)",
       "Read(//tmp/**)",
       "Bash(lsof -ti:5173)",
-      "Bash(make sync-remote *)"
+      "Bash(make sync-remote *)",
+      "WebFetch(domain:claude.ai)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(npx tsc *)"
     ]
   }
 }

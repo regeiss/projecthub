@@ -119,7 +119,6 @@ class KeycloakJWTAuthentication(BaseAuthentication):
                 workspace = None
 
         if workspace is None:
-            # Use an existing membership if one exists (preserves previous behaviour)
             existing = (
                 WorkspaceMember.objects
                 .filter(keycloak_sub=sub)
@@ -129,7 +128,9 @@ class KeycloakJWTAuthentication(BaseAuthentication):
             if existing:
                 workspace = existing.workspace
             else:
-                workspace = Workspace.objects.first()
+                # New user with no workspace yet — return a transient (unsaved) member
+                # so the onboarding flow can authenticate and create their first workspace.
+                return WorkspaceMember(keycloak_sub=sub, email=email, name=name)
 
         if not workspace:
             raise AuthenticationFailed("Nenhum workspace configurado.")

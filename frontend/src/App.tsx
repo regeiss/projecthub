@@ -29,12 +29,16 @@ import { ProjectDashboardPage } from './features/projects/ProjectDashboardPage'
 import { ProjectActivityPage } from './features/activity/ProjectActivityPage'
 import { UserSettingsPage } from './features/user/UserSettingsPage'
 import { InboxPage } from './features/notifications/InboxPage'
+import { OnboardingPage } from './features/onboarding/OnboardingPage'
+import { SignInPage } from './features/auth/SignInPage'
 
 export default function App() {
   return (
     <TooltipProvider>
     <AuthProvider>
       <Routes>
+        <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/" element={<WorkspacePage />} />

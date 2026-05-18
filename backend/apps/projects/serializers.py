@@ -64,6 +64,7 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
 
 class ProjectSerializer(serializers.ModelSerializer):
     member_count = serializers.SerializerMethodField()
+    identifier = serializers.CharField(max_length=10, required=False, allow_blank=True)
 
     class Meta:
         model = Project
@@ -78,19 +79,41 @@ class ProjectSerializer(serializers.ModelSerializer):
         return obj.members.count()
 
     def validate_identifier(self, value):
+        if not value:
+            return value
         value = value.upper()
         workspace = self.context["request"].user.workspace
-        qs = Project.objects.filter(workspace=workspace, identifier=value)
-        if self.instance:
-            qs = qs.exclude(pk=self.instance.pk)
-        if qs.exists():
-            raise serializers.ValidationError("Já existe um projeto com este identificador neste workspace.")
+        if workspace:
+            qs = Project.objects.filter(workspace=workspace, identifier=value)
+            if self.instance:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise serializers.ValidationError("Já existe um projeto com este identificador neste workspace.")
         return value
+
+    def _generate_identifier(self, name, workspace):
+        words = name.split()
+        if len(words) > 1:
+            base = ''.join(w[0] for w in words if w).upper()[:10]
+        else:
+            base = ''.join(c for c in name if c.isalnum()).upper()[:6]
+        base = base or "PRJ"
+        identifier = base
+        n = 1
+        while Project.objects.filter(workspace=workspace, identifier=identifier).exists():
+            suffix = str(n)
+            identifier = base[:10 - len(suffix)] + suffix
+            n += 1
+        return identifier
 
     def create(self, validated_data):
         request = self.context["request"]
         validated_data["workspace"] = request.user.workspace
         validated_data["created_by"] = request.user
+        if not validated_data.get("identifier"):
+            validated_data["identifier"] = self._generate_identifier(
+                validated_data.get("name", ""), validated_data["workspace"]
+            )
         project = super().create(validated_data)
 
         ProjectMember.objects.create(

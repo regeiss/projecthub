@@ -1,5 +1,5 @@
 # =============================================================================
-# ProjectHub — Docker Compose
+# ProjectHub â€” Docker Compose
 # Stack: Django + React + PostgreSQL + Redis + Celery + Nginx
 # =============================================================================
 
@@ -54,6 +54,8 @@ services:
     image: postgres:16-alpine
     container_name: projecthub_db
     restart: unless-stopped
+#    profiles:
+#      - local-db                 # SÃ³ sobe com: docker compose --profile local-db up
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-projecthub}
       POSTGRES_USER: ${POSTGRES_USER:-projecthub}
@@ -63,17 +65,17 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/db/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
     ports:
-      - "5432:5432"           # Remover em produção
+      - "5432:5432"           # Remover em produÃ§Ã£o
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-projecthub} -d ${POSTGRES_DB:-projecthub}"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - projecthub_net
+      - dsi-network
 
   # ---------------------------------------------------------------------------
-  # Redis — Cache, filas Celery, sessões, WebSocket channel layer
+  # Redis â€” Cache, filas Celery, sessÃµes, WebSocket channel layer
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
@@ -88,17 +90,17 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"           # Remover em produção
+      - "6388:6379"           # Remover em produÃ§Ã£o
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - projecthub_net
+      - dsi-network
 
   # ---------------------------------------------------------------------------
-  # Django — API REST + Django Channels (WebSocket)
+  # Django â€” API REST + Django Channels (WebSocket)
   # ---------------------------------------------------------------------------
   api:
     build:
@@ -109,34 +111,33 @@ services:
     <<: *django-env
     command: >
       sh -c "
+        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
         python manage.py wait_for_db &&
         python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput &&
-        python manage.py shell -c 'from apps.workspaces.models import Workspace; import os; Workspace.objects.exists() or Workspace.objects.create(name=os.environ.get(\"DEFAULT_WORKSPACE_NAME\", \"Default\"), slug=os.environ.get(\"DEFAULT_WORKSPACE_SLUG\", \"default\"))' &&
-        daphne -b 0.0.0.0 -p 8000 config.asgi:application
+        python manage.py ensure_default_workspace &&
+        daphne -b 0.0.0.0 -p 8004 config.asgi:application
       "
     volumes:
       - ./backend:/app
       - static_files:/app/staticfiles
       - media_files:/app/media
     ports:
-      - "8000:8000"           # Remover em produção (acessar via Nginx)
+      - "8004:8000"           # Remover em produÃ§Ã£o (acessar via Nginx)
     depends_on:
-      db:
-        condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/api/health/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     networks:
-      - projecthub_net
+      - dsi-network
 
   # ---------------------------------------------------------------------------
-  # Celery Worker — Tarefas assíncronas (CPM, notificações, sync)
+  # Celery Worker â€” Tarefas assÃ­ncronas (CPM, notificaÃ§Ãµes, sync)
   # ---------------------------------------------------------------------------
   celery_worker:
     build:
@@ -146,22 +147,26 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config worker
-      --loglevel=info
-      --concurrency=4
-      --queues=default,cpm,notifications,sync
+      sh -c "
+        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
+        python manage.py wait_for_db &&
+        celery -A config worker
+        --loglevel=info
+        --concurrency=4
+        --queues=default,cpm,notifications,sync
+      "
     volumes:
       - ./backend:/app
     depends_on:
-      db:
+      api:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - projecthub_net
+      - dsi-network
 
   # ---------------------------------------------------------------------------
-  # Celery Beat — Agendador de tarefas periódicas
+  # Celery Beat â€” Agendador de tarefas periÃ³dicas
   # ---------------------------------------------------------------------------
   celery_beat:
     build:
@@ -171,21 +176,25 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config beat
-      --loglevel=info
-      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      sh -c "
+        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
+        python manage.py wait_for_db &&
+        celery -A config beat
+        --loglevel=info
+        --scheduler django_celery_beat.schedulers:DatabaseScheduler
+      "
     volumes:
       - ./backend:/app
     depends_on:
-      db:
+      api:
         condition: service_healthy
       redis:
         condition: service_healthy
     networks:
-      - projecthub_net
+      - dsi-network
 
   # ---------------------------------------------------------------------------
-  # Flower — Monitoramento do Celery (opcional, desabilitar em produção)
+  # Flower â€” Monitoramento do Celery (opcional, desabilitar em produÃ§Ã£o)
   # ---------------------------------------------------------------------------
   flower:
     build:
@@ -195,21 +204,24 @@ services:
     restart: unless-stopped
     <<: *django-env
     command: >
-      celery -A config flower
-      --port=5555
-      --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+      sh -c "
+        python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
+        celery -A config flower
+        --port=5555
+        --basic_auth=${FLOWER_USER:-admin}:${FLOWER_PASSWORD:-admin}
+      "
     ports:
       - "5555:5555"
     depends_on:
       - redis
       - celery_worker
     profiles:
-      - monitoring               # Só sobe com: docker compose --profile monitoring up
+      - monitoring               # SÃ³ sobe com: docker compose --profile monitoring up
     networks:
-      - projecthub_net
+      - dsi-network
 
   # ---------------------------------------------------------------------------
-  # Frontend React (build estático servido pelo Nginx)
+  # Frontend React (build estÃ¡tico servido pelo Nginx)
   # Em desenvolvimento usar: npm run dev (Vite dev server na porta 5173)
   # ---------------------------------------------------------------------------
   frontend:
@@ -227,42 +239,33 @@ services:
     volumes:
       - frontend_build:/app/dist
     networks:
-      - projecthub_net
+      - dsi-network
 
   # ---------------------------------------------------------------------------
-  # Nginx — Reverse proxy, serve estáticos e roteamento
+  # Nginx â€” Reverse proxy, serve estÃ¡ticos e roteamento
   # ---------------------------------------------------------------------------
   nginx:
     image: nginx:1.25-alpine
     container_name: projecthub_nginx
     restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      # HTTP → redireciona para HTTPS
-      - "traefik.http.routers.projecthub-http.rule=Host(`dev-projecthub.novohamburgo.rs.gov.br`)"
-      - "traefik.http.routers.projecthub-http.entrypoints=web"
-      - "traefik.http.routers.projecthub-http.middlewares=redirect-https@file"
-      # HTTPS
-      - "traefik.http.routers.projecthub.rule=Host(`dev-projecthub.novohamburgo.rs.gov.br`)"
-      - "traefik.http.routers.projecthub.entrypoints=websecure"
-      - "traefik.http.routers.projecthub.tls=true"
-      - "traefik.http.services.projecthub.loadbalancer.server.port=80"
+    ports:  
+      - "127.0.0.1:8010:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_files:/var/www/static:ro
       - media_files:/var/www/media:ro
       - frontend_build:/var/www/html:ro
+      - ./nginx/certs:/etc/nginx/certs:ro   # Certificados SSL
     depends_on:
       - api
       - frontend
     networks:
-      - traefik_net
-      - projecthub_net
-
+      traefik_net:
+      dsi-network:
   # ---------------------------------------------------------------------------
-  # Keycloak — SSO / OIDC (se não tiver instância externa)
-  # Comentar este bloco se já tiver Keycloak rodando no OCI
+  # Keycloak â€” SSO / OIDC (se nÃ£o tiver instÃ¢ncia externa)
+  # Comentar este bloco se jÃ¡ tiver Keycloak rodando no OCI
   # ---------------------------------------------------------------------------
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
@@ -277,22 +280,42 @@ services:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT: "true"
+      KC_HOSTNAME_STRICT_HTTPS: "true"
       KC_PROXY: edge
-    command: start-dev --import-realm
-    ports:
-      - "8080:8080"
+      KC_HOSTNAME: dev-projecthub.novohamburgo.rs.gov.br
+      KC_HOSTNAME_PATH: /auth
+      KC_HTTP_RELATIVE_PATH: /auth
+      KC_DB_URL_PROPERTIES: "?connectTimeout=10000&tcpKeepAlives=true"
+      KC_SPI_STICKY_SESSION_ENCODER_INFINISPAN_SHOULD_ATTACH_ROUTE: "false"
+      KC_HTTP_COOKIE_SAME_SITE: "None"
+      KC_PROXY_HEADERS: "xforwarded"   
+      KC_FEATURES_DISABLED: "impersonation"
+      KC_SPI_LOGIN_PROTOCOL_OPENID_CONNECT_LEGACY_LOGOUT_REDIRECT_URI: "true"
+      KC_SPI_COOKIES_SAME_SITE_LEGACY_WORKAROUND: "true"
+    entrypoint:
+      - bash
+      - -c
+      - |
+        for i in {1..30}; do
+          timeout 2 bash -c "</dev/tcp/db/5432" 2>/dev/null && exec /opt/keycloak/bin/kc.sh start-dev --import-realm --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true --features-disabled=par
+          [ $$i -lt 30 ] && echo "Waiting for database... (attempt $$i/30)" && sleep 2
+        done
+        echo "Database connection timeout"
+        exit 1
+    command: []  
+#     ports:
+#       - "8089:8080"
     depends_on:
       db:
         condition: service_healthy
-    profiles:
-      - keycloak                 # Só sobe com: docker compose --profile keycloak up
+ #   profiles:
+ #     - keycloak                 # SÃ³ sobe com: docker compose --profile keycloak up
     networks:
-      - projecthub_net
-    volumes:
-      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema
+      - dsi-network
+    volumes: 
+      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema 
       - ./assets/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
-
 # =============================================================================
 volumes:
   postgres_data:
@@ -309,5 +332,5 @@ volumes:
 networks:
   traefik_net:
     external: true
-  projecthub_net:
+  dsi-network:
     driver: bridge

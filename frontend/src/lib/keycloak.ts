@@ -21,7 +21,8 @@ let _initPromise: Promise<boolean> | null = null
 export function initKeycloak(): Promise<boolean> {
   if (_initPromise) return _initPromise
   _initPromise = keycloak.init({
-    onLoad: 'login-required',
+    onLoad: 'check-sso',
+    silentCheckSsoFallback: false,
     checkLoginIframe: false,
     pkceMethod: 'S256',
     redirectUri: window.location.origin + '/',

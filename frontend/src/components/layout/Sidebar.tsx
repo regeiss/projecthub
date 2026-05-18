@@ -14,11 +14,10 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useWorkspaces, useCreateWorkspace } from '@/hooks/useWorkspace'
+import { useWorkspaces } from '@/hooks/useWorkspace'
 import { useProjects } from '@/hooks/useProjects'
-import { Modal, ModalFooter } from '@/components/ui/Modal'
-import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
+import { Modal } from '@/components/ui/Modal'
+import { WorkspaceCreateForm } from '@/features/workspace/WorkspaceCreateForm'
 import {
   Dropdown,
   DropdownTrigger,
@@ -67,46 +66,16 @@ function NavItem({
 }
 
 function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [error, setError] = useState('')
-  const create = useCreateWorkspace()
-  const { setWorkspace } = useWorkspaceStore()
   const navigate = useNavigate()
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    create.mutate(
-      { name },
-      {
-        onSuccess: (ws) => {
-          setWorkspace(ws)
-          navigate('/')
-          onClose()
-          setName('')
-        },
-        onError: () => setError('Erro ao criar workspace. Tente novamente.'),
-      },
-    )
+  function handleSuccess() {
+    navigate('/')
+    onClose()
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Novo workspace" size="sm">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Nome"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ex: Minha Empresa"
-          required
-          autoFocus
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <ModalFooter>
-          <Button variant="ghost" type="button" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" loading={create.isPending}>Criar</Button>
-        </ModalFooter>
-      </form>
+    <Modal open={open} onClose={onClose} size="md">
+      <WorkspaceCreateForm onSuccess={handleSuccess} onCancel={onClose} />
     </Modal>
   )
 }
