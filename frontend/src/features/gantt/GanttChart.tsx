@@ -1,5 +1,6 @@
-import { useMemo, useState, useRef, useImperativeHandle, forwardRef } from 'react'
-import { useCpmGantt } from '@/hooks/useCpm'
+import { useMemo, useState, useRef, useEffect, useImperativeHandle, forwardRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCpmGantt, useUpdateCpmDuration } from '@/hooks/useCpm'
 import { PageSpinner } from '@/components/ui/Spinner'
 import type { GanttTask } from '@/types'
 
@@ -104,7 +105,9 @@ function buildDaysAndWeeks(minDate: Date, totalDays: number) {
 
 // Logical arrow — stores day indices, not pixels (pixels depend on zoom)
 interface LogicalArrow {
-  x1Day: number
+  depTaskId: string   // used to recompute x1 when duration is drafted
+  depStartDay: number // start of the dep task (x1 = depStartDay + effectiveDuration)
+  x1Day: number       // original x1 (= depStartDay + origDuration)
   row1: number
   x2Day: number
   row2: number
@@ -148,11 +151,59 @@ function arrowPath(x1: number, y1: number, x2: number, y2: number): string {
   }
 }
 
+interface GanttDragState {
+  taskId: string
+  startX: number
+  origDuration: number
+  dayW: number
+}
+
 export const GanttChart = forwardRef<GanttChartHandle, GanttChartProps>(
   function GanttChart({ projectId }, ref) {
+    const navigate = useNavigate()
     const { data: tasks, isLoading } = useCpmGantt(projectId)
+    const updateDuration = useUpdateCpmDuration()
     const [zoom, setZoom] = useState(1.0)
     const scrollRef = useRef<HTMLDivElement>(null)
+    const [ganttDrag, setGanttDrag] = useState<GanttDragState | null>(null)
+    const [draftDurations, setDraftDurations] = useState<Record<string, number>>({})
+
+    useEffect(() => {
+      if (!ganttDrag) return
+
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = 'ew-resize'
+
+      let currentDuration = ganttDrag.origDuration
+
+      function onMouseMove(e: MouseEvent) {
+        const deltaDays = Math.round((e.clientX - ganttDrag.startX) / ganttDrag.dayW)
+        const next = Math.max(1, ganttDrag.origDuration + deltaDays)
+        currentDuration = next
+        setDraftDurations((d) => ({ ...d, [ganttDrag.taskId]: next }))
+      }
+
+      function onMouseUp() {
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+        if (currentDuration !== ganttDrag.origDuration) {
+          updateDuration.mutate(
+            { projectId, issueId: ganttDrag.taskId, durationDays: currentDuration },
+            { onSuccess: () => setDraftDurations((d) => { const n = { ...d }; delete n[ganttDrag.taskId]; return n }) },
+          )
+        }
+        setGanttDrag(null)
+      }
+
+      document.addEventListener('mousemove', onMouseMove)
+      document.addEventListener('mouseup', onMouseUp)
+      return () => {
+        document.removeEventListener('mousemove', onMouseMove)
+        document.removeEventListener('mouseup', onMouseUp)
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
+    }, [ganttDrag]) // eslint-disable-line react-hooks/exhaustive-deps
 
     const derived = useMemo(() => {
       if (!tasks || tasks.length === 0) return null
@@ -183,7 +234,10 @@ export const GanttChart = forwardRef<GanttChartHandle, GanttChartProps>(
             const depRow = taskMap.get(depId)
             if (depRow === undefined) return
             const depTask = tasks[depRow]
+            const depStartDay = daysBetween(minDate, parseLocalDate(depTask.start))
             arrows.push({
+              depTaskId: depTask.id,
+              depStartDay,
               x1Day: daysBetween(minDate, parseLocalDate(depTask.end)) + 1,
               row1: depRow,
               x2Day: daysBetween(minDate, parseLocalDate(task.start)),
@@ -349,7 +403,10 @@ export const GanttChart = forwardRef<GanttChartHandle, GanttChartProps>(
                   </marker>
                 </defs>
                 {arrows.map((a, i) => {
-                  const x1 = a.x1Day * dayW
+                  const effectiveX1Day = draftDurations[a.depTaskId] !== undefined
+                    ? a.depStartDay + draftDurations[a.depTaskId]
+                    : a.x1Day
+                  const x1 = effectiveX1Day * dayW
                   const y1 = a.row1 * ROW_HEIGHT + ROW_HEIGHT / 2
                   const x2 = a.x2Day * dayW
                   const y2 = a.row2 * ROW_HEIGHT + ROW_HEIGHT / 2
@@ -372,14 +429,15 @@ export const GanttChart = forwardRef<GanttChartHandle, GanttChartProps>(
               {(tasks as GanttTask[]).map((task, rowIdx) => {
                 const color = PALETTE[rowIdx % PALETTE.length]
                 const startDay = daysBetween(minDate, parseLocalDate(task.start))
-                const endDay = daysBetween(minDate, parseLocalDate(task.end))
-                const durationDays = endDay - startDay + 1
+                const origDuration = daysBetween(minDate, parseLocalDate(task.end)) - startDay + 1
+                const effectiveDuration = draftDurations[task.id] ?? origDuration
                 const barLeft = startDay * dayW
-                const barWidth = durationDays * dayW
+                const barWidth = effectiveDuration * dayW
                 const barTop = rowIdx * ROW_HEIGHT + BAR_TOP
                 const initial = task.name.charAt(0).toUpperCase()
                 const startLabel = fmtMonDay(parseLocalDate(task.start))
-                const endLabel = fmtMonDay(parseLocalDate(task.end))
+                const endLabel = fmtMonDay(addDays(minDate, startDay + effectiveDuration - 1))
+                const isDragging = ganttDrag?.taskId === task.id
 
                 return (
                   <div key={task.id}>
@@ -392,9 +450,12 @@ export const GanttChart = forwardRef<GanttChartHandle, GanttChartProps>(
                         height: BAR_HEIGHT,
                         borderRadius: BAR_HEIGHT / 2,
                         background: `linear-gradient(90deg, ${color.bar[0]}, ${color.bar[1]})`,
-                        boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)',
+                        boxShadow: isDragging ? '0 4px 16px 0 rgba(0,0,0,0.20)' : '0 2px 8px 0 rgba(0,0,0,0.10)',
+                        opacity: isDragging ? 1 : 0.9,
+                        cursor: 'pointer',
                       }}
                       title={`${task.name}: ${startLabel} — ${endLabel}`}
+                      onClick={() => navigate(`/projects/${projectId}/issues/${task.id}`)}
                     >
                       <div
                         className="flex-shrink-0 flex items-center justify-center rounded-full border-2 border-white/60 font-bold select-none"
@@ -410,11 +471,21 @@ export const GanttChart = forwardRef<GanttChartHandle, GanttChartProps>(
                         {initial}
                       </div>
                       <span
-                        className="ml-2 truncate text-xs font-semibold"
+                        className="ml-2 truncate text-xs font-semibold select-none"
                         style={{ color: color.text }}
                       >
                         {task.name}
                       </span>
+                      {/* Right-edge resize handle */}
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-3 cursor-ew-resize rounded-r-full hover:bg-black/20"
+                        onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setGanttDrag({ taskId: task.id, startX: e.clientX, origDuration: effectiveDuration, dayW })
+                        }}
+                      />
                     </div>
 
                     <div
@@ -425,8 +496,13 @@ export const GanttChart = forwardRef<GanttChartHandle, GanttChartProps>(
                     </div>
 
                     <div
-                      className="absolute text-[10px] font-medium text-gray-500 dark:text-gray-400 whitespace-nowrap pointer-events-none select-none"
-                      style={{ left: barLeft + barWidth, top: barTop - 16, transform: 'translateX(-50%)' }}
+                      className="absolute text-[10px] font-medium whitespace-nowrap pointer-events-none select-none"
+                      style={{
+                        left: barLeft + barWidth,
+                        top: barTop - 16,
+                        transform: 'translateX(-50%)',
+                        color: isDragging ? color.bar[0] : '#6b7280',
+                      }}
                     >
                       {endLabel}
                     </div>

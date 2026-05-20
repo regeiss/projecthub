@@ -3,7 +3,7 @@ import {
   AtSign, UserCheck, CheckCircle, MessageSquare, Diamond, Bell,
   CheckCheck, RotateCcw, Archive,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, relativeTime } from '@/lib/utils'
 import type { Notification } from '@/types'
 
 function typeChip(type: string) {
@@ -43,7 +43,7 @@ export function InboxItem({ notification, onMarkRead, onMarkUnread, onArchive }:
   return (
     <div
       className={cn(
-        'group flex cursor-pointer items-center gap-3 border-b border-dashed border-gray-200 px-6 py-2.5 hover:bg-gray-50 transition-colors',
+        'group flex cursor-pointer items-center gap-3 border-b border-dashed border-gray-200 dark:border-gray-700 px-6 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors',
         notification.isRead && 'opacity-65',
       )}
       onClick={handleClick}
@@ -53,7 +53,7 @@ export function InboxItem({ notification, onMarkRead, onMarkUnread, onArchive }:
         className={cn(
           'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
           notification.isRead
-            ? 'bg-gray-100 text-gray-400'
+            ? 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
             : 'bg-primary text-white',
         )}
       >
@@ -62,13 +62,11 @@ export function InboxItem({ notification, onMarkRead, onMarkUnread, onArchive }:
 
       {/* Content */}
       <div className="min-w-0 flex-1">
-        <p className={cn('truncate text-sm', !notification.isRead && 'font-medium')}>
+        <p className={cn('truncate text-sm text-gray-800 dark:text-gray-100', !notification.isRead && 'font-medium')}>
           {notification.title}
         </p>
-        <p className="mt-0.5 font-mono text-[11px] text-gray-400">
-          {new Date(notification.createdAt).toLocaleString('pt-BR', {
-            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-          })}
+        <p className="mt-0.5 font-mono text-[11px] text-gray-400 dark:text-gray-500">
+          {relativeTime(notification.createdAt ?? (notification as any).created_at)}
         </p>
       </div>
 
@@ -79,7 +77,7 @@ export function InboxItem({ notification, onMarkRead, onMarkUnread, onArchive }:
       >
         {!notification.isRead && (
           <button
-            className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700"
+            className="rounded p-1 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
             title="Marcar como lida"
             onClick={() => onMarkRead(notification.id)}
           >
@@ -88,7 +86,7 @@ export function InboxItem({ notification, onMarkRead, onMarkUnread, onArchive }:
         )}
         {notification.isRead && !notification.isArchived && (
           <button
-            className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700"
+            className="rounded p-1 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
             title="Marcar como não lida"
             onClick={() => onMarkUnread(notification.id)}
           >
@@ -97,7 +95,7 @@ export function InboxItem({ notification, onMarkRead, onMarkUnread, onArchive }:
         )}
         {!notification.isArchived && (
           <button
-            className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-700"
+            className="rounded p-1 text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200"
             title="Arquivar"
             onClick={() => onArchive(notification.id)}
           >

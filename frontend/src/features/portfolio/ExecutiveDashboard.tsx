@@ -232,6 +232,140 @@ function fmtDate(d: string | null) {
   return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
+// ─── Burn-Up Chart ───────────────────────────────────────────────────────────
+
+function BurnUpChart({ projects }: { projects: PortfolioDashboardProject[] }) {
+  const dated = projects.filter((p) => p.startDate && p.endDate)
+  if (dated.length === 0) return null
+
+  const minTime = Math.min(...dated.map((p) => new Date(p.startDate!).getTime()))
+  const maxTime = Math.max(...dated.map((p) => new Date(p.endDate!).getTime()))
+  if (minTime >= maxTime) return null
+
+  const totalScope = projects.reduce((s, p) => s + (p.evm?.totalIssues ?? 0), 0)
+  const totalDone  = projects.reduce((s, p) => s + (p.evm?.completedIssues ?? 0), 0)
+  if (totalScope === 0) return null
+
+  const W = 760, H = 150, ML = 42, MR = 16, MT = 14, MB = 28
+  const SVG_W = W + ML + MR
+  const SVG_H = H + MT + MB
+
+  const today = Date.now()
+  const todayClamped = Math.max(minTime, Math.min(today, maxTime))
+  const isInRange = today >= minTime && today <= maxTime
+
+  const xOf = (t: number) => ML + ((t - minTime) / (maxTime - minTime)) * W
+  const yOf = (n: number) => MT + H - (n / totalScope) * H
+
+  const ticks: { x: number; label: string }[] = []
+  const cur = new Date(minTime)
+  cur.setDate(1)
+  const endDate = new Date(maxTime)
+  while (cur <= endDate) {
+    const t = cur.getTime()
+    const mon = cur.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')
+    const yr  = String(cur.getFullYear()).slice(2)
+    ticks.push({ x: xOf(t), label: `${mon}/${yr}` })
+    cur.setMonth(cur.getMonth() + 1)
+  }
+  const step = ticks.length > 9 ? Math.ceil(ticks.length / 9) : 1
+  const visibleTicks = ticks.filter((_, i) => i % step === 0)
+
+  const todayX = xOf(todayClamped)
+  const todayY = yOf(totalDone)
+
+  return (
+    <div className="mb-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+      <p className="mb-3 text-xs font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+        Burn-Up do Portfolio
+      </p>
+      <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full">
+        {/* Horizontal grid lines */}
+        {[0, 0.25, 0.5, 0.75, 1].map((pct) => {
+          const y = yOf(totalScope * pct)
+          return (
+            <g key={pct}>
+              <line x1={ML} y1={y} x2={ML + W} y2={y}
+                stroke="currentColor" strokeOpacity={0.08} strokeWidth={1}
+                className="text-gray-600 dark:text-gray-300" />
+              <text x={ML - 5} y={y + 3.5} textAnchor="end" fontSize={9}
+                className="fill-gray-400 dark:fill-gray-500">
+                {Math.round(totalScope * pct)}
+              </text>
+            </g>
+          )
+        })}
+
+        {/* X axis baseline */}
+        <line x1={ML} y1={MT + H} x2={ML + W} y2={MT + H}
+          stroke="currentColor" strokeOpacity={0.12}
+          className="text-gray-500" />
+
+        {/* X ticks */}
+        {visibleTicks.map((tick) => (
+          <g key={tick.x}>
+            <line x1={tick.x} y1={MT + H} x2={tick.x} y2={MT + H + 4}
+              stroke="currentColor" strokeOpacity={0.25} className="text-gray-400" />
+            <text x={tick.x} y={MT + H + 13} textAnchor="middle" fontSize={8}
+              className="fill-gray-400 dark:fill-gray-500">
+              {tick.label}
+            </text>
+          </g>
+        ))}
+
+        {/* Today vertical marker */}
+        {isInRange && (
+          <>
+            <line x1={todayX} y1={MT} x2={todayX} y2={MT + H}
+              stroke="#818cf8" strokeWidth={1} strokeDasharray="3 3" strokeOpacity={0.7} />
+            <text x={todayX + 3} y={MT + 9} fontSize={7.5} fill="#818cf8" opacity={0.8}>
+              hoje
+            </text>
+          </>
+        )}
+
+        {/* Scope line — dashed horizontal */}
+        <line x1={ML} y1={yOf(totalScope)} x2={ML + W} y2={yOf(totalScope)}
+          stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 3" />
+        <text x={ML + W - 2} y={yOf(totalScope) - 5} textAnchor="end" fontSize={8} fill="#94a3b8">
+          Escopo ({totalScope})
+        </text>
+
+        {/* Ideal/planned line */}
+        <line
+          x1={xOf(minTime)} y1={yOf(0)}
+          x2={xOf(maxTime)} y2={yOf(totalScope)}
+          stroke="#cbd5e1" strokeWidth={1.5}
+        />
+
+        {/* Actual line — from start to today */}
+        <line
+          x1={xOf(minTime)} y1={yOf(0)}
+          x2={todayX} y2={todayY}
+          stroke="#6366f1" strokeWidth={2.5} strokeLinecap="round"
+        />
+
+        {/* Actual endpoint dot */}
+        <circle cx={todayX} cy={todayY} r={4} fill="#6366f1" />
+        <text x={todayX + 8} y={todayY + 4} fontSize={9} fill="#6366f1" fontWeight="600">
+          {totalDone}/{totalScope}
+        </text>
+
+        {/* Legend */}
+        <g transform={`translate(${ML + W - 118}, ${MT + 4})`}>
+          <line x1={0} y1={5} x2={14} y2={5} stroke="#94a3b8" strokeWidth={1.5} strokeDasharray="5 3" />
+          <text x={18} y={8} fontSize={8} fill="#94a3b8">Escopo total</text>
+          <line x1={0} y1={18} x2={14} y2={18} stroke="#cbd5e1" strokeWidth={1.5} />
+          <text x={18} y={21} fontSize={8} fill="#94a3b8">Planejado</text>
+          <line x1={0} y1={31} x2={14} y2={31} stroke="#6366f1" strokeWidth={2} />
+          <circle cx={7} cy={31} r={3} fill="#6366f1" />
+          <text x={18} y={34} fontSize={8} fill="#6366f1">Realizado</text>
+        </g>
+      </svg>
+    </div>
+  )
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function ExecutiveDashboard({ portfolioId }: Props) {
@@ -389,6 +523,11 @@ export function ExecutiveDashboard({ portfolioId }: Props) {
           </table>
         </div>
       )}
+
+      {/* Burn-up chart */}
+      <div className="mt-6">
+        <BurnUpChart projects={projects} />
+      </div>
 
       <AddProjectModal
         open={adding}

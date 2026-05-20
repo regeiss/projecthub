@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, LayoutDashboard, Map, Target, DollarSign, Settings, Trash2 } from 'lucide-react'
+import { Plus, LayoutDashboard, Map, Target, DollarSign, Users, Settings, Trash2 } from 'lucide-react'
 import {
   usePortfolios,
   useCreatePortfolio,
@@ -16,9 +16,10 @@ import { ExecutiveDashboard } from './ExecutiveDashboard'
 import { RoadmapView } from './RoadmapView'
 import { OkrPanel } from './OkrPanel'
 import { FinancialReport } from './FinancialReport'
+import { WorkloadView } from './WorkloadView'
 import type { Portfolio } from '@/types'
 
-type View = 'dashboard' | 'roadmap' | 'okr' | 'financeiro'
+type View = 'dashboard' | 'roadmap' | 'okr' | 'financeiro' | 'workload'
 
 // ─── Create Modal ─────────────────────────────────────────────────────────────
 
@@ -118,6 +119,7 @@ const viewTabs = [
   { id: 'roadmap'    as View, label: 'Roadmap',    icon: Map },
   { id: 'okr'        as View, label: 'OKR',        icon: Target },
   { id: 'financeiro' as View, label: 'Financeiro', icon: DollarSign },
+  { id: 'workload'   as View, label: 'Workload',   icon: Users },
 ]
 
 export function PortfolioPage() {
@@ -232,6 +234,8 @@ export function PortfolioPage() {
           <RoadmapView portfolioId={portfolio.id} />
         ) : view === 'okr' ? (
           <OkrPanel portfolioId={portfolio.id} />
+        ) : view === 'workload' ? (
+          <WorkloadView portfolioId={portfolio.id} />
         ) : (
           <FinancialReport portfolioId={portfolio.id} />
         )}

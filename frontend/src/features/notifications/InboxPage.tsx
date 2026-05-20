@@ -114,14 +114,14 @@ export function InboxPage() {
       {/* Main body */}
       <div className="flex flex-1 flex-col min-h-0">
         {/* Topbar */}
-        <div className="flex items-center gap-3 border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <button
-            className="lg:hidden rounded p-1 text-gray-500 hover:bg-gray-100"
+            className="lg:hidden rounded p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
             onClick={() => setMobileSidebarOpen(true)}
           >
             <Filter className="h-4 w-4" />
           </button>
-          <h1 className="flex-1 text-sm font-semibold text-gray-800">{titleLabel}</h1>
+          <h1 className="flex-1 text-sm font-semibold text-gray-800 dark:text-gray-100">{titleLabel}</h1>
           {notifications.length > 0 && filter !== 'archived' && (
             <Button
               variant="ghost"

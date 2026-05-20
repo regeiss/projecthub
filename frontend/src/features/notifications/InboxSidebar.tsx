@@ -47,9 +47,9 @@ export function InboxSidebar({
   }
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-gray-200 bg-white py-4">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-4">
       <div className="px-4 pb-3">
-        <p className="text-sm font-semibold text-gray-800">🔔 Inbox</p>
+        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100">Inbox</p>
       </div>
 
       {/* Main filters */}
@@ -65,7 +65,7 @@ export function InboxSidebar({
                 'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
                 isActive
                   ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-gray-600 hover:bg-gray-100',
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
               )}
             >
               <Icon className="h-4 w-4 shrink-0" />
@@ -82,10 +82,10 @@ export function InboxSidebar({
       {projects.length > 0 && (
         <div className="mt-4 flex flex-col">
           <div className="flex items-center px-5 py-2">
-            <span className="flex-1 text-[10px] font-mono uppercase tracking-widest text-gray-400">
+            <span className="flex-1 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-gray-500">
               Projetos
             </span>
-            <label className="flex cursor-pointer items-center gap-1 text-[10px] text-gray-400">
+            <label className="flex cursor-pointer items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500">
               <input
                 type="checkbox"
                 className="h-3 w-3"
@@ -107,7 +107,7 @@ export function InboxSidebar({
                     'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
                     isActive
                       ? 'bg-primary/10 text-primary font-medium'
-                      : 'text-gray-600 hover:bg-gray-100',
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
                   )}
                 >
                   <FolderKanban className="h-4 w-4 shrink-0" />
@@ -123,14 +123,14 @@ export function InboxSidebar({
       )}
 
       {/* Archived — pushed to bottom */}
-      <div className="mt-auto px-2 pt-2 border-t border-gray-100">
+      <div className="mt-auto px-2 pt-2 border-t border-gray-100 dark:border-gray-800">
         <button
           onClick={() => onFilterChange('archived')}
           className={cn(
             'flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors',
             activeFilter === 'archived' && !activeProjectId
               ? 'bg-primary/10 text-primary font-medium'
-              : 'text-gray-600 hover:bg-gray-100',
+              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800',
           )}
         >
           <Archive className="h-4 w-4 shrink-0" />

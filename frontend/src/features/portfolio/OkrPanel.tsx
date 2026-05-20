@@ -1,16 +1,19 @@
 import { useState } from 'react'
 import {
   usePortfolioObjectives,
+  usePortfolioProjects,
   useCreateObjective,
   useUpdateObjective,
   useDeleteObjective,
+  useLinkObjectiveProject,
+  useUnlinkObjectiveProject,
 } from '@/hooks/usePortfolio'
 import { PageSpinner } from '@/components/ui/Spinner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
-import { Target, Plus, Edit2, Trash2 } from 'lucide-react'
-import type { PortfolioObjective } from '@/types'
+import { Target, Plus, Edit2, Trash2, X, Link } from 'lucide-react'
+import type { PortfolioObjective, PortfolioProject } from '@/types'
 
 interface OkrPanelProps {
   portfolioId: string
@@ -155,17 +158,35 @@ function ObjectiveCard({
   obj,
   portfolioId,
   color,
+  portfolioProjects,
   onEdit,
 }: {
   obj: PortfolioObjective
   portfolioId: string
   color: string
+  portfolioProjects: PortfolioProject[]
   onEdit: (o: PortfolioObjective) => void
 }) {
-  const remove = useDeleteObjective(portfolioId)
-  const pct = obj.progressPct ?? 0
+  const remove  = useDeleteObjective(portfolioId)
+  const link    = useLinkObjectiveProject(portfolioId)
+  const unlink  = useUnlinkObjectiveProject(portfolioId)
+  const [linking, setLinking] = useState(false)
+  const [selectedId, setSelectedId] = useState('')
+
+  const pct     = obj.progressPct ?? 0
   const current = parseFloat(String(obj.currentValue ?? 0)) || 0
-  const target = parseFloat(String(obj.targetValue ?? 100)) || 100
+  const target  = parseFloat(String(obj.targetValue ?? 100)) || 100
+
+  const linkedIds  = new Set((obj.linkedProjects ?? []).map((p) => p.project))
+  const available  = portfolioProjects.filter((pp) => !linkedIds.has(pp.projectId))
+
+  function handleLink() {
+    if (!selectedId) return
+    link.mutate(
+      { objId: obj.id, projectId: selectedId },
+      { onSuccess: () => { setLinking(false); setSelectedId('') } },
+    )
+  }
 
   return (
     <div
@@ -213,23 +234,69 @@ function ObjectiveCard({
         />
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {obj.dueDate && (
-          <span className="text-xs text-gray-400 dark:text-gray-500">
-            Prazo: {new Date(obj.dueDate).toLocaleDateString('pt-BR')}
-          </span>
-        )}
-        {obj.linkedProjects && obj.linkedProjects.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {obj.linkedProjects.map((p) => (
-              <span
-                key={p.project}
-                className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium"
-                style={{ backgroundColor: color + '22', color }}
+      {/* Linked projects + link control */}
+      <div className="mt-3 space-y-2">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {obj.dueDate && (
+            <span className="text-xs text-gray-400 dark:text-gray-500">
+              Prazo: {new Date(obj.dueDate).toLocaleDateString('pt-BR')}
+            </span>
+          )}
+          {(obj.linkedProjects ?? []).map((p) => (
+            <span
+              key={p.project}
+              className="group/chip inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
+              style={{ backgroundColor: color + '22', color }}
+            >
+              {p.projectName}
+              <button
+                onClick={() => unlink.mutate({ objId: obj.id, projectId: p.project })}
+                className="rounded opacity-50 hover:opacity-100"
+                title="Desvincular"
               >
-                {p.projectName}
-              </span>
-            ))}
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))}
+          {available.length > 0 && !linking && (
+            <button
+              onClick={() => setLinking(true)}
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-400 transition-colors"
+            >
+              <Link className="h-3 w-3" />
+              Vincular projeto
+            </button>
+          )}
+        </div>
+
+        {linking && (
+          <div className="flex items-center gap-2">
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
+              autoFocus
+              className="h-7 flex-1 rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 text-xs text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:outline-none"
+            >
+              <option value="">— Selecione —</option>
+              {available.map((pp) => (
+                <option key={pp.projectId} value={pp.projectId}>
+                  [{pp.projectIdentifier}] {pp.projectName}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={handleLink}
+              disabled={!selectedId || link.isPending}
+              className="rounded bg-indigo-600 px-2 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-40"
+            >
+              {link.isPending ? '...' : 'Vincular'}
+            </button>
+            <button
+              onClick={() => { setLinking(false); setSelectedId('') }}
+              className="rounded p-1 text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         )}
       </div>
@@ -241,6 +308,7 @@ function ObjectiveCard({
 
 export function OkrPanel({ portfolioId }: OkrPanelProps) {
   const { data: objectives, isLoading } = usePortfolioObjectives(portfolioId)
+  const { data: portfolioProjects = [] } = usePortfolioProjects(portfolioId)
   const [creating, setCreating] = useState(false)
   const [editingObj, setEditingObj] = useState<PortfolioObjective | null>(null)
 
@@ -273,6 +341,7 @@ export function OkrPanel({ portfolioId }: OkrPanelProps) {
               obj={obj}
               portfolioId={portfolioId}
               color={PALETTE[idx % PALETTE.length]}
+              portfolioProjects={portfolioProjects}
               onEdit={setEditingObj}
             />
           ))}

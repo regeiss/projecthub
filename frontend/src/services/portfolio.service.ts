@@ -33,6 +33,46 @@ function mapObjective(raw: any): PortfolioObjective {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapEvm(raw: any): EvmData {
+  return {
+    pctIssuesCompleted: raw.pct_issues_completed ?? 0,
+    pctTimeElapsed:     raw.pct_time_elapsed     ?? 0,
+    totalIssues:        raw.total_issues         ?? 0,
+    completedIssues:    raw.completed_issues     ?? 0,
+    pv:                 Number(raw.pv            ?? 0),
+    ev:                 Number(raw.ev            ?? 0),
+    ac:                 Number(raw.ac            ?? 0),
+    cpi:                raw.cpi                  ?? 1,
+    spi:                raw.spi                  ?? 1,
+    budgetPlanned:      Number(raw.budget_planned   ?? 0),
+    budgetActual:       Number(raw.budget_actual    ?? 0),
+    varianceCost:       Number(raw.variance_cost    ?? 0),
+    varianceSchedule:   Number(raw.variance_schedule ?? 0),
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapPortfolioProject(raw: any): PortfolioProject {
+  return {
+    id:                raw.id,
+    portfolioId:       raw.portfolio,
+    projectId:         raw.project,
+    projectName:       raw.project_name,
+    projectIdentifier: raw.project_identifier,
+    startDate:         raw.start_date ?? null,
+    endDate:           raw.end_date ?? null,
+    budgetPlanned:     raw.budget_planned,
+    budgetActual:      raw.budget_actual,
+    ragStatus:         raw.rag_status,
+    ragLabel:          raw.rag_label,
+    ragOverride:       raw.rag_override,
+    ragNote:           raw.rag_note ?? null,
+    createdAt:         raw.created_at,
+    updatedAt:         raw.updated_at,
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapDashboardProject(raw: any): PortfolioDashboardProject {
   return {
     id:                raw.id,
@@ -50,7 +90,7 @@ function mapDashboardProject(raw: any): PortfolioDashboardProject {
     ragNote:           raw.rag_note ?? null,
     createdAt:         raw.created_at,
     updatedAt:         raw.updated_at,
-    evm:               raw.evm,
+    evm:               raw.evm ? mapEvm(raw.evm) : mapEvm({}),
     riskCount:         raw.risk_count         ?? 0,
     criticalRiskCount: raw.critical_risk_count ?? 0,
   }
@@ -110,8 +150,8 @@ export const portfolioService = {
   // Projects
   projects: (portfolioId: string) =>
     api
-      .get<PaginatedResponse<PortfolioProject>>(`/portfolio/${portfolioId}/projects/`)
-      .then((r) => r.data.results),
+      .get<PaginatedResponse<unknown>>(`/portfolio/${portfolioId}/projects/`)
+      .then((r) => (r.data.results as unknown[]).map(mapPortfolioProject)),
 
   addProject: (portfolioId: string, data: { project: string; startDate?: string | null; endDate?: string | null; budgetPlanned?: string }) =>
     api
@@ -183,4 +223,12 @@ export const portfolioService = {
 
   deleteObjective: (portfolioId: string, objId: string) =>
     api.delete(`/portfolio/${portfolioId}/objectives/${objId}/`),
+
+  linkObjectiveProject: (portfolioId: string, objId: string, projectId: string) =>
+    api
+      .post(`/portfolio/${portfolioId}/objectives/${objId}/projects/`, { project: projectId })
+      .then((r) => r.data),
+
+  unlinkObjectiveProject: (portfolioId: string, objId: string, projectId: string) =>
+    api.delete(`/portfolio/${portfolioId}/objectives/${objId}/projects/${projectId}/`),
 }

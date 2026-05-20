@@ -33,6 +33,19 @@ export function useCpmBaselines(projectId: string) {
   })
 }
 
+export function useUpdateCpmDuration() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ projectId, issueId, durationDays }: { projectId: string; issueId: string; durationDays: number }) =>
+      cpmService.updateDuration(projectId, issueId, durationDays),
+    onSuccess: async (_, { projectId }) => {
+      await cpmService.calculate(projectId)
+      qc.invalidateQueries({ queryKey: ['cpm-gantt', projectId] })
+      qc.invalidateQueries({ queryKey: ['cpm-data', projectId] })
+    },
+  })
+}
+
 export function useCalculateCpm() {
   const qc = useQueryClient()
   return useMutation({

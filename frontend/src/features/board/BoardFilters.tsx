@@ -15,7 +15,7 @@ import type { IssueFilters, Priority, IssueType } from '@/types'
 import { IssueForm } from '@/features/issues/IssueForm'
 
 // ---------------------------------------------------------------------------
-// FilterPill â€” generic single-select filter dropdown
+// FilterPill  generic single-select filter dropdown
 // ---------------------------------------------------------------------------
 interface FilterOption {
   value: string
@@ -100,7 +100,7 @@ const PRIORITY_DOT: Record<string, string> = {
 const PRIORITY_OPTIONS: FilterOption[] = [
   { value: 'urgent', label: 'Urgente', icon: <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PRIORITY_DOT.urgent }} /> },
   { value: 'high', label: 'Alta', icon: <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PRIORITY_DOT.high }} /> },
-  { value: 'medium', label: 'MÃ©dia', icon: <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PRIORITY_DOT.medium }} /> },
+  { value: 'medium', label: 'Média', icon: <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PRIORITY_DOT.medium }} /> },
   { value: 'low', label: 'Baixa', icon: <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PRIORITY_DOT.low }} /> },
   { value: 'none', label: 'Nenhuma', icon: <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: PRIORITY_DOT.none }} /> },
 ]
@@ -108,7 +108,7 @@ const PRIORITY_OPTIONS: FilterOption[] = [
 const TYPE_OPTIONS: FilterOption[] = [
   { value: 'task', label: 'Tarefa' },
   { value: 'bug', label: 'Bug' },
-  { value: 'story', label: 'HistÃ³ria' },
+  { value: 'story', label: 'História' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -153,7 +153,7 @@ export function BoardFilters({ projectId, filters, onFiltersChange }: BoardFilte
 
       <div className="flex items-center gap-1.5">
         <FilterPill
-          label="ResponsÃ¡vel"
+          label="Responsável"
           value={filters.assigneeId}
           options={memberOptions}
           onChange={(v) => set('assigneeId', v)}
@@ -187,6 +187,35 @@ export function BoardFilters({ projectId, filters, onFiltersChange }: BoardFilte
           </button>
         )}
       </div>
+
+      {members.length > 0 && (
+        <div className="ml-auto flex -space-x-1.5">
+          {members.map((m) => {
+            const isActive = filters.assigneeId === m.memberId
+            return (
+              <button
+                key={m.memberId}
+                type="button"
+                title={m.memberName}
+                onClick={() => set('assigneeId', isActive ? undefined : m.memberId)}
+                className="rounded-full transition-opacity"
+              >
+                <Avatar
+                  src={m.memberAvatar}
+                  name={m.memberName}
+                  size="sm"
+                  className={cn(
+                    'ring-2 transition-all',
+                    isActive
+                      ? 'ring-primary opacity-100'
+                      : 'ring-gray-200 dark:ring-gray-900 opacity-60 hover:opacity-100',
+                  )}
+                />
+              </button>
+            )
+          })}
+        </div>
+      )}
 
       <IssueForm
         projectId={projectId}

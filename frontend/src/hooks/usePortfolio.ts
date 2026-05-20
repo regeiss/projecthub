@@ -42,6 +42,14 @@ export function usePortfolioObjectives(id: string) {
   })
 }
 
+export function usePortfolioProjects(portfolioId: string) {
+  return useQuery({
+    queryKey: ['portfolio-projects', portfolioId],
+    queryFn: () => portfolioService.projects(portfolioId),
+    enabled: !!portfolioId,
+  })
+}
+
 // ─── Portfolio CRUD ──────────────────────────────────────────────────────────
 
 export function useCreatePortfolio() {
@@ -101,6 +109,7 @@ export function useUpdatePortfolioProject() {
     }) => portfolioService.updateProject(portfolioId, ppId, data),
     onSuccess: (_, { portfolioId }) => {
       qc.invalidateQueries({ queryKey: ['portfolio-dashboard', portfolioId] })
+      qc.invalidateQueries({ queryKey: ['portfolio-roadmap', portfolioId] })
     },
   })
 }
@@ -151,6 +160,24 @@ export function useDeleteObjective(portfolioId: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (objId: string) => portfolioService.deleteObjective(portfolioId, objId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['portfolio-objectives', portfolioId] }),
+  })
+}
+
+export function useLinkObjectiveProject(portfolioId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ objId, projectId }: { objId: string; projectId: string }) =>
+      portfolioService.linkObjectiveProject(portfolioId, objId, projectId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['portfolio-objectives', portfolioId] }),
+  })
+}
+
+export function useUnlinkObjectiveProject(portfolioId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ objId, projectId }: { objId: string; projectId: string }) =>
+      portfolioService.unlinkObjectiveProject(portfolioId, objId, projectId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['portfolio-objectives', portfolioId] }),
   })
 }

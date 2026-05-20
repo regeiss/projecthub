@@ -23,7 +23,7 @@ function groupByDate(notifications: Notification[]): DateGroup[] {
   }
 
   for (const n of notifications) {
-    const d = new Date(n.createdAt)
+    const d = new Date(n.createdAt ?? (n as any).created_at)
     const day = new Date(d.getFullYear(), d.getMonth(), d.getDate())
     if (day >= today) {
       groups['Hoje'].push(n)
