@@ -1,0 +1,517 @@
+/* === ProjectHub Login Theme — Split-screen (PatternFly 3/4 DOM) === */
+/*
+  Actual DOM (parent=keycloak, Keycloak 23):
+
+  body
+    div.login-pf-page                    ← flex row container
+      div#kc-header.login-pf-page-header ← LEFT panel
+        div#kc-header-wrapper
+      div.card-pf                        ← RIGHT panel
+        header.login-pf-header
+          h1#kc-page-title
+        div#kc-content
+          div#kc-content-wrapper
+            div#kc-form
+              form#kc-form-login
+*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ─── RESET ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #fff;
+}
+
+/* ─── OUTER WRAPPER — flex row, full viewport ────────────────────────────── */
+.login-pf-page {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: linear-gradient(to right,
+    #1e2a4a 0% 52%,
+    #fdfdfb 52% 100%
+  ) !important;
+}
+
+/* ─── LEFT PANEL — #kc-header ───────────────────────────────────────────── */
+#kc-header,
+.login-pf-page-header {
+  order: -1 !important;
+  flex: 0 0 52% !important;
+  width: 52% !important;
+  min-width: 52% !important;
+  max-width: 52% !important;
+  align-self: stretch !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 48px 56px !important;
+  color: #fff !important;
+  overflow: hidden !important;
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  /* Safari inherits text-align:center from PF3 base CSS — override explicitly */
+  text-align: left !important;
+  -webkit-text-align: left !important;
+
+  background-image:
+    radial-gradient(circle at 88% -8%, rgba(99,140,230,0.50) 0%, transparent 48%),
+    radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+    linear-gradient(160deg,
+      #2d3f6e 0%,
+      #253563 55%,
+      #1e2a4a 100%) !important;
+  background-size: cover, 22px 22px, cover !important;
+  background-position: 0 0, 0 0, 0 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ── Brand row: NH logo + org name ─────────────────────────────────────── */
+#kc-header-wrapper {
+  position: relative !important;
+  z-index: 2 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  line-height: 0 !important;
+  flex: none !important;
+}
+
+/* NH logo mark */
+#kc-header-wrapper::before {
+  content: 'NH' !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #fff, rgba(255,255,255,.6)) !important;
+  color: #2d3f6e !important;
+  font-family: 'Fraunces', serif !important;
+  font-weight: 800 !important;
+  font-size: 18px !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25) !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+}
+
+/* Org name */
+#kc-header-wrapper::after {
+  content: 'Município de Novo Hamburgo\A CTIBD · Departamento de TI&BD' !important;
+  white-space: pre !important;
+  display: block !important;
+  line-height: 1.45 !important;
+  font-size: 13px !important;
+  letter-spacing: .01em !important;
+  color: rgba(255,255,255,.75) !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-weight: 400 !important;
+  text-align: left !important;
+}
+
+/* ── "Plataforma em desenvolvimento" badge ─────────────────────────────── */
+#kc-header::before {
+  content: '● Plataforma em desenvolvimento' !important;
+  position: absolute !important;
+  left: 56px !important;
+  top: calc(50% - 148px) !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  box-shadow:
+    inset 0 0 0 999px rgba(255,255,255,.10),
+    0 0 0 1px rgba(255,255,255,.22) !important;
+  color: #4ade80 !important;
+  font-size: 11.5px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  letter-spacing: .07em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  text-align: left !important;
+}
+
+/* ── Headline ───────────────────────────────────────────────────────────── */
+#kc-header::after {
+  content: 'Controle de \A portfólios e projetos' !important;
+  white-space: pre !important;
+  position: absolute !important;
+  left: 56px !important;
+  right: 56px !important;
+  top: calc(50% - 92px) !important;
+  z-index: 2 !important;
+  display: block !important;
+  font-family: 'Fraunces', serif !important;
+  font-weight: 500 !important;
+  font-size: 52px !important;
+  line-height: 1.04 !important;
+  letter-spacing: -0.02em !important;
+  color: #fff !important;
+  text-align: left !important;
+}
+
+/* ── Description paragraph ─────────────────────────────────────────────── */
+.login-pf-page::before {
+  content: 'Ambiente único para acompanhar iniciativas, marcos\A e indicadores das secretarias do município.' !important;
+  position: absolute !important;
+  left: 56px !important;
+  right: calc(48% + 56px) !important;
+  top: calc(50% + 30px) !important;
+  z-index: 3 !important;
+  display: block !important;
+  white-space: pre !important;
+  font-size: 14.5px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  color: rgba(255,255,255,.72) !important;
+  pointer-events: none !important;
+  text-align: left !important;
+}
+
+/* ── Stats rail ─────────────────────────────────────────────────────────── */
+.login-pf-page::after {
+  content: '184 projetos ativos  ·  10 secretarias  ·  R$ 412M sob gestão' !important;
+  position: absolute !important;
+  left: 56px !important;
+  right: calc(48% + 24px) !important;
+  bottom: 48px !important;
+  z-index: 3 !important;
+  display: block !important;
+  white-space: nowrap !important;
+  font-size: 12px !important;
+  font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+  font-weight: 400 !important;
+  letter-spacing: .04em !important;
+  color: rgba(255,255,255,.55) !important;
+  border-top: 1px solid rgba(255,255,255,.14) !important;
+  padding-top: 16px !important;
+  pointer-events: none !important;
+  text-align: left !important;
+}
+
+/* ─── RIGHT PANEL — .card-pf ────────────────────────────────────────────── */
+.card-pf {
+  flex: 1 1 auto !important;
+  order: 1 !important;
+  align-self: stretch !important;
+  height: 100% !important;
+  background: #fdfdfb !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  overflow-y: auto !important;
+  padding: 56px 72px !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  position: relative !important;
+}
+
+/* ── Top-right nav label ────────────────────────────────────────────────── */
+.card-pf::before {
+  content: 'Suporte\00A0\00A0\00A0\00A0\00A0\00A0 Documentação\00A0\00A0\00A0\00A0\00A0\00A0 Status' !important;
+  position: absolute !important;
+  top: 28px !important;
+  right: 72px !important;
+  z-index: 2 !important;
+  display: block !important;
+  font-size: 12.5px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-weight: 400 !important;
+  color: #9b9a95 !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap !important;
+}
+
+/* ─── FORM HEADER ───────────────────────────────────────────────────────── */
+.login-pf-header {
+  padding: 0 0 24px 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* "Acesso restrito" eyebrow */
+.login-pf-header::before {
+  content: 'Acesso restrito · v0.3.2' !important;
+  display: block !important;
+  font-family: 'JetBrains Mono', ui-monospace, monospace !important;
+  font-size: 11.5px !important;
+  letter-spacing: .14em !important;
+  text-transform: uppercase !important;
+  color: #6b6c72 !important;
+  margin-bottom: 14px !important;
+}
+
+/* Subtitle */
+.login-pf-header::after {
+  content: 'Entre com suas credenciais institucionais para continuar.' !important;
+  display: block !important;
+  color: #6b6c72 !important;
+  font-size: 14.5px !important;
+  line-height: 1.5 !important;
+  margin-top: 8px !important;
+}
+
+/* ── Page title ─────────────────────────────────────────────────────────── */
+#kc-page-title,
+h1#kc-page-title {
+  font-family: 'Fraunces', serif !important;
+  font-size: 36px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.1 !important;
+  color: #0c1322 !important;
+  margin: 0 0 4px !important;
+  text-shadow: none !important;
+}
+
+/* ─── FORM BODY ─────────────────────────────────────────────────────────── */
+#kc-content,
+#kc-content-wrapper,
+#kc-form,
+#kc-form-wrapper {
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+
+/* ── Form group spacing ─────────────────────────────────────────────────── */
+.form-group {
+  margin-bottom: 18px !important;
+}
+
+/* ── Form labels ────────────────────────────────────────────────────────── */
+.pf-c-form__label,
+.pf-c-form__label-text,
+label {
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  color: #1a2236 !important;
+  letter-spacing: .01em !important;
+  text-shadow: none !important;
+  display: block !important;
+  margin-bottom: 6px !important;
+}
+
+/* Person icon before username label */
+label[for="username"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+label[for="username"]::before {
+  content: '' !important;
+  display: inline-block !important;
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231a2236' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Lock icon before password label */
+label[for="password"] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+label[for="password"]::before {
+  content: '' !important;
+  display: inline-block !important;
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%231a2236' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='11' width='18' height='11' rx='2'/%3E%3Cpath d='M7 11V7a5 5 0 0 1 10 0v4'/%3E%3C/svg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* ── Inputs ─────────────────────────────────────────────────────────────── */
+.pf-c-form-control,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100% !important;
+  height: 46px !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #e0dfd9 !important;
+  background: #fff !important;
+  font-size: 14.5px !important;
+  color: #0c1322 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  padding: 0 14px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  transition: border-color .15s, box-shadow .15s !important;
+}
+
+.pf-c-form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus {
+  border-color: #3b5bdb !important;
+  box-shadow: 0 0 0 4px rgba(59,91,219,.12) !important;
+}
+
+/* ── Kill browser autofill background ──────────────────────────────────── */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 999px #fff inset !important;
+  box-shadow: 0 0 0 999px #fff inset !important;
+  -webkit-text-fill-color: #0c1322 !important;
+  transition: background-color 86400s ease !important;
+  caret-color: #0c1322 !important;
+}
+
+/* ── Password input group ───────────────────────────────────────────────── */
+.pf-c-input-group {
+  display: flex !important;
+  height: 46px !important;
+  border-radius: 10px !important;
+  border: 1.5px solid #e0dfd9 !important;
+  background: #fff !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+}
+
+.pf-c-input-group .pf-c-form-control,
+.pf-c-input-group input {
+  flex: 1 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  height: 100% !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.pf-c-input-group .pf-c-button {
+  border: none !important;
+  background: transparent !important;
+  height: 100% !important;
+  padding: 0 14px !important;
+  color: #6b6c72 !important;
+  cursor: pointer !important;
+}
+
+/* ── Remember me + forgot password row ─────────────────────────────────── */
+.login-pf-settings {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+#kc-form-options a {
+  font-size: 12.5px !important;
+  color: #3b5bdb !important;
+  text-decoration: none !important;
+  font-weight: 500 !important;
+}
+
+/* ── Submit button ──────────────────────────────────────────────────────── */
+#kc-login,
+input[type="submit"]#kc-login {
+  display: block !important;
+  width: 100% !important;
+  height: 52px !important;
+  margin-top: 20px !important;
+  border-radius: 10px !important;
+  border: none !important;
+  background: #0c1322 !important;
+  color: #fff !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: .01em !important;
+  cursor: pointer !important;
+  transition: background .2s !important;
+  box-shadow: none !important;
+}
+
+#kc-login:hover {
+  background: #1a2540 !important;
+}
+
+/* ── Error / alert messages ─────────────────────────────────────────────── */
+#kc-error-message,
+#input-error,
+.kc-feedback-text,
+.alert-error {
+  color: #7f1d1d !important;
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  border-radius: 9px !important;
+  padding: 10px 12px !important;
+  font-size: 13px !important;
+  text-shadow: none !important;
+  font-weight: 400 !important;
+  margin-bottom: 16px !important;
+}
+
+/* ── Hide unused elements ───────────────────────────────────────────────── */
+#kc-registration,
+#kc-current-locale-link,
+#kc-info-message,
+.login-pf-signup {
+  display: none !important;
+}
+
+/* ─── RESPONSIVE — stack vertically on narrow screens ───────────────────── */
+@media (max-width: 900px) {
+  html, body { overflow: auto; }
+
+  .login-pf-page {
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 100vh !important;
+  }
+
+  #kc-header,
+  .login-pf-page-header {
+    flex: none !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 200px !important;
+    padding: 32px !important;
+  }
+
+  #kc-header::before { display: none !important; }
+
+  #kc-header::after {
+    font-size: 28px !important;
+    top: 64px !important;
+  }
+
+  .card-pf {
+    height: auto !important;
+    padding: 40px 24px 60px !important;
+  }
+}

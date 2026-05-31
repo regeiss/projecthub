@@ -1,0 +1,479 @@
+import logging
+
+from django.db.models import Count, Q
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.core.files.storage import default_storage
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import generics, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
+from rest_framework.filters import OrderingFilter, SearchFilter
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+
+from core.pagination import ActivityCursorPagination, StandardPagination
+
+from .filters import IssueFilter
+from .models import Issue, IssueActivity, IssueAttachment, IssueComment, IssueRelation, IssueWatcher
+from .permissions import IsIssueReporterOrProjectMember
+from .serializers import (
+    EpicSerializer,
+    IssueActivitySerializer,
+    IssueAttachmentSerializer,
+    IssueCommentSerializer,
+    IssueRelationSerializer,
+    IssueSerializer,
+    IssueStateUpdateSerializer,
+    SubtaskSerializer,
+)
+
+logger = logging.getLogger(__name__)
+
+ALLOWED_MIME_TYPES = {
+    "image/jpeg", "image/png", "image/gif", "image/webp",
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/plain", "text/csv",
+    "application/zip",
+}
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+
+
+def _get_issue(pk, user):
+    try:
+        issue = Issue.objects.select_related(
+            "project", "state", "assignee", "reporter", "created_by"
+        ).get(pk=pk)
+    except Issue.DoesNotExist:
+        raise NotFound("Issue não encontrada.")
+
+    if user.role == "admin":
+        return issue
+    if not issue.project.members.filter(member=user).exists():
+        raise NotFound("Issue não encontrada.")
+    return issue
+
+
+# ---------------------------------------------------------------------------
+# Issues
+# ---------------------------------------------------------------------------
+
+
+class IssueViewSet(ModelViewSet):
+    """
+    CRUD de issues + actions: state, comments, activities, attachments, relations.
+    GET /issues/?project_id=<uuid> — project_id é obrigatório no list.
+    """
+    serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = IssueFilter
+    search_fields = ["title"]
+    ordering_fields = ["sort_order", "created_at", "updated_at", "priority", "due_date"]
+    ordering = ["sort_order"]
+    http_method_names = ["get", "post", "patch", "delete"]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = Issue.objects.select_related(
+            "project", "state", "assignee", "reporter", "created_by"
+        ).prefetch_related("labels")
+
+        if self.action == "list":
+            project_id = self.request.query_params.get("project_id")
+            if project_id:
+                # single-project path
+                from apps.projects.models import Project
+                try:
+                    project = Project.objects.get(pk=project_id)
+                except Project.DoesNotExist:
+                    return Issue.objects.none()
+                if user.role != "admin" and not project.members.filter(member=user).exists():
+                    return Issue.objects.none()
+                qs = qs.filter(project_id=project_id)
+            else:
+                # workspace-wide: all accessible projects
+                from apps.projects.models import ProjectMember
+                if user.role == "admin":
+                    qs = qs.filter(project__workspace=user.workspace)
+                else:
+                    accessible_ids = ProjectMember.objects.filter(
+                        member=user
+                    ).values_list("project_id", flat=True)
+                    qs = qs.filter(project_id__in=accessible_ids)
+            # annotate runs for BOTH branches
+            qs = qs.annotate(
+                subtask_count=Count('sub_issues', distinct=True),
+                completed_subtask_count=Count(
+                    'sub_issues',
+                    filter=Q(sub_issues__state__category='completed'),
+                    distinct=True,
+                ),
+            )
+            return qs
+
+        # Para retrieve/update/delete, filtrar pelo acesso do usuário
+        if user.role == "admin":
+            return qs
+        return qs.filter(project__members__member=user).distinct()
+
+    def perform_create(self, serializer):
+        project_id = self.request.data.get("project")
+        if not project_id:
+            raise ValidationError({"project": "Campo obrigatório."})
+        from apps.projects.models import Project
+
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            raise ValidationError({"project": "Projeto não encontrado."})
+        user = self.request.user
+        if user.role != "admin" and not project.members.filter(member=user).exists():
+            raise PermissionDenied("Sem acesso ao projeto.")
+        serializer.save(project=project)
+
+    def perform_update(self, serializer):
+        serializer.instance._actor = self.request.user
+        serializer.save()
+
+    @action(detail=True, methods=["patch"], url_path="state")
+    def update_state(self, request, pk=None):
+        """PATCH /issues/{id}/state/ — move issue no board."""
+        issue = _get_issue(pk, request.user)
+        serializer = IssueStateUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        data = serializer.validated_data
+        issue.state_id = data["state_id"]
+        issue.sort_order = data["sort_order"]
+        issue._actor = request.user
+        issue.save(update_fields=["state_id", "sort_order", "updated_at"])
+
+        # Broadcast via WebSocket
+        try:
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                f"project_{issue.project_id}",
+                {
+                    "type": "issue_updated",
+                    "payload": {
+                        "issueId": str(issue.id),
+                        "stateId": str(issue.state_id),
+                        "sortOrder": issue.sort_order,
+                    },
+                    "sender": "server",
+                },
+            )
+        except Exception:
+            logger.exception("Falha no broadcast de issue.updated")
+
+        return Response(IssueSerializer(issue, context={"request": request}).data)
+
+
+# ---------------------------------------------------------------------------
+# Comments
+# ---------------------------------------------------------------------------
+
+
+class IssueCommentListCreateView(generics.ListCreateAPIView):
+    """GET/POST /issues/{issue_pk}/comments/"""
+    serializer_class = IssueCommentSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+
+    def _get_issue(self):
+        return _get_issue(self.kwargs["issue_pk"], self.request.user)
+
+    def get_queryset(self):
+        return IssueComment.objects.filter(
+            issue=self._get_issue()
+        ).select_related("author")
+
+    def perform_create(self, serializer):
+        issue = self._get_issue()
+        instance = serializer.save(issue=issue, author=self.request.user)
+        # Extract @mentions from TipTap JSON content and attach to instance for signal
+        content = instance.content
+        if isinstance(content, dict):
+            from apps.notifications.utils import extract_tiptap_mentions
+            instance._mentioned_ids = extract_tiptap_mentions(content)
+
+
+class IssueCommentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """PATCH/DELETE /issues/{issue_pk}/comments/{pk}/"""
+    serializer_class = IssueCommentSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "patch", "delete"]
+
+    def get_object(self):
+        issue = _get_issue(self.kwargs["issue_pk"], self.request.user)
+        try:
+            comment = IssueComment.objects.get(pk=self.kwargs["pk"], issue=issue)
+        except IssueComment.DoesNotExist:
+            raise NotFound("Comentário não encontrado.")
+        # Somente o autor pode editar/deletar
+        if (
+            self.request.method in ("PATCH", "DELETE")
+            and str(comment.author_id) != str(self.request.user.id)
+            and self.request.user.role != "admin"
+        ):
+            raise PermissionDenied("Somente o autor pode editar este comentário.")
+        return comment
+
+
+# ---------------------------------------------------------------------------
+# Activities
+# ---------------------------------------------------------------------------
+
+
+class IssueActivityListView(generics.ListAPIView):
+    """GET /issues/{issue_pk}/activities/"""
+    serializer_class = IssueActivitySerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = ActivityCursorPagination
+
+    def get_queryset(self):
+        issue = _get_issue(self.kwargs["issue_pk"], self.request.user)
+        return IssueActivity.objects.filter(issue=issue).select_related("actor")
+
+
+# ---------------------------------------------------------------------------
+# Attachments
+# ---------------------------------------------------------------------------
+
+
+class IssueAttachmentListCreateView(generics.ListCreateAPIView):
+    """GET/POST /issues/{issue_pk}/attachments/"""
+    serializer_class = IssueAttachmentSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def _get_issue(self):
+        return _get_issue(self.kwargs["issue_pk"], self.request.user)
+
+    def get_queryset(self):
+        return IssueAttachment.objects.filter(issue=self._get_issue())
+
+    def create(self, request, *args, **kwargs):
+        issue = self._get_issue()
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            raise ValidationError({"file": "Arquivo obrigatório."})
+        if file_obj.size > MAX_FILE_SIZE:
+            raise ValidationError({"file": f"Tamanho máximo: {MAX_FILE_SIZE // 1024 // 1024}MB."})
+        if file_obj.content_type not in ALLOWED_MIME_TYPES:
+            raise ValidationError({"file": "Tipo de arquivo não permitido."})
+
+        # Salva no storage (OCI ou local)
+        path = default_storage.save(
+            f"attachments/{issue.project_id}/{issue.id}/{file_obj.name}", file_obj
+        )
+
+        attachment = IssueAttachment.objects.create(
+            issue=issue,
+            uploaded_by=request.user,
+            filename=file_obj.name,
+            file_size=file_obj.size,
+            mime_type=file_obj.content_type,
+            storage_path=path,
+        )
+        return Response(
+            IssueAttachmentSerializer(attachment).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class IssueAttachmentDestroyView(generics.DestroyAPIView):
+    """DELETE /issues/{issue_pk}/attachments/{pk}/"""
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        issue = _get_issue(self.kwargs["issue_pk"], self.request.user)
+        try:
+            return IssueAttachment.objects.get(pk=self.kwargs["pk"], issue=issue)
+        except IssueAttachment.DoesNotExist:
+            raise NotFound("Anexo não encontrado.")
+
+    def perform_destroy(self, instance):
+        try:
+            default_storage.delete(instance.storage_path)
+        except Exception:
+            logger.exception("Falha ao deletar arquivo do storage")
+        instance.delete()
+
+
+# ---------------------------------------------------------------------------
+# Relations
+# ---------------------------------------------------------------------------
+
+
+class IssueRelationListCreateView(generics.ListCreateAPIView):
+    """GET/POST /issues/{issue_pk}/relations/"""
+    serializer_class = IssueRelationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None  # relations are bounded per issue; frontend expects a flat array
+
+    def _get_issue(self):
+        return _get_issue(self.kwargs["issue_pk"], self.request.user)
+
+    def get_queryset(self):
+      return IssueRelation.objects.select_related(
+        'related_issue', 'related_issue__project'
+      ).filter(issue=self._get_issue())
+
+    def perform_create(self, serializer):
+        serializer.save(issue=self._get_issue())
+
+
+class IssueRelationDestroyView(generics.DestroyAPIView):
+    """DELETE /issues/{issue_pk}/relations/{pk}/"""
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        issue = _get_issue(self.kwargs["issue_pk"], self.request.user)
+        try:
+            return IssueRelation.objects.get(pk=self.kwargs["pk"], issue=issue)
+        except IssueRelation.DoesNotExist:
+            raise NotFound("Relação não encontrada.")
+
+
+# ---------------------------------------------------------------------------
+# Subtasks
+# ---------------------------------------------------------------------------
+
+
+class IssueSubtaskListCreateView(generics.ListCreateAPIView):
+    """GET/POST /issues/{issue_pk}/subtasks/"""
+    permission_classes = [IsAuthenticated]
+    pagination_class = None  # subtasks are bounded per parent; no pagination needed
+
+    def _get_issue(self):
+        return _get_issue(self.kwargs["issue_pk"], self.request.user)
+
+    def get_serializer_class(self):
+        # IssueSerializer and SubtaskSerializer are imported at module level
+        if self.request.method == "POST":
+            return IssueSerializer
+        return SubtaskSerializer
+
+    def get_queryset(self):
+        return self._get_issue().sub_issues.select_related(
+            "state", "assignee"
+        ).order_by("sort_order")
+
+    def perform_create(self, serializer):
+        parent = self._get_issue()
+        if parent.parent_id is not None:
+            raise ValidationError("Subtarefas não podem ter filhos.")
+        serializer.save(
+            project=parent.project,
+            parent=parent,
+            type=Issue.Type.SUBTASK,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Epics
+# ---------------------------------------------------------------------------
+
+
+class EpicListView(generics.ListAPIView):
+    """GET /api/v1/projects/{project_id}/epics/ — list all epics in a project."""
+    serializer_class = EpicSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        user = self.request.user
+        project_id = self.kwargs['project_id']
+
+        # Enforce project access at the queryset level — same pattern as IssueViewSet.
+        from apps.projects.models import Project
+        try:
+            project = Project.objects.get(pk=project_id)
+        except Project.DoesNotExist:
+            return Issue.objects.none()
+        if user.role != 'admin' and not project.members.filter(member=user).exists():
+            return Issue.objects.none()
+
+        return Issue.objects.select_related('state', 'assignee').filter(
+            project_id=project_id,
+            type='epic',
+        ).annotate(
+            child_count=Count('epic_issues'),
+            completed_count=Count(
+                'epic_issues',
+                filter=Q(epic_issues__state__category='completed'),
+            ),
+        ).order_by('created_at')
+
+
+class EpicIssuesView(generics.ListAPIView):
+    """GET /api/v1/issues/{issue_pk}/epic-issues/ — list child issues of an epic."""
+    serializer_class = IssueSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = None  # children are bounded per epic; frontend expects a flat array
+    filter_backends = []     # no global filter backends — queryset is already scoped to the epic
+
+    def get_queryset(self):
+        user = self.request.user
+        try:
+            epic = Issue.objects.select_related('project').get(
+                id=self.kwargs['issue_pk']
+            )
+        except Issue.DoesNotExist:
+            raise ValidationError({'detail': 'Issue not found.'})
+
+        if epic.type != 'epic':
+            raise ValidationError({'detail': 'This issue is not an epic.'})
+
+        # Enforce project access
+        if (user.role != 'admin'
+                and not epic.project.members.filter(member=user).exists()):
+            return Issue.objects.none()
+
+        return Issue.objects.select_related(
+            'project', 'state', 'assignee', 'reporter', 'created_by'
+        ).prefetch_related('labels').filter(epic=epic).order_by('created_at')[:500]
+
+
+# ---------------------------------------------------------------------------
+# Watchers
+# ---------------------------------------------------------------------------
+
+def _get_issue_for_user(issue_pk, user):
+    try:
+        issue = Issue.objects.select_related('project').get(pk=issue_pk)
+    except Issue.DoesNotExist:
+        raise NotFound("Issue não encontrada.")
+    if (user.role != 'admin'
+            and not issue.project.members.filter(member=user).exists()):
+        raise PermissionDenied()
+    return issue
+
+
+class IssueWatchToggleView(generics.GenericAPIView):
+    """POST → watch; DELETE → unwatch. Returns {watching: bool}."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, issue_pk):
+        issue = _get_issue_for_user(issue_pk, request.user)
+        IssueWatcher.objects.get_or_create(issue=issue, member=request.user)
+        return Response({"watching": True})
+
+    def delete(self, request, issue_pk):
+        issue = _get_issue_for_user(issue_pk, request.user)
+        IssueWatcher.objects.filter(issue=issue, member=request.user).delete()
+        return Response({"watching": False})
+
+    def get(self, request, issue_pk):
+        issue = _get_issue_for_user(issue_pk, request.user)
+        watching = IssueWatcher.objects.filter(issue=issue, member=request.user).exists()
+        return Response({"watching": watching})

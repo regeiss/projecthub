@@ -1,0 +1,19 @@
+# =============================================================================
+# ProjectHub — requirements/production.txt
+# Inclui base + extras de produção
+# =============================================================================
+
+-r base.txt
+
+# Servidor WSGI/ASGI de produção (Daphne já está no base para ASGI)
+gunicorn==23.0.0                        # Fallback WSGI se necessário
+
+# Compressão de estáticos
+whitenoise==6.8.2                       # Serve estáticos sem Nginx em staging
+
+# Segurança
+django-csp==3.8                         # Content Security Policy headers
+django-permissions-policy==4.21.0      # Permissions-Policy header
+
+# Performance
+django-cachalot==2.6.3                  # Cache automático de queries ORM

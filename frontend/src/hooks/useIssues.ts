@@ -1,0 +1,289 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { issueService } from '@/services/issue.service'
+import type { CreateSubtaskDto, IssueFilters } from '@/types'
+
+export function useMyWork(memberId: string | undefined) {
+  return useQuery({
+    queryKey: ['my-work', memberId],
+    queryFn: () => issueService.myWork(memberId!),
+    enabled: !!memberId,
+    staleTime: 60_000,
+  })
+}
+
+export function useIssues(projectId: string, filters: IssueFilters = {}) {
+  return useQuery({
+    queryKey: ['issues', projectId, filters],
+    queryFn: () => issueService.list({ ...filters, projectId }),
+    enabled: !!projectId,
+  })
+}
+
+export function useIssue(projectId: string, issueId: string) {
+  return useQuery({
+    queryKey: ['issue', issueId],
+    queryFn: () => issueService.get(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useIssueComments(projectId: string, issueId: string) {
+  return useQuery({
+    queryKey: ['issue-comments', issueId],
+    queryFn: () => issueService.comments(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useIssueActivities(projectId: string, issueId: string) {
+  return useQuery({
+    queryKey: ['issue-activities', issueId],
+    queryFn: () => issueService.activities(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useIssueAttachments(projectId: string, issueId: string) {
+  return useQuery({
+    queryKey: ['issue-attachments', issueId],
+    queryFn: () => issueService.attachments(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useCreateIssue() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId,
+      data,
+    }: {
+      projectId: string
+      data: Record<string, unknown>
+    }) => {
+      const payload: Record<string, unknown> = {
+        project: projectId,
+        title: data.title,
+        priority: data.priority ?? 'none',
+      }
+      if (data.stateId) payload.state = data.stateId
+      if (data.assigneeId) payload.assignee = data.assigneeId
+      if (data.description) payload.description = data.description
+      if (data.type) payload.type = data.type
+      if (data.epicId !== undefined) payload.epic_id = data.epicId
+      if (data.color) payload.color = data.color
+      if (data.startDate !== undefined) payload.start_date = data.startDate
+      if (data.dueDate !== undefined) payload.due_date = data.dueDate
+      if (Array.isArray(data.labelIds) && data.labelIds.length > 0) {
+        payload.label_ids = data.labelIds
+      }
+      return issueService.create(payload as Parameters<typeof issueService.create>[0])
+    },
+    onSuccess: (_, { projectId, data }) => {
+      qc.invalidateQueries({ queryKey: ['issues', projectId] })
+      qc.invalidateQueries({ queryKey: ['epics'] })
+      if (data.epicId) {
+        qc.invalidateQueries({ queryKey: ['epic-issues', String(data.epicId)] })
+      }
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      console.error('[useCreateIssue] 400 body:', err?.response?.data)
+    },
+  })
+}
+
+export function useUpdateIssue() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId: _projectId,
+      issueId,
+      data,
+    }: {
+      projectId: string
+      issueId: string
+      data: Record<string, unknown>
+    }) => {
+      const payload: Record<string, unknown> = {}
+      if (data.title !== undefined) payload.title = data.title
+      if (data.description !== undefined) payload.description = data.description
+      if (data.priority !== undefined) payload.priority = data.priority
+      if (data.stateId !== undefined) payload.state = data.stateId
+      if (data.assigneeId !== undefined) payload.assignee = data.assigneeId
+      if (data.sortOrder !== undefined) payload.sort_order = data.sortOrder
+      if (data.estimatePoints !== undefined) payload.estimate_points = data.estimatePoints
+      if (data.size !== undefined) payload.size = data.size
+      if (data.estimateDays !== undefined) payload.estimate_days = data.estimateDays
+      if (data.startDate !== undefined) payload.start_date = data.startDate
+      if (data.dueDate !== undefined) payload.due_date = data.dueDate
+      if (data.epicId !== undefined) payload.epic_id = data.epicId
+      if (data.color !== undefined) payload.color = data.color
+      if (Array.isArray(data.labelIds)) payload.label_ids = data.labelIds
+      // allow direct snake_case passthrough for drag-and-drop
+      if (data.state !== undefined) payload.state = data.state
+      if (data.sort_order !== undefined) payload.sort_order = data.sort_order
+      return issueService.update(issueId, payload as Parameters<typeof issueService.update>[1])
+    },
+    onSuccess: (issue, { projectId, issueId, data }) => {
+      qc.invalidateQueries({ queryKey: ['issues'] })
+      qc.invalidateQueries({ queryKey: ['issue', issueId] })
+      qc.invalidateQueries({ queryKey: ['epics'] })
+      if (data.estimateDays !== undefined || data.startDate !== undefined || data.dueDate !== undefined) {
+        qc.invalidateQueries({ queryKey: ['cpm-gantt', projectId] })
+        qc.invalidateQueries({ queryKey: ['cpm-data', projectId] })
+        qc.invalidateQueries({ queryKey: ['cpm-network', projectId] })
+      }
+    },
+  })
+}
+
+export function useDeleteIssue() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId: _projectId,
+      issueId,
+    }: {
+      projectId: string
+      issueId: string
+    }) => issueService.delete(issueId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['issues'] })
+      qc.invalidateQueries({ queryKey: ['epics'] })
+    },
+  })
+}
+
+export function useAddComment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId: _projectId,
+      issueId,
+      content,
+    }: {
+      projectId: string
+      issueId: string
+      content: Record<string, unknown>
+    }) => issueService.addComment(issueId, content),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['issue-comments', issueId] })
+    },
+  })
+}
+
+export function useUploadAttachment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      projectId: _projectId,
+      issueId,
+      file,
+    }: {
+      projectId: string
+      issueId: string
+      file: File
+    }) => issueService.uploadAttachment(issueId, file),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['issue-attachments', issueId] })
+    },
+  })
+}
+
+export function useSubtasks(issueId: string) {
+  return useQuery({
+    queryKey: ['subtasks', issueId],
+    queryFn: () => issueService.subtasks(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useCreateSubtask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ issueId, data }: { issueId: string; data: CreateSubtaskDto }) => {
+      const payload: Record<string, unknown> = {
+        title: data.title,
+        priority: data.priority ?? 'none',
+      }
+      if (data.stateId) payload.state = data.stateId
+      if (data.assigneeId) payload.assignee = data.assigneeId
+      if (data.description) payload.description = data.description
+      if (data.startDate !== undefined) payload.start_date = data.startDate
+      if (data.dueDate !== undefined) payload.due_date = data.dueDate
+      if (Array.isArray(data.labelIds) && data.labelIds.length > 0) {
+        payload.label_ids = data.labelIds
+      }
+      return issueService.createSubtask(issueId, payload)
+    },
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['subtasks', issueId] })
+      qc.invalidateQueries({ queryKey: ['issue', issueId] })
+    },
+  })
+}
+
+export function useRelations(issueId: string) {
+  return useQuery({
+    queryKey: ['relations', issueId],
+    queryFn: () => issueService.relations(issueId),
+    enabled: !!issueId,
+  })
+}
+
+export function useAddRelation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      issueId,
+      relatedIssueId,
+      relationType,
+      lagDays,
+    }: {
+      issueId: string
+      relatedIssueId: string
+      relationType: string
+      lagDays: number
+    }) => issueService.addRelation(issueId, relatedIssueId, relationType, lagDays),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['relations', issueId] })
+    },
+  })
+}
+
+export function useDeleteRelation() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ issueId, relationId }: { issueId: string; relationId: string }) =>
+      issueService.deleteRelation(issueId, relationId),
+    onSuccess: (_, { issueId }) => {
+      qc.invalidateQueries({ queryKey: ['relations', issueId] })
+    },
+  })
+}
+
+export function useIssueSearch(query: string) {
+  return useQuery({
+    queryKey: ['issue-search', query],
+    queryFn: () => issueService.search(query),
+    enabled: query.length >= 2,
+    staleTime: 30_000,
+  })
+}
+
+export function useEpics(projectId: string | undefined) {
+  return useQuery({
+    queryKey: ['epics', projectId],
+    queryFn: () => issueService.getEpics(projectId!),
+    enabled: !!projectId,
+  })
+}
+
+export function useEpicIssues(epicId: string | undefined) {
+  return useQuery({
+    queryKey: ['epic-issues', epicId],
+    queryFn: () => issueService.getEpicIssues(epicId!),
+    enabled: !!epicId,
+  })
+}

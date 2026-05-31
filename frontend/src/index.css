@@ -1,0 +1,343 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =============================================================================
+   Color themes — applied via data-color-theme on <html>
+   Variables are R G B triplets (no commas) for Tailwind opacity support.
+   ============================================================================= */
+
+/* Default / Slate Blue */
+:root,
+[data-color-theme="slate"] {
+  --color-primary:       37  99 235;   /* blue-600  */
+  --color-primary-hover: 29  78 216;   /* blue-700  */
+  --color-primary-light: 239 246 255;  /* blue-50   */
+  --color-primary-muted: 219 234 254;  /* blue-100  */
+  --color-primary-text:  29  78 216;   /* blue-700  */
+
+  --color-bg-space:   241 245 249;     /* slate-100  — page canvas */
+  --color-bg-card:    255 255 255;     /* white      — card surface */
+  --color-bg-sidebar: 248 250 252;     /* slate-50   — sidebar      */
+  --color-border:     226 232 240;     /* slate-200  — borders      */
+
+  --color-sidebar-dark: 23 37 84;      /* blue-950   — dark sidebar */
+}
+
+/* Warm Violet */
+[data-color-theme="stone"] {
+  --color-primary:       124  58 237;  /* violet-600 */
+  --color-primary-hover: 109  40 217;  /* violet-700 */
+  --color-primary-light: 245 243 255;  /* violet-50  */
+  --color-primary-muted: 237 233 254;  /* violet-100 */
+  --color-primary-text:  109  40 217;  /* violet-700 */
+
+  --color-bg-space:   247 245 255;     /* violet-50 tinted canvas  */
+  --color-bg-card:    253 252 255;     /* near-white with violet cast */
+  --color-bg-sidebar: 245 243 255;     /* violet-50 sidebar */
+  --color-border:     237 233 254;     /* violet-100 borders */
+
+  --color-sidebar-dark: 46 16 101;     /* violet-950 — dark sidebar */
+}
+
+/* Teal */
+[data-color-theme="teal"] {
+  --color-primary:        13 148 136;  /* teal-600 */
+  --color-primary-hover:  15 118 110;  /* teal-700 */
+  --color-primary-light:  240 253 250; /* teal-50  */
+  --color-primary-muted:  204 251 241; /* teal-100 */
+  --color-primary-text:   15 118 110;  /* teal-700 */
+
+  --color-bg-space:   236 254 252;     /* teal-50 canvas  */
+  --color-bg-card:    250 255 254;     /* near-white with teal cast */
+  --color-bg-sidebar: 240 253 250;     /* teal-50 sidebar */
+  --color-border:     153 234 214;     /* teal-200 borders */
+
+  --color-sidebar-dark:  4 47 46;      /* teal-950  — dark sidebar */
+}
+
+/* Warm Brown (grayish) */
+[data-color-theme="brown"] {
+  --color-primary:       120  53  15;  /* amber-900  */
+  --color-primary-hover:  92  40  10;  /* deeper brown */
+  --color-primary-light: 254 243 199;  /* amber-100  */
+  --color-primary-muted: 253 230 138;  /* amber-200  */
+  --color-primary-text:   92  40  10;
+
+  --color-bg-space:   250 248 245;     /* warm off-white canvas */
+  --color-bg-card:    255 255 255;
+  --color-bg-sidebar: 245 243 238;     /* warm gray sidebar */
+  --color-border:     231 224 215;     /* warm gray-200 */
+
+  --color-sidebar-dark: 41 30 22;      /* very dark warm brown */
+}
+
+/* Dark Yellow / Ochre */
+[data-color-theme="ochre"] {
+  --color-primary:       161 120   0;  /* custom ochre */
+  --color-primary-hover: 133  99   0;
+  --color-primary-light: 254 252 232;  /* yellow-50  */
+  --color-primary-muted: 254 249 195;  /* yellow-100 */
+  --color-primary-text:  133  99   0;
+
+  --color-bg-space:   254 252 232;     /* yellow-50 canvas */
+  --color-bg-card:    255 255 255;
+  --color-bg-sidebar: 254 250 220;     /* warm yellow-tinted sidebar */
+  --color-border:     253 224 132;     /* yellow-300 borders */
+
+  --color-sidebar-dark: 66 49  0;      /* very dark ochre */
+}
+
+/* =============================================================================
+   Code blocks — NodeView CSS variables (light / dark)
+   ============================================================================= */
+
+:root {
+  --cb-bg:     #f1f5f9;   /* slate-100 */
+  --cb-border: #94a3b8;   /* slate-400 */
+  --cb-num:    #94a3b8;   /* slate-400 */
+  --cb-text:   #1e293b;   /* slate-800 */
+}
+
+.dark {
+  --cb-bg:     #1e293b;   /* slate-800 */
+  --cb-border: #475569;   /* slate-600 */
+  --cb-num:    #64748b;   /* slate-500 */
+  --cb-text:   #e2e8f0;   /* slate-200 */
+}
+
+/* Inline code (outside code blocks) — exclude .cb-content inside NodeView code blocks */
+.ProseMirror code:not(pre code):not(.cb-content),
+.prose code:not(pre code):not(.cb-content) {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.8125rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.dark .ProseMirror code:not(pre code),
+.dark .prose code:not(pre code) {
+  background-color: #1e293b;
+  color: #e2e8f0;
+}
+
+/* =============================================================================
+   Wiki page link chip — targets links whose href starts with /projects/
+   Applies inside both the TipTap editor (.ProseMirror) and the read-only
+   rendered output (.prose). Attribute selector beats generic prose-a rules.
+   ============================================================================= */
+.ProseMirror a[href^="/projects/"],
+.prose a[href^="/projects/"] {
+  display: inline;
+  background-color: #dbeafe;       /* blue-100 */
+  color: #1d4ed8 !important;       /* blue-700 */
+  border-radius: 4px;
+  padding: 1px 6px;
+  text-decoration: none !important;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.dark .ProseMirror a[href^="/projects/"],
+.dark .prose a[href^="/projects/"] {
+  background-color: rgba(30, 58, 138, 0.35); /* blue-900/35 */
+  color: #93c5fd !important;                  /* blue-300 */
+}
+
+.ProseMirror a[href^="/projects/"]:hover,
+.prose a[href^="/projects/"]:hover {
+  background-color: #bfdbfe; /* blue-200 */
+}
+
+.dark .ProseMirror a[href^="/projects/"]:hover,
+.dark .prose a[href^="/projects/"]:hover {
+  background-color: rgba(30, 58, 138, 0.55);
+}
+
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: rgb(var(--color-bg-space));
+    @apply text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  }
+
+  /* React Flow overrides */
+  .react-flow__attribution {
+    display: none;
+  }
+}
+
+/* =============================================================================
+   Theme-aware card surfaces — light mode only.
+   Targets the common card pattern: rounded + border + bg-white.
+   Dark mode keeps its own bg-gray-900 via Tailwind's dark: prefix.
+   ============================================================================= */
+html:not(.dark) .bg-white {
+  background-color: rgb(var(--color-bg-card));
+}
+
+html:not(.dark) aside.bg-white,
+html:not(.dark) .sidebar-bg {
+  background-color: rgb(var(--color-bg-sidebar));
+}
+
+/* =============================================================================
+   Code Block — wiki editor (VS Code Dark+ theme)
+   ============================================================================= */
+/* TipTap wraps every node in a div.node-{name} — strip any border/outline from it */
+.node-codeBlock {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.node-codeBlock.ProseMirror-selectednode {
+  outline: 2px solid rgba(99,102,241,0.4) !important;
+  border-radius: 6px !important;
+}
+
+.cb-root {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.625;
+  background: #0d1117;
+  border: none !important;
+  border-radius: 6px;
+  margin: 12px 0;
+  overflow: hidden;
+  color: #e6edf3;
+}
+
+.cb-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 6px 12px;
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  user-select: none;
+}
+
+.cb-lang-select {
+  appearance: none;
+  background: #3c3c3c;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #a0a0a0;
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+}
+.cb-lang-select:hover { border-color: #888; color: #ccc; }
+.cb-lang-select option { background: #252526; color: #d4d4d4; }
+
+.cb-lang-badge {
+  font-size: 11px;
+  color: #6a9955;
+  letter-spacing: 0.04em;
+}
+
+.cb-body { display: flex; overflow-x: auto; }
+
+.cb-line-numbers {
+  flex-shrink: 0;
+  min-width: 2.75rem;
+  text-align: right;
+  padding: 14px 12px;
+  border-right: 1px solid #21262d;
+  color: #3d444d;
+  user-select: none;
+  white-space: pre;
+  line-height: 1.625;
+  font-size: 12px;
+}
+
+.cb-content {
+  flex: 1;
+  min-width: 0;
+  display: block;
+  padding: 14px 18px !important;
+  white-space: pre;
+  background: none !important;
+  line-height: 1.625;
+  color: #e6edf3 !important;
+  font-size: 13px !important;
+  border-radius: 0 !important;
+}
+
+/* hljs token colors — VS Code Dark+ */
+.hljs-keyword,
+.hljs-selector-tag       { color: #569cd6; }
+.hljs-string,
+.hljs-template-string,
+.hljs-template-tag       { color: #ce9178; }
+.hljs-comment,
+.hljs-quote              { color: #6a9955; font-style: italic; }
+.hljs-number,
+.hljs-literal            { color: #b5cea8; }
+.hljs-title              { color: #dcdcaa; }
+.hljs-type,
+.hljs-class              { color: #4ec9b0; }
+.hljs-meta               { color: #c586c0; }
+.hljs-built_in           { color: #4ec9b0; }
+.hljs-variable,
+.hljs-params             { color: #9cdcfe; }
+.hljs-attr,
+.hljs-attribute,
+.hljs-property           { color: #9cdcfe; }
+.hljs-tag,
+.hljs-name               { color: #569cd6; }
+.hljs-selector-class     { color: #d7ba7d; }
+.hljs-selector-id        { color: #dcdcaa; }
+.hljs-regexp             { color: #d16969; }
+.hljs-symbol             { color: #b5cea8; }
+.hljs-operator,
+.hljs-punctuation        { color: #d4d4d4; }
+.hljs-link               { color: #9cdcfe; text-decoration: underline; }
+.hljs-deletion           { color: #f44747; background: rgba(244,71,71,0.12); }
+.hljs-addition           { color: #b5cea8; background: rgba(181,206,168,0.12); }
+.hljs-emphasis           { font-style: italic; }
+.hljs-strong             { font-weight: 600; }
+.hljs-section            { color: #569cd6; font-weight: 600; }
+.hljs-bullet             { color: #6796e6; }
+
+@layer utilities {
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-origin: vertical;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .bg-space {
+    background-color: rgb(var(--color-bg-space));
+  }
+
+  .bg-surface {
+    background-color: rgb(var(--color-bg-card));
+  }
+
+  .bg-sidebar {
+    background-color: rgb(var(--color-bg-sidebar));
+  }
+
+  .bg-sidebar-dark {
+    background-color: rgb(var(--color-sidebar-dark));
+  }
+
+  .border-theme {
+    border-color: rgb(var(--color-border));
+  }
+}

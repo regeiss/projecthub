@@ -1,0 +1,136 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { wikiService } from '@/services/wiki.service'
+import { useDebounce } from '@/hooks/useDebounce'
+import type { WikiPage } from '@/types'
+
+/** Fetches ALL pages in a project's wiki space (no parent filter). */
+export function useAllWikiPages(projectId: string | undefined) {
+  const { data: spaces = [] } = useQuery({
+    queryKey: ['wiki-spaces'],
+    queryFn: () => wikiService.spaces(),
+  })
+  const space = spaces.find((s) => s.projectId === projectId)
+  return useQuery({
+    queryKey: ['wiki-pages-all', space?.id],
+    queryFn: () => wikiService.pages(space!.id, undefined),
+    enabled: !!space?.id,
+  })
+}
+
+export function useWikiSpaces() {
+  return useQuery({
+    queryKey: ['wiki-spaces'],
+    queryFn: () => wikiService.spaces(),
+  })
+}
+
+export function useWikiSearch(spaceId: string, query: string) {
+  const debouncedQuery = useDebounce(query, 300)
+  return useQuery({
+    queryKey: ['wiki-search', spaceId, debouncedQuery],
+    queryFn: () => wikiService.searchPages(spaceId, debouncedQuery),
+    enabled: !!spaceId && debouncedQuery.trim().length >= 2,
+    staleTime: 30_000,
+  })
+}
+
+export function useWikiPages(spaceId: string, parentId?: string | null) {
+  return useQuery({
+    queryKey: ['wiki-pages', spaceId, parentId],
+    queryFn: () => wikiService.pages(spaceId, parentId),
+    enabled: !!spaceId,
+  })
+}
+
+export function useWikiPage(pageId: string) {
+  return useQuery({
+    queryKey: ['wiki-page', pageId],
+    queryFn: () => wikiService.getPage(pageId),
+    enabled: !!pageId,
+  })
+}
+
+export function useWikiPageComments(pageId: string) {
+  return useQuery({
+    queryKey: ['wiki-comments', pageId],
+    queryFn: () => wikiService.comments(pageId),
+    enabled: !!pageId,
+  })
+}
+
+export function useWikiPageVersions(pageId: string) {
+  return useQuery({
+    queryKey: ['wiki-versions', pageId],
+    queryFn: () => wikiService.versions(pageId),
+    enabled: !!pageId,
+    staleTime: 0,
+  })
+}
+
+export function useCreateWikiSpace() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ projectId, name }: { projectId: string | null; name: string }) =>
+      wikiService.createSpace(projectId, name),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['wiki-spaces'] })
+    },
+  })
+}
+
+/** Returns the workspace-level wiki space (projectId === null). */
+export function useWorkspaceWikiSpace() {
+  const { data: spaces = [], isLoading } = useWikiSpaces()
+  const space = spaces.find((s) => s.projectId === null) ?? null
+  return { space, isLoading }
+}
+
+export function useCreateWikiPage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ spaceId, data }: { spaceId: string; data: Partial<WikiPage> }) =>
+      wikiService.createPage(spaceId, data),
+    onSuccess: (page) => {
+      qc.invalidateQueries({ queryKey: ['wiki-pages', page.spaceId] })
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onError: (err: any) => {
+      console.error('[useCreateWikiPage] 400 body:', err?.response?.data)
+    },
+  })
+}
+
+export function useUpdateWikiPage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ pageId, data }: { pageId: string; data: Partial<WikiPage> }) =>
+      wikiService.updatePage(pageId, data),
+    onSuccess: (page) => {
+      qc.invalidateQueries({ queryKey: ['wiki-page', page.id] })
+      qc.invalidateQueries({ queryKey: ['wiki-pages', page.spaceId] })
+    },
+  })
+}
+
+export function useDeleteWikiPage() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ pageId, spaceId }: { pageId: string; spaceId: string }) =>
+      wikiService.deletePage(pageId),
+    onSuccess: (_data, { spaceId }) => {
+      qc.invalidateQueries({ queryKey: ['wiki-pages', spaceId] })
+    },
+  })
+}
+
+export function useRestoreWikiVersion() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ pageId, versionId }: { pageId: string; versionId: string }) =>
+      wikiService.restoreVersion(pageId, versionId),
+    onSuccess: (page, { pageId }) => {
+      qc.invalidateQueries({ queryKey: ['wiki-page', page.id] })
+      qc.invalidateQueries({ queryKey: ['wiki-versions', pageId] })
+    },
+  })
+}

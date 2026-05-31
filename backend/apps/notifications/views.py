@@ -1,0 +1,173 @@
+from django.utils import timezone
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from core.pagination import StandardPagination
+
+from .models import Notification
+from .serializers import NotificationSerializer
+
+
+class NotificationListView(generics.ListAPIView):
+    """GET /notifications/ — lista notificações do usuário autenticado."""
+    serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        qs = Notification.objects.filter(recipient=self.request.user)
+
+        filter_param = self.request.query_params.get("filter")
+        if filter_param == "mentions":
+            qs = qs.filter(type__in=["issue_mentioned", "wiki_mentioned"])
+        elif filter_param == "assigned":
+            qs = qs.filter(type="issue_assigned")
+        elif filter_param == "watching":
+            qs = qs.filter(type="issue_commented")
+        elif filter_param == "unread":
+            qs = qs.filter(is_read=False, is_archived=False)
+        elif filter_param == "archived":
+            qs = qs.filter(is_archived=True)
+        else:
+            qs = qs.filter(is_archived=False)
+
+        project_id = self.request.query_params.get("project_id")
+        if project_id:
+            from apps.issues.models import Issue
+            issue_ids = Issue.objects.filter(
+                project_id=project_id
+            ).values("id")
+            qs = qs.filter(entity_type="issue", entity_id__in=issue_ids)
+
+        unread_only = self.request.query_params.get("unread")
+        if unread_only in ("1", "true", "True"):
+            qs = qs.filter(is_read=False)
+
+        return qs
+
+
+class NotificationUnreadCountView(APIView):
+    """GET /notifications/unread-count/ — contagem de não lidas."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        count = Notification.objects.filter(recipient=request.user, is_read=False).count()
+        return Response({"unread_count": count})
+
+
+class NotificationMarkReadView(APIView):
+    """POST /notifications/{pk}/read/ — marca uma notificação como lida."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            notification = Notification.objects.get(pk=pk, recipient=request.user)
+        except Notification.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if not notification.is_read:
+            notification.is_read = True
+            notification.read_at = timezone.now()
+            notification.save(update_fields=["is_read", "read_at"])
+
+        return Response(NotificationSerializer(notification).data)
+
+
+class NotificationMarkAllReadView(APIView):
+    """POST /notifications/mark-all-read/ — marca todas como lidas."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        updated = Notification.objects.filter(
+            recipient=request.user, is_read=False
+        ).update(is_read=True, read_at=timezone.now())
+        return Response({"marked_read": updated})
+
+
+class NotificationDeleteView(generics.DestroyAPIView):
+    """DELETE /notifications/{pk}/ — remove uma notificação."""
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Notification.objects.filter(recipient=self.request.user)
+
+
+class NotificationCountsView(APIView):
+    """GET /notifications/counts/ — contagens por categoria para sidebar."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        base = Notification.objects.filter(recipient=user, is_archived=False)
+        archived_qs = Notification.objects.filter(recipient=user, is_archived=True)
+
+        from apps.issues.models import Issue
+
+        counts = {
+            "all": base.count(),
+            "unread": base.filter(is_read=False).count(),
+            "mentions": base.filter(
+                type__in=["issue_mentioned", "wiki_mentioned"]
+            ).count(),
+            "assigned": base.filter(type="issue_assigned").count(),
+            "watching": base.filter(type="issue_commented").count(),
+            "archived": archived_qs.count(),
+            "by_project": {},
+        }
+
+        # Unread counts per project (entity_type=issue only)
+        entity_ids = list(
+            base.filter(is_read=False, entity_type="issue")
+            .values_list("entity_id", flat=True)
+        )
+        if entity_ids:
+            issue_project_map = {
+                str(i.id): str(i.project_id)
+                for i in Issue.objects.filter(id__in=entity_ids).only("id", "project_id")
+            }
+            by_project: dict[str, int] = {}
+            for eid in entity_ids:
+                pid = issue_project_map.get(str(eid))
+                if pid:
+                    by_project[pid] = by_project.get(pid, 0) + 1
+            counts["by_project"] = by_project
+
+        return Response(counts)
+
+
+class NotificationArchiveView(APIView):
+    """POST /notifications/{pk}/archive/ — arquiva uma notificação."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            notification = Notification.objects.get(pk=pk, recipient=request.user)
+        except Notification.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        notification.is_archived = True
+        notification.is_read = True
+        if not notification.read_at:
+            notification.read_at = timezone.now()
+        notification.save(update_fields=["is_archived", "is_read", "read_at"])
+
+        return Response(NotificationSerializer(notification).data)
+
+
+class NotificationMarkUnreadView(APIView):
+    """POST /notifications/{pk}/unread/ — marca uma notificação como não lida."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        try:
+            notification = Notification.objects.get(pk=pk, recipient=request.user)
+        except Notification.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        notification.is_read = False
+        notification.read_at = None
+        notification.save(update_fields=["is_read", "read_at"])
+
+        return Response(NotificationSerializer(notification).data)

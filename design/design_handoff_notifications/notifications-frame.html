@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ProjectHub — Whole-app wireframes</title>
+<meta name="viewport" content="width=1440" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Kalam:wght@300;400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<style>
+  :root {
+    --paper: #f4f1ea;
+    --paper-2: #ebe7dd;
+    --ink: #1a1a1a;
+    --ink-soft: #333;
+    --ink-mid: #6b6b6b;
+    --ink-faint: #a8a39a;
+    --line: #1a1a1a;
+    --line-soft: #b8b3a8;
+    --fill: #ffffff;
+    --fill-2: #e6e2d8;
+    --accent: #c83b2a; /* cycled via tweaks */
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background:
+      radial-gradient(ellipse at top left, #fbf9f3 0%, transparent 60%),
+      radial-gradient(ellipse at bottom right, #efece4 0%, transparent 50%),
+      var(--paper);
+    background-attachment: fixed;
+    font-family: "Kalam", "Caveat", sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 56px 64px 200px;
+  }
+
+  /* subtle paper grain */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,0.012) 0 1px, transparent 1px 3px);
+    z-index: 0;
+  }
+
+  .doc {
+    position: relative;
+    max-width: 1760px;
+    margin: 0 auto;
+    z-index: 1;
+  }
+
+  /* ---------- title block ---------- */
+  .doc-header {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 32px;
+  }
+  .doc-title {
+    font-family: "Caveat", cursive;
+    font-size: 64px;
+    font-weight: 700;
+    line-height: 0.9;
+    letter-spacing: 0.5px;
+  }
+  .doc-title span { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+  .doc-sub {
+    font-family: "Kalam";
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+    max-width: 520px;
+  }
+  .doc-stamp {
+    font-family: "Kalam"; font-weight: 700;
+    font-size: 13px;
+    border: 1.5px solid var(--ink);
+    padding: 8px 14px;
+    transform: rotate(2deg);
+    background: var(--fill);
+    letter-spacing: 1px;
+  }
+  .doc-stamp small { display: block; font-weight: 400; font-size: 11px; color: var(--ink-mid); letter-spacing: 0; }
+
+  /* ---------- section heads ---------- */
+  .section {
+    margin-top: 72px;
+  }
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+  .section-num {
+    font-family: "Caveat";
+    font-size: 42px;
+    font-weight: 700;
+    width: 60px; height: 60px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+    display: grid; place-items: center;
+    background: var(--fill);
+    transform: rotate(-3deg);
+  }
+  .section-title {
+    font-family: "Caveat";
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .section-rule {
+    flex: 1;
+    height: 0;
+    border-top: 1.5px dashed var(--ink-mid);
+    margin-bottom: 8px;
+  }
+  .section-note {
+    font-family: "Kalam";
+    font-size: 14px;
+    color: var(--ink-mid);
+    max-width: 280px;
+    line-height: 1.3;
+  }
+
+  /* ---------- frame grid ---------- */
+  .frames {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 36px 28px;
+  }
+
+  .frame { position: relative; }
+  .frame .caption {
+    font-family: "Caveat";
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .frame .caption .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1.5px solid var(--ink);
+    padding: 2px 6px;
+    transform: translateY(-2px);
+  }
+  .frame .caption .meta {
+    font-family: "Kalam";
+    font-weight: 400;
+    font-size: 13px;
+    color: var(--ink-mid);
+    margin-left: auto;
+  }
+
+  /* the sketch card */
+  .sketch {
+    background: var(--fill);
+    border: 2px solid var(--ink);
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    box-shadow: 4px 5px 0 rgba(0,0,0,0.08);
+  }
+  .sketch::after {
+    /* slight off-axis double-line on top edge for hand-drawn vibe */
+    content: "";
+    position: absolute; inset: 2px 4px auto 2px; height: 0;
+    border-top: 1px solid rgba(0,0,0,0.18);
+    pointer-events: none;
+  }
+
+  /* col spans */
+  .span-3 { grid-column: span 3; }
+  .span-4 { grid-column: span 4; }
+  .span-5 { grid-column: span 5; }
+  .span-6 { grid-column: span 6; }
+  .span-7 { grid-column: span 7; }
+  .span-8 { grid-column: span 8; }
+  .span-12 { grid-column: span 12; }
+
+  /* ---------- shared inside-frame primitives ---------- */
+  /* every frame has a viewport with chrome */
+  .vp {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    display: grid;
+    grid-template-rows: 28px 1fr;
+    font-family: "Kalam";
+    font-size: 12px;
+    color: var(--ink);
+  }
+  .vp.tall { aspect-ratio: 16 / 11; }
+  .vp.short { aspect-ratio: 16 / 9; }
+  .vp.square { aspect-ratio: 4 / 3; }
+
+  /* browser chrome */
+  .chrome {
+    border-bottom: 1.5px solid var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    background: var(--fill-2);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    color: var(--ink-mid);
+  }
+  .chrome .dot {
+    width: 8px; height: 8px; border: 1.2px solid var(--ink); border-radius: 50%;
+  }
+  .chrome .url {
+    flex: 1; padding: 3px 8px; background: var(--fill);
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    color: var(--ink-soft);
+    overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  }
+
+  /* app shell layout inside a viewport */
+  .shell {
+    display: grid;
+    grid-template-columns: 24% 1fr;
+    height: 100%;
+  }
+  .shell.with-secondary {
+    grid-template-columns: 18% 22% 1fr;
+  }
+  .col {
+    border-right: 1.5px solid var(--ink);
+    padding: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  .col:last-child { border-right: none; }
+  .col-body { padding: 12px; height: 100%; overflow: hidden; position: relative; }
+
+  /* sidebar text rows */
+  .side-title {
+    font-family: "Caveat"; font-weight: 700; font-size: 16px;
+    display: flex; align-items: center; gap: 6px;
+    padding-bottom: 6px;
+    border-bottom: 1px dashed var(--ink-mid);
+    margin-bottom: 8px;
+  }
+  .side-title .logo {
+    width: 14px; height: 14px;
+    background: var(--ink);
+    display: inline-block;
+    transform: rotate(45deg);
+  }
+  .side-section {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    color: var(--ink-mid);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 8px 0 4px;
+  }
+  .nav-item {
+    font-family: "Kalam";
+    font-size: 12px;
+    padding: 3px 6px;
+    border-radius: 3px;
+    display: flex; align-items: center; gap: 6px;
+    color: var(--ink-soft);
+  }
+  .nav-item .ic {
+    width: 10px; height: 10px;
+    border: 1.2px solid var(--ink-mid);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .nav-item.active {
+    background: var(--accent);
+    color: var(--paper);
+  }
+  .nav-item.active .ic { border-color: var(--paper); background: var(--paper); }
+
+  /* main column header */
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--ink-mid);
+    margin-bottom: 10px;
+  }
+  .breadcrumb {
+    font-family: "Kalam";
+    font-size: 11px;
+    color: var(--ink-mid);
+  }
+  .h1 {
+    font-family: "Caveat";
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .btn {
+    border: 1.5px solid var(--ink);
+    padding: 2px 8px;
+    font-family: "Kalam";
+    font-size: 11px;
+    background: var(--fill);
+    border-radius: 2px;
+    transform: rotate(-0.5deg);
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--ink);
+  }
+  .btn.solid { background: var(--ink); color: var(--paper); }
+  .btn.accent { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .row { display: flex; align-items: center; gap: 6px; }
+  .grow { flex: 1; }
+
+  /* squiggle (lorem placeholder line) */
+  .squiggle { display: block; height: 6px; margin: 4px 0; background-image:
+    repeating-linear-gradient(90deg, var(--ink-faint) 0 6px, transparent 6px 10px);
+    border-radius: 3px;
+  }
+  .squiggle.short { width: 55%; }
+  .squiggle.mid   { width: 75%; }
+  .squiggle.wide  { width: 92%; }
+  .squiggle.dark  { background-image: repeating-linear-gradient(90deg, var(--ink) 0 8px, transparent 8px 12px); }
+  .squiggle.tall  { height: 9px; }
+
+  /* generic placeholder card */
+  .ph {
+    border: 1.5px solid var(--ink);
+    background: var(--fill);
+    padding: 6px;
+    border-radius: 2px;
+  }
+  .ph.tinted { background: var(--paper-2); }
+  .ph.dashed { border-style: dashed; }
+
+  /* labeled "x" placeholder image */
+  .imgph {
+    border: 1.5px solid var(--ink);
+    background:
+      linear-gradient(135deg, transparent calc(50% - 0.5px), var(--ink-faint) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+      linear-gradient(45deg, transparent calc(50% - 0.5px), var(--ink-faint) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+      var(--fill-2);
+    position: relative;
+  }
+  .imgph .label {
+    position: absolute; left: 4px; bottom: 2px;
+    font-family: "JetBrains Mono", monospace; font-size: 9px;
+    color: var(--ink-mid);
+    background: var(--fill-2);
+    padding: 0 2px;
+  }
+
+  /* avatar pile */
+  .avatars { display: flex; }
+  .avatars .av {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    border: 1.5px solid var(--ink);
+    background: var(--fill);
+    margin-left: -5px;
+    font-family: "Kalam"; font-size: 9px;
+    display: grid; place-items: center;
+    color: var(--ink);
+  }
+  .avatars .av:first-child { margin-left: 0; }
+
+  /* tag chip */
+  .chip {
+    display: inline-flex; align-items: center;
+    border: 1.2px solid var(--ink);
+    padding: 0 5px;
+    border-radius: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    background: var(--fill);
+    height: 14px;
+    margin-right: 4px;
+  }
+  .chip.solid { background: var(--ink); color: var(--paper); }
+  .chip.accent { background: var(--accent); color: var(--paper); border-color: var(--accent); }
+  .chip.outline { background: transparent; }
+
+  /* hotspot annotation */
+  .hotspot {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .hotspot .pin {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    background: rgba(255,255,255,0.85);
+    display: grid; place-items: center;
+    font-family: "Caveat"; font-weight: 700;
+    color: var(--accent);
+    font-size: 14px;
+  }
+  .hotspot .note {
+    font-family: "Caveat";
+    font-weight: 600;
+    font-size: 18px;
+    color: var(--accent);
+    line-height: 1;
+    max-width: 160px;
+  }
+
+  /* flow arrow between frames */
+  .flow-arrow {
+    grid-column: span 12;
+    display: flex; align-items: center; gap: 12px;
+    margin: -8px 0 -10px;
+    color: var(--accent);
+    font-family: "Caveat";
+    font-weight: 700;
+    font-size: 22px;
+    padding-left: 60px;
+  }
+  .flow-arrow svg { flex-shrink: 0; }
+
+  /* ---------- Board (kanban) specific ---------- */
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    height: 100%;
+  }
+  .kcol {
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    padding: 4px;
+    display: flex; flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+  }
+  .kcol .kh {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    color: var(--ink);
+    text-transform: uppercase;
+    border-bottom: 1px dashed var(--ink-mid);
+    padding-bottom: 2px;
+    letter-spacing: 0.5px;
+  }
+  .kcard {
+    background: var(--fill);
+    border: 1.2px solid var(--ink);
+    padding: 4px;
+    border-radius: 2px;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .kcard .kid { font-family: "JetBrains Mono", monospace; font-size: 8px; color: var(--ink-mid); }
+  .kcard.dragging {
+    transform: rotate(-2deg);
+    box-shadow: 3px 4px 0 rgba(0,0,0,0.12);
+    border-color: var(--accent);
+  }
+
+  /* ---------- Gantt specific ---------- */
+  .gantt {
+    display: grid;
+    grid-template-columns: 28% 1fr;
+    height: 100%;
+    border-top: 1px dashed var(--ink-mid);
+  }
+  .gantt .glist {
+    border-right: 1.5px solid var(--ink);
+    display: flex; flex-direction: column;
+  }
+  .gantt .grow1 {
+    display: grid; grid-template-columns: 18px 1fr;
+    padding: 4px 6px;
+    border-bottom: 1px dashed var(--ink-faint);
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+  }
+  .gantt .glabel { font-family: "Kalam"; font-size: 11px; color: var(--ink-soft); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .gantt .gtimeline { position: relative; overflow: hidden; }
+  .gantt .gscale {
+    height: 18px;
+    border-bottom: 1px dashed var(--ink-mid);
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8px;
+    color: var(--ink-mid);
+  }
+  .gantt .gscale span {
+    border-right: 1px dashed var(--ink-faint);
+    padding: 3px 4px;
+  }
+  .gantt .gtrack {
+    height: 22px;
+    border-bottom: 1px dashed var(--ink-faint);
+    position: relative;
+  }
+  .gantt .gbar {
+    position: absolute;
+    top: 5px; height: 12px;
+    background: var(--fill);
+    border: 1.5px solid var(--ink);
+    border-radius: 2px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 8px;
+    color: var(--ink);
+    padding: 0 4px;
+    overflow: hidden; white-space: nowrap;
+    display: flex; align-items: center;
+  }
+  .gantt .gbar.fill { background: var(--ink); color: var(--paper); }
+  .gantt .gbar.accent { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .gantt .gdiamond {
+    position: absolute;
+    top: 7px;
+    width: 10px; height: 10px;
+    transform: rotate(45deg);
+    background: var(--ink);
+  }
+  .gantt .gdep {
+    position: absolute;
+    border-left: 1.2px dashed var(--ink-mid);
+    border-bottom: 1.2px dashed var(--ink-mid);
+    pointer-events: none;
+  }
+
+  
+  /* ---------- project topbar (was secondary sidebar) ---------- */
+  .ptabs {
+    display: flex;
+    border-bottom: 1.5px solid var(--ink);
+    margin: -12px -12px 8px;
+    padding: 0;
+    background: var(--paper);
+    font-family: "Kalam";
+    font-size: 11px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ptabs .ptab {
+    padding: 5px 8px;
+    border-right: 1px dashed var(--ink-mid);
+    color: var(--ink-soft);
+    display: flex; align-items: center; gap: 4px;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .ptabs .ptab.proj {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "Caveat"; font-weight: 700; font-size: 14px;
+    padding: 4px 10px;
+  }
+  .ptabs .ptab.active {
+    background: var(--accent);
+    color: var(--paper);
+    font-weight: 700;
+  }
+  .ptabs .ptab .ic {
+    width: 8px; height: 8px;
+    border: 1.2px solid currentColor;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+  .ptabs .ptab.proj .ic { border: none; width: 10px; height: 10px; background: var(--paper); transform: rotate(45deg); }
+  .ptabs .spill {
+    margin-left: auto;
+    padding: 5px 8px;
+    color: var(--ink-mid);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+  }
+
+  /* ---------- workspace home dashboard tiles ---------- */
+  .tiles {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 8px;
+    height: 100%;
+  }
+  .tile {
+    border: 1.5px solid var(--ink);
+    background: var(--fill);
+    padding: 8px;
+    border-radius: 2px;
+    display: flex; flex-direction: column; gap: 4px;
+    overflow: hidden;
+  }
+  .tile .th {
+    font-family: "Caveat"; font-weight: 700; font-size: 15px;
+    line-height: 1;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .tile .th small { font-family: "Kalam"; font-size: 10px; color: var(--ink-mid); font-weight: 400; }
+
+  /* bar chart */
+  .bars { display: flex; align-items: end; gap: 4px; height: 100%; padding-top: 4px; }
+  .bars div {
+    flex: 1;
+    background: var(--ink);
+    border-top: 1.5px solid var(--ink);
+  }
+  .bars div.accent { background: var(--accent); }
+
+  /* line chart */
+  .line-svg { width: 100%; height: 100%; }
+  .line-svg path { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+  .line-svg path.accent { stroke: var(--accent); stroke-width: 2; }
+
+  /* lorem helpers */
+  .lorem-block { display: flex; flex-direction: column; gap: 3px; }
+
+  /* legend / footnote */
+  .legend {
+    margin-top: 80px;
+    padding-top: 20px;
+    border-top: 1.5px dashed var(--ink-mid);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    font-family: "Kalam";
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .legend h4 {
+    font-family: "Caveat"; font-weight: 700; font-size: 20px;
+    margin: 0 0 6px;
+  }
+  .legend .key { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+  .legend .swatch { width: 18px; height: 14px; border: 1.5px solid var(--ink); }
+  .legend .swatch.fill { background: var(--ink); }
+  .legend .swatch.accent { background: var(--accent); border-color: var(--accent); }
+  .legend .swatch.dash { border-style: dashed; background: transparent; }
+
+  /* tweaks panel position adjustment */
+  #tweaks-mount { position: fixed; right: 16px; bottom: 16px; z-index: 100; }
+</style>
+</head>
+<body style="background:#f6f4ef; padding:40px; display:grid; place-items:center;">
+<div style="width:560px;">
+  <!-- 09 Notifications -->
+      <div class="frame span-3" data-screen-label="09 Notifications">
+        <div class="caption"><span class="num">09</span> notificações</div>
+        <div class="sketch">
+          <div class="vp tall">
+            <div class="chrome"><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="url">/ inbox</div></div>
+            <div class="shell" style="grid-template-columns: 32% 1fr;">
+              <div class="col">
+                <div class="side-title">🔔 Inbox</div>
+                <div class="nav-item active"><span class="ic"></span> Tudo <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:9px;">12</span></div>
+                <div class="nav-item"><span class="ic"></span> Não lidas <span style="margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:9px;">5</span></div>
+                <div class="nav-item"><span class="ic"></span> @ menções</div>
+                <div class="nav-item"><span class="ic"></span> Atribuídas</div>
+                <div class="nav-item"><span class="ic"></span> Observando</div>
+                <div class="side-section">filtros</div>
+                <div class="nav-item"><span class="ic"></span> Atlas</div>
+                <div class="nav-item"><span class="ic"></span> Beacon</div>
+                <div class="grow"></div>
+                <div class="nav-item"><span class="ic"></span> Arquivadas</div>
+              </div>
+              <div class="col-body" style="padding:0;">
+                <div class="topbar" style="padding:6px 8px; border-bottom:1px dashed var(--ink-faint);">
+                  <div class="h1" style="font-size:14px;">Tudo</div>
+                  <div class="grow"></div>
+                  <div class="chip outline">marcar tudo como lido</div>
+                </div>
+                <div class="side-section" style="padding:0 8px;">hoje</div>
+                <div style="padding:0 8px;">
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                    <span class="chip accent">@</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle wide" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">ATL-172 &middot; 2m</div>
+                    </div>
+                    <div class="av" style="width:18px;height:18px;border-radius:50%;border:1.2px solid var(--ink);">K</div>
+                  </div>
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                    <span class="chip accent">▸</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle mid" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">atribuído &middot; 14m</div>
+                    </div>
+                    <div class="av" style="width:18px;height:18px;border-radius:50%;border:1.2px solid var(--ink);">M</div>
+                  </div>
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint);">
+                    <span class="chip accent">✓</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle wide" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">BCN-44 &middot; 1h</div>
+                    </div>
+                    <div class="av" style="width:18px;height:18px;border-radius:50%;border:1.2px solid var(--ink);">J</div>
+                  </div>
+                </div>
+                <div class="side-section" style="padding:0 8px;">ontem</div>
+                <div style="padding:0 8px;">
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint); opacity:.7;">
+                    <span class="chip">◆</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle mid" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">marco &middot; 1d</div>
+                    </div>
+                  </div>
+                  <div class="row" style="padding:5px 0; border-bottom:1px dashed var(--ink-faint); opacity:.7;">
+                    <span class="chip">◷</span>
+                    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+                      <div class="squiggle wide" style="margin:0;"></div>
+                      <div class="row" style="font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--ink-mid);">ciclo encerrado &middot; 1d</div>
+                    </div>
+                  </div>
+                  <div class="row" style="padding:5px 0; opacity:.6;">
+                    <span class="chip">@</span>
+                    <div style="flex:1;"><div class="squiggle short" style="margin:0;"></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+</div>
+</body></html>

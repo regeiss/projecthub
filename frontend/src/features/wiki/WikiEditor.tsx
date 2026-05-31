@@ -1,0 +1,262 @@
+import { useEffect, useMemo, useRef } from 'react'
+import type { ProjectMember } from '@/types'
+import { useProjectMembers } from '@/hooks/useProjects'
+import { useWorkspaceMembers } from '@/hooks/useWorkspace'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import { PanelExtension } from './extensions/Panel'
+import { IssueListExtension } from './extensions/IssueListNode'
+import { buildMentionExtension } from './extensions/Mention'
+import { SlashCommandExtension } from './extensions/SlashCommand'
+import { DateExtension } from './extensions/DateNode'
+import { StatusExtension } from './extensions/StatusNode'
+import { VideoExtension } from './extensions/VideoNode'
+import { FileExtension } from './extensions/FileNode'
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react'
+import type { Editor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import Image from '@tiptap/extension-image'
+import TaskList from '@tiptap/extension-task-list'
+import TaskItem from '@tiptap/extension-task-item'
+import Highlight from '@tiptap/extension-highlight'
+import Table from '@tiptap/extension-table'
+import TableRow from '@tiptap/extension-table-row'
+import TableHeader from '@tiptap/extension-table-header'
+import TableCell from '@tiptap/extension-table-cell'
+import Link from '@tiptap/extension-link'
+import Underline from '@tiptap/extension-underline'
+import * as Y from 'yjs'
+import { WebsocketProvider } from 'y-websocket'
+import {
+  Bold, Italic, Underline as UnderlineIcon,
+  Strikethrough, Highlighter, Code, Link as LinkIcon,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { EditorToolbar } from './EditorToolbar'
+import { HeadingWithId } from './extensions/HeadingWithId'
+import { CodeBlockWithLineNumbers } from './extensions/CodeBlockWithLineNumbers'
+
+interface WikiEditorProps {
+  pageId: string
+  projectId?: string          // enables @mention member list
+  initialContent?: object | null
+  readOnly?: boolean
+  className?: string
+  onContentChange?: (content: object) => void
+  onEditorReady?: (editor: Editor) => void
+}
+
+function BubbleButton({
+  onClick,
+  active,
+  title,
+  children,
+}: {
+  onClick: () => void
+  active?: boolean
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className={cn(
+        'flex h-7 w-7 items-center justify-center rounded text-sm transition-colors',
+        active ? 'bg-white/20 text-white' : 'text-gray-300 hover:bg-white/10 hover:text-white',
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+export function WikiEditor({ pageId, projectId, initialContent, readOnly = false, className, onContentChange, onEditorReady }: WikiEditorProps) {
+  const ydoc = useMemo(() => new Y.Doc(), [pageId])
+
+  // Keep a stable ref so the onUpdate closure always calls the latest callback
+  // (useEditor only captures the initial render's onContentChange)
+  const onContentChangeRef = useRef(onContentChange)
+  onContentChangeRef.current = onContentChange
+
+  // Track whether we've seeded the editor with saved content yet.
+  // We cannot use useEditor's `content` option because it only applies at
+  // mount time, but initialContent may arrive asynchronously (stale cache →
+  // background refetch). Once seeded, we never overwrite the editor again so
+  // in-progress edits are not clobbered.
+  const contentSeeded = useRef(false)
+
+  // @mention — both hooks called unconditionally (Rules of Hooks); each has its own `enabled` guard.
+  // When projectId is absent (workspace wiki) we fall back to workspace members.
+  const workspace = useWorkspaceStore(s => s.workspace)
+  const { data: projectMembers = [] } = useProjectMembers(projectId ?? '')
+  const { data: wsMembers = [] } = useWorkspaceMembers(workspace?.slug ?? '')
+
+  const members = useMemo<ProjectMember[]>(() => {
+    if (projectMembers.length > 0) return projectMembers
+    return wsMembers.map(wm => ({
+      id: wm.id,
+      projectId: projectId ?? '',
+      memberId: wm.id,
+      memberName: wm.name,
+      memberEmail: wm.email,
+      memberAvatar: wm.avatarUrl,
+      role: (wm.role === 'admin' ? 'admin' : wm.role === 'guest' ? 'viewer' : 'member') as ProjectMember['role'],
+      createdAt: wm.createdAt,
+    }))
+  }, [projectId, projectMembers, wsMembers])
+
+  const membersRef = useRef<ProjectMember[]>(members)
+  membersRef.current = members
+
+  useEffect(() => {
+    const wsUrl = import.meta.env.VITE_WS_URL ?? 'ws://localhost/ws'
+    const token = (window as unknown as Record<string, string>).__kc_token ?? ''
+    const provider = new WebsocketProvider(
+      `${wsUrl}/wiki/pages/${pageId}/?token=${token}`,
+      `wiki-${pageId}`,
+      ydoc,
+    )
+    return () => {
+      provider.destroy()
+      ydoc.destroy()
+    }
+  }, [pageId, ydoc])
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({ history: false, heading: false, codeBlock: false }),
+      HeadingWithId.configure({ levels: [1, 2, 3] }),
+      Placeholder.configure({ placeholder: 'Comece a escrever…' }),
+      Image,
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      Highlight.configure({ multicolor: false }),
+      Table.configure({ resizable: true }),
+      TableRow,
+      TableHeader,
+      TableCell,
+      Link.configure({ openOnClick: true, autolink: true }),
+      Underline,
+      PanelExtension,
+      buildMentionExtension(() => membersRef.current),
+      SlashCommandExtension,
+      DateExtension,
+      StatusExtension,
+      VideoExtension,
+      FileExtension,
+      IssueListExtension,
+      CodeBlockWithLineNumbers,
+    ],
+    editable: !readOnly,
+    onUpdate: ({ editor }) => {
+      if (!readOnly) onContentChangeRef.current?.(editor.getJSON())
+    },
+    editorProps: {
+      attributes: {
+        class: cn(
+          'prose prose-sm max-w-none focus:outline-none min-h-[300px] px-6 py-4',
+          'prose-headings:font-semibold prose-headings:text-gray-900',
+          'prose-a:text-indigo-600 prose-a:underline prose-a:bg-blue-100 dark:prose-a:bg-blue-900/30 prose-a:rounded prose-a:px-0.5',
+          'prose-code:bg-gray-100 prose-code:rounded prose-code:px-1',
+          '[&_pre_code]:!bg-transparent [&_pre_code]:!px-0 [&_pre_code]:!rounded-none',
+        ),
+      },
+    },
+  })
+
+  useEffect(() => {
+    if (editor && onEditorReady) {
+      onEditorReady(editor)
+    }
+    // onEditorReady is intentionally excluded: callers pass setEditor (stable setState ref)
+  }, [editor]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!editor || contentSeeded.current) return
+    if (initialContent) {
+      editor.commands.setContent(initialContent)
+      contentSeeded.current = true
+    }
+  }, [editor, initialContent])
+
+  function handleSetLink() {
+    if (!editor) return
+    const prev = editor.getAttributes('link').href ?? ''
+    const url = window.prompt('URL do link:', prev)
+    if (url === null) return
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+    } else {
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    }
+  }
+
+  return (
+    <div className={cn('flex flex-col bg-white dark:bg-gray-900', className ?? 'overflow-hidden rounded-md border border-gray-200 dark:border-gray-700')}>
+      {editor && !readOnly && <EditorToolbar editor={editor} onSetLink={handleSetLink} />}
+
+      {editor && !readOnly && (
+        <BubbleMenu
+          editor={editor}
+          tippyOptions={{ duration: 100 }}
+          className="flex items-center gap-0.5 rounded-lg bg-gray-800 px-1.5 py-1 shadow-lg"
+        >
+          <BubbleButton
+            title="Negrito"
+            active={editor.isActive('bold')}
+            onClick={() => editor.chain().focus().toggleBold().run()}
+          >
+            <Bold className="h-3.5 w-3.5" />
+          </BubbleButton>
+          <BubbleButton
+            title="Itálico"
+            active={editor.isActive('italic')}
+            onClick={() => editor.chain().focus().toggleItalic().run()}
+          >
+            <Italic className="h-3.5 w-3.5" />
+          </BubbleButton>
+          <BubbleButton
+            title="Sublinhado"
+            active={editor.isActive('underline')}
+            onClick={() => editor.chain().focus().toggleUnderline().run()}
+          >
+            <UnderlineIcon className="h-3.5 w-3.5" />
+          </BubbleButton>
+          <BubbleButton
+            title="Tachado"
+            active={editor.isActive('strike')}
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+          >
+            <Strikethrough className="h-3.5 w-3.5" />
+          </BubbleButton>
+          <div className="mx-1 h-4 w-px bg-gray-600" />
+          <BubbleButton
+            title="Destaque"
+            active={editor.isActive('highlight')}
+            onClick={() => editor.chain().focus().toggleHighlight().run()}
+          >
+            <Highlighter className="h-3.5 w-3.5" />
+          </BubbleButton>
+          <BubbleButton
+            title="Código inline"
+            active={editor.isActive('code')}
+            onClick={() => editor.chain().focus().toggleCode().run()}
+          >
+            <Code className="h-3.5 w-3.5" />
+          </BubbleButton>
+          <BubbleButton
+            title="Link"
+            active={editor.isActive('link')}
+            onClick={handleSetLink}
+          >
+            <LinkIcon className="h-3.5 w-3.5" />
+          </BubbleButton>
+        </BubbleMenu>
+      )}
+
+      <EditorContent editor={editor} />
+    </div>
+  )
+}
