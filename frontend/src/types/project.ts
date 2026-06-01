@@ -8,6 +8,8 @@ export interface Project {
   color: string
   status: 'active' | 'paused' | 'completed' | 'archived'
   isPrivate: boolean
+  start_date: string | null
+  target_date: string | null
   createdById: string
   createdAt: string
   updatedAt: string

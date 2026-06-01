@@ -165,9 +165,23 @@ body {
   font-family: 'Fraunces', serif !important;
   font-weight: 500 !important;
   font-size: 52px !important;
-  line-height: 1.04 !important;
+  line-height: 1.2 !important;
   letter-spacing: -0.02em !important;
-  color: #fff !important;
+  /* Line 1 ("Controle de") white; line 2 ("portfólios e projetos") orange-yellow.
+     Line height = 52px × 1.2 = 62px — gradient breaks at that boundary.
+     padding-bottom gives descenders (j, g, p…) room inside the paint area. */
+  padding-bottom: 8px !important;
+  background-image: linear-gradient(
+    to bottom,
+    #ffffff 0px,
+    #ffffff 62px,
+    #f59e0b 62px,
+    #f59e0b 100%
+  ) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
   text-align: left !important;
 }
 
@@ -177,7 +191,7 @@ body {
   position: absolute !important;
   left: 56px !important;
   right: calc(48% + 56px) !important;
-  top: calc(50% + 30px) !important;
+  top: calc(50% + 60px) !important;
   z-index: 3 !important;
   display: block !important;
   white-space: pre !important;

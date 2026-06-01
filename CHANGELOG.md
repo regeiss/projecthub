@@ -5,12 +5,61 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
+========================================================================================================================================================
+
+ The git diff is inflated — comparing our initial commit against the remote brings in hundreds of pre-existing files. Here are the files
+ actually edited in this session and the previous one (since 29/05):
+
+  Gantt chart
+  frontend/src/features/gantt/GanttChart.tsx
+  frontend/src/hooks/useCpm.ts          (read, not modified)
+  frontend/src/services/cpm.service.ts  (read, not modified)
+
+  Keycloak auth fixes
+  frontend/src/features/auth/AuthProvider.tsx
+  frontend/src/features/auth/SignInPage.tsx
+  frontend/src/lib/keycloak.ts
+  frontend/vite.config.ts
+  backend/config/settings/base.py
+  backend/apps/authentication/authentication.py
+  assets/meu-tema/login/theme.properties
+
+  Keycloak login theme CSS
+  assets/meu-tema/login/resources/css/style.css
+
+  Project/infra
+  .gitignore
+  .env                      (DATABASE_URL, KEYCLOAK_ISSUER, VITE_* vars)
+  changelog.md
+
+⏺ Modified files:
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/CHANGELOG.md
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/assets/meu-tema/login/resources/css/style.css
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/models.py
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/serializers.py
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectsPage.tsx
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/hooks/useProjects.ts
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/types/project.ts
+
+  Created files:
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/migrations/0002_project_dates.py
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectWizard.test.tsx
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectWizard.tsx
+
+
+
+========================================================================================================================================================
+
 ## [Unreleased]
 
 ### Fixed
+
 - **Keycloak login — painel direito renderizando abaixo (2026-05-30)**: o painel direito (formulário) estava aparecendo abaixo do painel esquerdo em vez de ao lado. Causa: o PatternFly v5 pode definir `flex-wrap: wrap` ou layout grid no container, fazendo os itens quebrarem linha. Correções em `assets/meu-tema/login/resources/css/style.css`: adicionado `flex-wrap: nowrap !important` e `justify-content: flex-start !important` ao `.pf-v5-c-login`; adicionado `flex-wrap: nowrap !important`, `min-height: 0 !important` e reset de grid (`grid-template-*: none`) ao `.pf-v5-c-login__container`; painel direito (`main.pf-v5-c-login__main`) recebeu `flex: 1 1 48%`, `width: 48%` e `min-width: 300px` para não colapsar.
 
 ### Added
+
+- **Wizard de criação de projeto (2026-05-31)**: substituído o modal simples de criação por um wizard de 4 passos. Passo 1 — **Detalhes**: nome, identificador (auto-derivado das iniciais do nome, editável), descrição, paleta de 10 cores e toggle privado/público. Passo 2 — **Time**: busca e seleciona membros do workspace com escolha de papel (admin/membro/visualizador). Passo 3 — **Estados**: edição inline das 6 cores e nomes dos estados auto-gerados (Backlog, A fazer, Em andamento, Em revisão, Concluído, Cancelado), adição e remoção de estados extras. Passo 4 — **Datas**: data de início e data alvo do projeto (novos campos `start_date` / `target_date` no model `Project`). Cada passo intermediário tem botão "Pular". Ao concluir o wizard navega para o board do novo projeto. Backend: migration `0002_project_dates.py` adiciona os dois campos `DateField` ao model; serializer atualizado. Frontend: `ProjectWizard.tsx` (novo), hooks `useCreateProjectState`, `useUpdateProjectState`, `useDeleteProjectState` adicionados a `useProjects.ts`, `Project` type ampliado, `ProjectsPage.tsx` usa o wizard. Testes: `ProjectWizard.test.tsx` com cobertura dos 4 passos, validação, navegação e skip.
+
 - **Gantt — arraste da borda esquerda para ajustar data de início (2026-05-30)**: adicionada alça de arrastar na borda esquerda de cada barra do Gantt. Arrastar para a esquerda/direita altera a `start_date` da issue mantendo a data de término fixa (a duração visual se ajusta proporcionalmente). Durante o arraste, a barra se move e o rótulo de data de início é destacado na cor da barra. Ao soltar, a mutação `PATCH /issues/{id}/` atualiza `start_date` e o TanStack Query invalida as queries `cpm-gantt`, `cpm-data` e `cpm-network`, forçando recálculo CPM. As setas de dependência também se atualizam durante o arraste via `draftStartOffsets`. Acessibilidade: `role="button"` e `aria-label="Ajustar data de início"` na alça. Arquivo: `GanttChart.tsx` (novo `GanttStartDragState`, `draftStartOffsets`, `toISODate()`, campo `succTaskId` em `LogicalArrow`); `useUpdateIssue` importado de `useIssues.ts`.
 
 - **Temas de cor — Warm Brown e Ocre (2026-05-22)**: dois novos temas adicionados ao seletor de cores do navbar. "Warm Brown" aplica marrom acinzentado escuro (`amber-900`) como cor primária e sidebar quase preta com tom quente (`#29 1e 16`). "Ocre" aplica amarelo escuro/ocre como cor primária e sidebar muito escura em tom âmbar (`#42 31 00`). Cada tema define seu próprio conjunto de variáveis CSS (`--color-primary`, `--color-sidebar-dark`, `--color-bg-*`, `--color-border`). Arquivos: `index.css` (dois novos blocos `[data-color-theme]`), `ThemeContext.tsx` (union type e validação do `localStorage`), `ColorThemeSelector.tsx` (dois novos swatches).
@@ -32,6 +81,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **Navbar — pesquisa global de issues (2026-05-12)**: atalho ⌘K / Ctrl+K abre painel de busca global com debounce de 300ms. Resultados incluem issues e páginas wiki com navegação por teclado (↑↓ Enter). Arquivos: `GlobalSearch.tsx`, `GlobalSearchResults.tsx`, `GlobalSearchFilterChips.tsx`.
 
 ### Fixed
+
 - **Busca global — fontes SVG nos gráficos ignorando `fontSize` prop (2026-05-22)**: atributo de apresentação SVG `fontSize={N}` tinha especificidade menor que estilos CSS herdados do pai. Corrigido usando `style={{ fontSize: 'Npx' }}` em todos os elementos `<text>` dos componentes de gráfico.
 
 - **Wiki — pesquisa de páginas na sidebar (2026-05-07)**: campo de busca adicionado ao topo da sidebar de ambas as wikis (projeto e workspace). Ao digitar 2+ caracteres, a árvore de páginas é substituída por uma lista de resultados filtrados pelo título. A busca usa debounce de 300ms e chama `GET /wiki/spaces/{id}/pages/?search=<query>` no backend. Backend: `WikiPageListCreateView` agora inclui `filter_backends = [SearchFilter]` com `search_fields = ["title"]`. Frontend: novo `WikiSidebar.tsx` compartilhado entre `WikiLayout` e `WorkspaceWikiLayout`, com `useWikiSearch` hook e `wikiService.searchPages()`.
@@ -41,6 +91,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **Wiki do workspace — documentação geral independente de projetos (2026-05-06)**: nova rota `/wiki` acessível pelo ícone de livro na sidebar principal. Funciona como um Confluence: espaço wiki compartilhado por todo o workspace, sem vínculo com nenhum projeto específico. Na primeira visita, um botão "Criar wiki" inicializa o `WikiSpace` com `project=null`. Toda a infraestrutura existente é reutilizada (editor TipTap + Yjs CRDT colaborativo, `PageTree`, `WikiTOC`, versionamento, comentários). Arquivos alterados: `wiki.service.ts` (aceita `projectId: string | null`), `useWiki.ts` (novo hook `useWorkspaceWikiSpace()`, `useCreateWikiSpace` aceita null), novo `WorkspaceWikiLayout.tsx`, `WikiPage.tsx` (busca de espaço tolera `projectId=null`), `App.tsx` (rotas `/wiki` e `/wiki/:pageId`), `Sidebar.tsx` (ícone BookOpen "Wiki" adicionado à nav).
 
 ### Fixed
+
 - **Gantt — setas de dependência sobrepondo a barra na saída (2026-05-06)**: o roteamento em Z saía da borda esquerda da cápsula ao invés da direita quando a tarefa successor estava à esquerda ou muito próxima. Corrigido com roteamento ortogonal de 5 segmentos em escadinha: a seta sempre sai pela direita (STUB fixo para a direita), vai ao meio vertical, descia/sobe, e chega pela esquerda do successor. Sem sobreposição com a cápsula na saída.
 - **Gantt — épicos exibidos no gráfico (2026-05-06)**: issues do tipo `epic` apareciam como tarefas no Gantt. Corrigido excluindo épicos na query do algoritmo CPM (`Issue.objects.exclude(type="epic")`) e no backend `_build_graph`.
 - **Gantt — barras sempre com 1 dia independente de `estimate_days` (2026-05-06)**: o algoritmo CPM lia `CpmIssueData.duration_days` (campo que permanecia 1 após o primeiro cálculo) em vez de `Issue.estimate_days`. Corrigido lendo `estimate_days` diretamente da issue. `recalculate_cpm` atualizado para incluir `duration_days` no `bulk_update`. Novo sinal `trigger_cpm_on_issue_change` dispara recálculo assíncrono quando `estimate_days`, `start_date` ou `due_date` de uma issue é alterado. Hook `useUpdateIssue` invalida as queries CPM quando esses campos são atualizados.
@@ -48,15 +99,18 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **Gantt — barras ignorando timezone UTC-3 (2026-05-06)**: `new Date("2024-04-01")` interpretava como UTC midnight, resultando em 31/03 no fuso UTC-3. Corrigido com `parseLocalDate()` que divide a string `YYYY-MM-DD` e constrói a data como local (sem conversão UTC).
 
 ### Added
+
 - **Keycloak login — três cápsulas individuais no cabeçalho (2026-05-06)**: ao invés de uma única barra no topo, cada texto ("Prefeitura de Novo Hamburgo", "Controle de portfolios e projetos", "CTIBD") agora é uma cápsula (pill) independente com `border-radius: 22px`, `backdrop-filter: blur(12px)` e `box-shadow` próprio. `#kc-header` tornou-se um container flex transparente com `gap: 12px`; o wrapper central saiu de `position: absolute` para `flex: 1; justify-content: center`.
 
  adicionada página `/settings` acessível pelo menu do avatar no canto superior direito. Permite editar nome de exibição e URL do avatar (salvo via PATCH `/api/v1/auth/me/`), exibe e-mail, função, data de ingresso e último acesso. Botão "Alterar senha" abre o console de conta do Keycloak em nova aba. Backend: `MeView` agora suporta PATCH com `WorkspaceMemberUpdateSerializer` (campos `name` e `avatar_url`).
+
 - **CPM Network — caixa de dados abaixo do nó (2026-05-03)**: a caixa ES|EF / LS|LF estava posicionada *acima* do círculo (como no commit anterior), mas a notação padrão do CPM coloca os dados *abaixo*. Caixa movida para `top: CIRCLE + GAP` com `position: absolute` (fora do container do nó, preservando os handles no centro do círculo). Handles explicitados com `top: CIRCLE/2` para garantir alinhamento. Espaçamento vertical dos nós aumentado de 180 para 220 px para acomodar a caixa abaixo. Adicionados rótulos ES EF / LS LF à esquerda da caixa.
 - **Auth — loop infinito no localhost:5173 (2026-05-03)**: `IS_KC_CALLBACK` era calculado dentro do `useEffect`, mas o `keycloak-js` já chama `history.replaceState()` para limpar `?code=` da URL *de forma síncrona* dentro de `keycloak.init()`. O React StrictMode re-executa o effect após o cleanup, momento em que a URL já está limpa — então o segundo mount via `isKcCallback = false` e, em caso de falha no exchange PKCE, chamava `keycloak.login()` novamente, gerando o loop. Corrigido movendo o cálculo para nível de módulo em `lib/keycloak.ts` (`IS_KC_CALLBACK`), capturando o valor antes de qualquer execução do React ou do keycloak-js. Adicionados também `http://localhost:5173/*` e `http://127.0.0.1:5173/*` em `redirectUris` e `webOrigins` no cliente Keycloak `projecthub-frontend`.
 - **Keycloak login — mensagens de erro e espaçamento (2026-05-02)**: mensagens de erro abaixo dos campos agora em vermelho claro (`#fca5a5`) com fundo semitransparente, legíveis sobre o backdrop. "Esqueceu sua senha?" movido para linha separada com `gap: 12px` de "Mantenha-me conectado", cor alterada para azul claro (`#93c5fd`).
 - **CPM Network — conectores ausentes (2026-05-01)**: `CpmNode` não tinha componentes `Handle` do React Flow, o que impedia qualquer aresta de renderizar. Adicionados `<Handle type="target" position={Position.Left}/>` e `<Handle type="source" position={Position.Right}/>`. Corrigido também o mapeamento de `isCritical` → `is_critical` (snake_case enviado pelo backend) para que o estilo do caminho crítico funcione corretamente nos nós e arestas.
 
 ### Added
+
 - **Keycloak realm export** (`assets/real-export.json`): realm `projecthub` com clientes
   `projecthub-frontend` (public, PKCE) e `projecthub-backend` (confidential, service account),
   audience mapper no frontend para incluir o backend no token, roles `workspace-admin` /
@@ -75,19 +129,23 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - Os cards EVM do topo (PV/EV/CPI/SPI) foram corrigidos para agregar dos projetos individuais em vez do campo `totals` do backend (que retornava zeros)
 
 ### Fixed
+
 - **Auth — "Parâmetro inválido: redirect_uri" no refresh (2026-04-09)**: ao fazer refresh em qualquer rota interna (ex: `/projects/123/board`), o `keycloak-js` usava `window.location.href` como `redirect_uri`, que não estava registrada no client do Keycloak. Fix: adicionado `redirectUri: window.location.origin + '/'` no `keycloak.init()` para sempre enviar a URI raiz, que já é registrada como válida.
 
 ### Added
+
 - **Portfolio — OKR per-objective colors (2026-04-09)**: each objective card gets a distinct color from the same 10-color palette. Color is applied to the `Target` icon, the progress bar fill, the card border tint, and the linked-project badges.
 - **Portfolio — roadmap per-project colors (2026-04-09)**: each project bar gets a distinct color from a 10-color palette (indigo, amber, emerald, red, blue, violet, orange, teal, pink, lime) derived by index, replacing the unreliable `projectColor` field. A matching color dot is shown next to the project name in the left column.
 - **Portfolio — roadmap month separators (2026-04-09)**: the timeline now shows vertical lines at each month boundary with abbreviated month+year labels (e.g. "Abr 26") in the header. Timeline range is snapped to the first/last day of the bounding months for clean alignment (`RoadmapView.tsx`).
 
 ### Fixed
+
 - **Portfolio — "Add project" modal showed empty project list (2026-04-08)**: `AddProjectModal` called `useProjects()` without a `workspaceId`, which disabled the query (`enabled: !!workspaceId`). Fixed by reading `workspaceId` from `useWorkspaceStore` and passing it to `useProjects(workspaceId)`.
 - **Wiki — slash command menu compact layout (2026-04-08)**: reduced item padding (`py-1`), font sizes (`text-xs` for labels, `text-[10px]` for subtitles, `text-sm` for icons), and added `max-height: min(480px, 70vh)` with `overflow-y-auto` so the menu never bleeds off-screen regardless of the number of items (`SlashCommandList.tsx`).
 - **Wiki — slash command broken after refactor (2026-04-08)**: `SlashCommandList.selectItem` was calling `command(item.action)` (a `SlashCommandAction`) instead of `command(item)` (the full `SlashCommandItem`). The TipTap Suggestion command handler expected the full item to access `item.action.type` via switch; passing only the action made the switch fall through silently. Updated tests to assert on the full item object.
 
 ### Added
+
 - **Wiki — extended slash commands (2026-04-08)**:
   - New TipTap node extensions: `DateExtension` (inline date picker), `StatusExtension` (in-progress/done/blocked/in-review/pending badges), `VideoExtension` (YouTube/Vimeo/direct URL embed), `FileExtension` (external file link with `javascript:` URL sanitisation).
   - Slash command menu now groups commands under section headers "Painéis", "Conteúdo" and "Mídia"; headers are omitted when their group has no matches in the filtered result.
@@ -95,6 +153,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - Diacritic-aware filtering — typing "conclusao" matches "Concluído".
 
 ### Added
+
 - **Wiki Phase 1 — dual-store model, breadcrumbs, TOC, and test suite (2026-04-01)**:
   - **Backend — dual-store content model**: added `yjs_state` `BinaryField` to `WikiPage` and `WikiPageVersion`; `save_yjs_state` Celery task now writes to `yjs_state` only (not `content`); `WikiPageConsumer` sends TipTap JSON init message followed by Yjs binary on connect.
   - **Backend — `ancestors` field**: `WikiPageDetailSerializer` now includes `ancestors` list (root-first chain of `{id, title}` objects) for breadcrumb navigation.
@@ -106,9 +165,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - **Frontend — types and service**: `WikiPage` type extended with `ancestors`; `mapPage` maps backend `ancestors` array.
 
 ### Fixed
+
 - **`IssueRelationListCreateView` — remove pagination (2026-03-22)**: added `pagination_class = None` so `GET /issues/{id}/relations/` returns a flat array instead of a paginated envelope. The frontend service passes the response directly as an array; the previous paginated response caused the relation list to always appear empty. Updated `test_relations.py` to match the flat response (`resp.data[0]` instead of `resp.data['results'][0]`).
 
 ### Added
+
 - **Issue Linking — complete feature (2026-03-22)**:
   - **Backend — `IssueRelationSerializer` derived fields**: added 4 read-only computed fields (`related_issue_title`, `related_issue_sequence_id`, `related_issue_project_id`, `related_issue_project_name`) sourced via `select_related('related_issue', 'related_issue__project')` to avoid N+1 queries.
   - **Backend — relation validation**: self-relation guard returns 400 with message "An issue cannot be related to itself"; duplicate relation guard prevents DB-level `IntegrityError` and returns 400 with "This relation already exists."
@@ -137,6 +198,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - `AddMemberModal` component in WorkspaceSettings with debounced search, role selector, and error feedback
 
 ### Corrigido
+
 - **TypeScript — conflito de `@types/react` v18 vs v19 em Modal/Radix (2026-03-16)**: O `node_modules` raiz do workspace continha `@types/react@19` (puxado por `@radix-ui/react-dialog@^1.1.15`), enquanto o frontend usava v18. O TypeScript resolvia dois `ReactNode` incompatíveis, causando erros TS2786 em todos os componentes Radix. Adicionado `overrides` nos `package.json` raiz e do frontend para forçar `@types/react@^18.3.14` em toda a árvore de dependências.
 - **Sidebar — tooltips não fechavam ao tirar o hover (2026-03-16)**: O `Tooltip` usava `RadixTooltip.Root` sem estado controlado, o que causava tooltips presos quando o mouse saía rapidamente. Adicionado estado `open` controlado com `onOpenChange` e `onMouseLeave` explícito no trigger para forçar fechamento imediato.
 - **IssueForm — campos `size` e `estimateDays` não eram salvos ao editar (2026-03-16)**: O hook `useUpdateIssue` em `useIssues.ts` não mapeava os campos `size` → `payload.size` e `estimateDays` → `payload.estimate_days`, então esses valores nunca chegavam ao backend ao salvar o formulário de edição. Adicionados os dois mapeamentos ao bloco de construção do payload.
@@ -147,11 +209,11 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   - **Bug 2 — conteúdo do workspace incorreto ao trocar**: `request.user.workspace` nunca mudava (sempre apontava para o primeiro workspace), então projetos, portfolio e demais dados eram sempre filtrados pelo workspace errado, tornando o seletor de workspace puramente visual.
   - **Solução**: Frontend agora envia header `X-Workspace-ID: {id}` em todas as requisições (interceptor no axios). Backend lê o header e faz lookup do `WorkspaceMember` para o workspace correto; se não existir, cria o registro automaticamente. Se o header estiver ausente, mantém comportamento anterior (primeiro membership existente).
 
-
 - **IssueForm — dropdown de ciclo (2026-03-15)**: O campo "Ciclo" na tela de editar issue exibia um input somente-leitura em vez de um dropdown selecionável. Substituído por `<select>` com todos os ciclos do projeto. Ao salvar, o formulário fecha imediatamente (`onClose()` antes das chamadas de ciclo); a troca de ciclo é feita em background via `cycleService.addIssue`/`removeIssue` para evitar que o backdrop do modal bloqueie o botão "Voltar" enquanto as requisições de ciclo estavam em andamento.
 - **IssueDetailPage — descrição renderizada como HTML simples (2026-03-15)**: a descrição era exibida como texto plano, quebrando a formatação HTML gerada pelo editor rico. Substituído por `dangerouslySetInnerHTML`.
 
 ### Adicionado
+
 - **WikiPage — botão de salvar manual (2026-03-17)**: adicionado botão "Salvar" no cabeçalho da página wiki com suporte a `Ctrl+S` / `Cmd+S`. O botão fica ativo (azul) quando há conteúdo não salvo e mostra "Salvando…" durante a requisição e "Salvo" após o sucesso. O `WikiEditor` agora expõe `onContentChange` para notificar o pai do conteúdo mais recente.
 - **WikiLayout — criar wiki por projeto (2026-03-17)**: quando um projeto ainda não tem espaço wiki, a aba Wiki exibe um botão "Criar wiki" em vez de uma mensagem estática. Ao clicar, cria o espaço via `POST /wiki/spaces/` com o nome do projeto. Corrigido o mapeamento de `createSpace` no serviço para enviar `{ project, name }` no formato esperado pelo backend.
 - **IssueCard — badge de ciclo (2026-03-17)**: quando uma issue pertence a um ciclo, exibe um badge violeta com ícone de ciclo e o nome do ciclo (truncado em 16 chars) na linha de metadados do card do kanban.
@@ -213,6 +275,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [0.4.0] — 2026-03-12
 
 ### Adicionado
+
 - **Módulos (frontend)**: página `ModulesPage` com cards agrupados por status, progress bar,
   responsável (lead), datas e modal de criação/edição. Rota e tab na nav do projeto.
 - **Portfolio — gerenciamento completo**:
@@ -229,6 +292,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   o `node_modules` Alpine no Docker build
 
 ### Corrigido
+
 - **`portfolio.service.ts` — roadmap**: retornava `r.data` inteiro em vez de
   `{ projects, dependencies }` (bug de tipo)
 - **`portfolio.service.ts` — paginação**: `projects()`, `objectives()` e `costs()`
@@ -249,6 +313,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **`updateProject`**: payload enviado em camelCase sem conversão snake_case
 
 ### Alterado
+
 - **`types/portfolio.ts`**: adicionado tipo `RoadmapProject` com `projectColor` e `predecessors`
 - **`types/index.ts`**: adicionado campo `leadDetail` ao tipo `Module`
 - **`package.json`**: script `build` separado em `build` (vite) e `typecheck` (tsc)
@@ -258,6 +323,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [0.3.0] — 2026-03-11
 
 ### Adicionado
+
 - **Risk Register (backend)**: app `risks` com model `ProjectRisk` (managed=False),
   matriz de probabilidade×impacto (score 1–25), status workflow
   (identified → analyzing → mitigating → monitoring → closed),
@@ -271,6 +337,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 - **Editor Yjs**: integração de colaboração em tempo real via WebSocket
 
 ### Corrigido
+
 - `RiskForm`: reset de estado ao trocar de risco, lógica de filtro da matriz
 - Múltiplos bugs model vs DB schema (`db_column`, campos faltantes)
 
@@ -279,6 +346,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [0.2.0] — 2026-03-10
 
 ### Adicionado
+
 - **Portfolio (backend — Fase 3)**: models `Portfolio`, `PortfolioProject`,
   `PortfolioProjectDep`, `PortfolioObjective`, `ObjectiveProject`, `PortfolioCostEntry`
   (todos managed=False)
@@ -296,6 +364,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
   `GanttChart` (tabela visual), `NetworkDiagram` (ReactFlow + caminho crítico)
 
 ### Corrigido
+
 - Docker volume mount Windows: workaround `make sync-backend`
 - Auth: audience mismatch Keycloak (`KEYCLOAK_VERIFY_AUDIENCE=False` em dev)
 - Services com `PaginatedResponse`: `.results` extraído corretamente
@@ -305,6 +374,7 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 ## [0.1.0] — 2026-03-07
 
 ### Adicionado
+
 - **Fundação**: Django 5.1 + DRF + Channels + Celery + Redis + PostgreSQL 16
 - **Auth**: Keycloak OIDC com verificação JWT local via JWKS (cache Redis 1h)
 - **Workspaces**: CRUD + membros + management command `wait_for_db`

@@ -23,6 +23,8 @@ class Project(models.Model):
         max_length=20, choices=Status.choices, default=Status.ACTIVE
     )
     is_private = models.BooleanField(default=False)
+    start_date = models.DateField(blank=True, null=True)
+    target_date = models.DateField(blank=True, null=True)
     created_by = models.ForeignKey(
         "workspaces.WorkspaceMember",
         on_delete=models.SET_NULL,

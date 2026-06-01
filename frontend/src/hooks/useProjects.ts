@@ -96,3 +96,28 @@ export function useDeleteProject() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projects'] }),
   })
 }
+
+export function useCreateProjectState(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: Partial<IssueState>) => projectService.createState(projectId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project-states', projectId] }),
+  })
+}
+
+export function useUpdateProjectState(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ stateId, data }: { stateId: string; data: Partial<IssueState> }) =>
+      projectService.updateState(projectId, stateId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project-states', projectId] }),
+  })
+}
+
+export function useDeleteProjectState(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (stateId: string) => projectService.deleteState(projectId, stateId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project-states', projectId] }),
+  })
+}

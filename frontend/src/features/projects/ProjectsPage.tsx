@@ -2,11 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, LayoutGrid, List, Diamond } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useProjects, useCreateProject, useProjectMembers } from '@/hooks/useProjects'
+import { useProjects, useProjectMembers } from '@/hooks/useProjects'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Modal, ModalFooter } from '@/components/ui/Modal'
+import { Modal } from '@/components/ui/Modal'
 import { AvatarGroup } from '@/components/ui/Avatar'
+import { ProjectWizard } from './ProjectWizard'
 import { cn } from '@/lib/utils'
 import type { Project, ProjectMember } from '@/types'
 
@@ -122,63 +122,12 @@ function ProjectRow({ project, onClick }: { project: Project; onClick: () => voi
   )
 }
 
-// ─── Create modal ─────────────────────────────────────────────────────────────
+// ─── Create wizard modal ──────────────────────────────────────────────────────
 
 function CreateProjectModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState('')
-  const [identifier, setIdentifier] = useState('')
-  const [error, setError] = useState('')
-  const { workspace } = useWorkspaceStore()
-  const create = useCreateProject()
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setError('')
-    if (!workspace) { setError('Workspace não encontrado.'); return }
-    create.mutate(
-      { workspaceId: workspace.id, data: { name, identifier } },
-      {
-        onSuccess: onClose,
-        onError: (err: unknown) => {
-          const msg =
-            (err as { response?: { data?: { error?: string } } })?.response?.data?.error
-            ?? 'Erro ao criar projeto. Tente novamente.'
-          setError(msg)
-        },
-      },
-    )
-  }
-
   return (
-    <Modal open={open} onClose={onClose} title="Novo projeto" size="sm">
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Nome"
-          value={name}
-          onChange={(e) => {
-            setName(e.target.value)
-            if (!identifier)
-              setIdentifier(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))
-          }}
-          placeholder="Ex: Sistema de Contratos"
-          required
-          autoFocus
-        />
-        <Input
-          label="Identificador"
-          value={identifier}
-          onChange={(e) =>
-            setIdentifier(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))
-          }
-          placeholder="Ex: CONT"
-          required
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <ModalFooter>
-          <Button variant="ghost" type="button" onClick={onClose}>Cancelar</Button>
-          <Button type="submit" loading={create.isPending}>Criar projeto</Button>
-        </ModalFooter>
-      </form>
+    <Modal open={open} onClose={onClose} title="Novo projeto" size="lg">
+      <ProjectWizard onDone={onClose} />
     </Modal>
   )
 }
