@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { categoryFromPath, ROUTE_MAP } from '../content/routeMap'
 import type { HelpCategory } from '../content/types'
-// import { ARTICLES } from '../content/articles'   ← KEEP THIS LINE COMMENTED OUT (articles.tsx doesn't exist yet)
+import { ARTICLES } from '../content/articles'
 
 describe('categoryFromPath', () => {
   it('returns "board" for project board route', () => {
@@ -77,17 +77,17 @@ describe('ROUTE_MAP integrity', () => {
   })
 })
 
-// describe('ARTICLES routePattern integrity', () => {   ← KEEP THIS BLOCK COMMENTED OUT
-//   it('every routePattern in ARTICLES maps to a valid category via categoryFromPath', () => {
-//     ARTICLES
-//       .filter((a) => a.routePattern)
-//       .forEach((a) => {
-//         const testPath = a.routePattern!
-//           .replace(':projectId', 'test-id')
-//           .replace(':pageId', 'page-id')
-//           .replace(':cycleId', 'cycle-id')
-//         const result = categoryFromPath(testPath)
-//         expect(result).toBe(a.category)
-//       })
-//   })
-// })
+describe('ARTICLES routePattern integrity', () => {
+  it('every routePattern in ARTICLES maps to a valid category via categoryFromPath', () => {
+    ARTICLES
+      .filter((a) => a.routePattern)
+      .forEach((a) => {
+        const testPath = a.routePattern!
+          .replace(':projectId', 'test-id')
+          .replace(':pageId', 'page-id')
+          .replace(':cycleId', 'cycle-id')
+        const result = categoryFromPath(testPath)
+        expect(result).toBe(a.category)
+      })
+  })
+})
