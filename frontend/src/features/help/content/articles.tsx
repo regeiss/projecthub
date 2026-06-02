@@ -12,7 +12,7 @@ export const ARTICLES: HelpArticle[] = [
     body: (
       <div className="space-y-4">
         <p className="text-gray-700 dark:text-gray-300">
-          O <strong>ProjectHub</strong> é o sistema interno de gestão de projetos da Prefeitura de Novo Hamburgo. Use-o para planejar, acompanhar e entregar projetos com eficiência.
+          O ProjectHub é o sistema interno de gestão de projetos da Prefeitura de Novo Hamburgo. Use-o para planejar, acompanhar e entregar projetos com eficiência.
         </p>
         <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Passo a passo</h3>
         <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400">
