@@ -317,7 +317,7 @@ export const ARTICLES: HelpArticle[] = [
   {
     id: 'rag-status',
     category: 'portfolio',
-    title: 'Status RAG explicado',
+    title: 'Semáforo de saúde do projeto',
     routePattern: '/portfolio',
     keywords: ['rag', 'status', 'verde', 'âmbar', 'vermelho', 'semáforo'],
     bodyText:
