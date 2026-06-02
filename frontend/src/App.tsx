@@ -29,6 +29,7 @@ import { ProjectDashboardPage } from './features/projects/ProjectDashboardPage'
 import { ProjectActivityPage } from './features/activity/ProjectActivityPage'
 import { UserSettingsPage } from './features/user/UserSettingsPage'
 import { InboxPage } from './features/notifications/InboxPage'
+import { HelpPage } from './features/help'
 import { OnboardingPage } from './features/onboarding/OnboardingPage'
 import { SignInPage } from './features/auth/SignInPage'
 
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="/workspace/settings" element={<WorkspaceSettings />} />
             <Route path="/settings" element={<UserSettingsPage />} />
             <Route path="/inbox" element={<InboxPage />} />
+            <Route path="/help" element={<HelpPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

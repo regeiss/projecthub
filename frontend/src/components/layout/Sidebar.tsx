@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useNavigate, useParams } from 'react-router-dom'
+import { NavLink, useNavigate, useParams, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard,
   FolderKanban,
@@ -11,6 +11,7 @@ import {
   Bell,
   PanelLeft,
   PanelLeftClose,
+  HelpCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -77,6 +78,7 @@ function CreateWorkspaceModal({ open, onClose }: { open: boolean; onClose: () =>
 export function Sidebar() {
   const { workspace, setWorkspace } = useWorkspaceStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const { projectId } = useParams()
   const { data: workspaces = [] } = useWorkspaces()
   const { data: projects = [] } = useProjects(workspace?.id ?? '')
@@ -239,6 +241,29 @@ export function Sidebar() {
           expanded ? 'px-3' : 'items-center px-2',
         )}
       >
+        {/* Help button */}
+        <div className={cn('group/nav relative', expanded && 'w-full')}>
+          <button
+            onClick={() => navigate('/help', { state: { from: location.pathname } })}
+            aria-label="Ajuda"
+            className={cn(
+              'flex h-8 items-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white',
+              expanded ? 'w-full gap-3 px-2' : 'w-8 justify-center',
+            )}
+          >
+            <HelpCircle className="h-4 w-4 shrink-0" />
+            {expanded && <span className="text-sm">Ajuda</span>}
+          </button>
+
+          {!expanded && (
+            <div className="pointer-events-none absolute left-full top-1/2 ml-3 -translate-y-1/2 hidden group-hover/nav:block z-50">
+              <div className="rounded-md bg-black/75 px-2.5 py-1 text-xs text-white whitespace-nowrap shadow-lg">
+                Ajuda
+              </div>
+            </div>
+          )}
+        </div>
+
         <NavItem to="/workspace/settings" icon={Settings} label="Configurações" expanded={expanded} />
 
         <button
