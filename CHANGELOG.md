@@ -52,6 +52,22 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Help module — central help centre (2026-06-01)**:
+  - New `/help` route with a two-column layout (category sidebar on the left, content area on the right).
+  - `HelpCircle` icon entry point added to the Sidebar bottom section (below the workspace nav items).
+  - `?` keyboard shortcut opens the help centre from anywhere in the app (implemented in `useHelp` hook with a global `keydown` listener; suppressed when focus is inside an `<input>`, `<textarea>`, or `[contenteditable]`).
+  - Context-aware: navigating to `/help` from a project route (e.g. `/projects/:id/board`) auto-selects the most relevant category via `categoryFromPath()` in `routeMap.ts`.
+  - 24 help articles across 13 categories (all content in Portuguese): Início Rápido, Projetos, Issues, Ciclos, Backlog, Board, Módulos, Marcos, Wiki, Gantt, Portfolio, Recursos, Riscos.
+  - Keyboard shortcuts reference panel (`ShortcutsPanel`) listing all app-wide shortcuts grouped by section.
+  - 10 FAQ entries with expandable accordion (`FaqPanel`), covering common onboarding and workflow questions.
+  - In-memory debounced search (300 ms) across articles and FAQ entries (`HelpSearch` component + `useHelp` hook); matching term is highlighted in results.
+  - Full test suite: **55 tests across 7 test files** covering `routeMap`, `useHelp` hook, `HelpSearch`, `HelpArticle`, `ShortcutsPanel`, `FaqPanel`, and `HelpPage` integration.
+  - Files added under `frontend/src/features/help/`: `types.ts`, `content/articles.ts`, `content/shortcuts.ts`, `content/faq.ts`, `routeMap.ts`, `useHelp.ts`, `HelpSidebar.tsx`, `HelpSearch.tsx`, `HelpArticleList.tsx`, `HelpArticle.tsx`, `ShortcutsPanel.tsx`, `FaqPanel.tsx`, `HelpPage.tsx`, `index.ts`, and corresponding `__tests__/` files.
+  - `App.tsx` wired with `<Route path="/help" element={<HelpPage />} />`.
+  - `Sidebar.tsx` updated with `HelpCircle` nav item and `?` shortcut handler.
+
 ### Fixed
 
 - **Keycloak login — painel direito renderizando abaixo (2026-05-30)**: o painel direito (formulário) estava aparecendo abaixo do painel esquerdo em vez de ao lado. Causa: o PatternFly v5 pode definir `flex-wrap: wrap` ou layout grid no container, fazendo os itens quebrarem linha. Correções em `assets/meu-tema/login/resources/css/style.css`: adicionado `flex-wrap: nowrap !important` e `justify-content: flex-start !important` ao `.pf-v5-c-login`; adicionado `flex-wrap: nowrap !important`, `min-height: 0 !important` e reset de grid (`grid-template-*: none`) ao `.pf-v5-c-login__container`; painel direito (`main.pf-v5-c-login__main`) recebeu `flex: 1 1 48%`, `width: 48%` e `min-width: 300px` para não colapsar.
