@@ -8,7 +8,9 @@
 
 ## Overview
 
-A comprehensive, context-aware help center embedded in ProjectHub. Users access it via a `?` icon at the bottom of the sidebar (alongside Settings) or by pressing `?` anywhere in the app. The help center is a dedicated full-page route (`/help`) with three content areas: feature guides, keyboard shortcuts, and FAQ.
+A comprehensive, context-aware help center embedded in ProjectHub. Users access it via a `HelpCircle` icon in the **bottom section of the sidebar** (the same section as the Settings icon and the collapse toggle) or by pressing `?` anywhere in the app. The help center is a dedicated full-page route (`/help`) with three content areas: feature guides, keyboard shortcuts, and FAQ.
+
+All UI text and `aria-label` values are in **Portuguese**, consistent with the rest of the application (e.g. "Ajuda", "Pesquisar na ajuda", "Categorias de ajuda").
 
 ---
 
@@ -16,7 +18,7 @@ A comprehensive, context-aware help center embedded in ProjectHub. Users access 
 
 ### Approach
 
-Static TypeScript content map. All help content lives as structured TypeScript objects in `src/features/help/content/`. No external dependencies, no backend calls, no markdown parser — content is typed JSX rendered directly. Search runs in-memory with a simple debounced filter over title + keywords + body text.
+Static TypeScript content map. All help content lives as structured TypeScript objects in `src/features/help/content/`. No external dependencies, no backend calls, no markdown parser — content is typed JSX rendered directly. Search runs in-memory with a simple debounced filter over `title`, `keywords`, and the dedicated `bodyText` string field (see types below).
 
 ### File Structure
 
@@ -27,13 +29,14 @@ src/features/help/
     shortcuts.ts         ← keyboard shortcut definitions
     faq.ts               ← FAQ entries
     routeMap.ts          ← maps route patterns → article category ids
-  HelpPage.tsx           ← /help route, two-column layout
+  HelpPage.tsx           ← /help route, two-column layout + header
   HelpSidebar.tsx        ← left category navigation
+  HelpArticleList.tsx    ← list of article titles for the selected category
   HelpArticle.tsx        ← renders a single article's JSX body
   HelpSearch.tsx         ← search input + results list
   ShortcutsPanel.tsx     ← keyboard shortcut reference grid
   FaqPanel.tsx           ← FAQ accordion
-  useHelp.ts             ← hook: current article state, search, context detection
+  useHelp.ts             ← hook: current article state, search, context detection, keyboard shortcut
   index.ts               ← public exports
 ```
 
@@ -44,18 +47,20 @@ type HelpCategory =
   | 'general' | 'board' | 'backlog' | 'cycles' | 'gantt'
   | 'wiki' | 'portfolio' | 'issues' | 'modules'
   | 'milestones' | 'risks' | 'resources' | 'workspace'
+  // 'inbox' is out of scope for this iteration
 
 type HelpArticle = {
   id: string
   category: HelpCategory
   title: string
-  body: React.ReactNode      // JSX: headings, paragraphs, tip callouts
-  keywords: string[]         // searched alongside title + body text
-  routePattern?: string      // e.g. '/projects/:id/board' — drives context detection
+  body: React.ReactNode  // JSX: headings, paragraphs, tip callouts — display only
+  bodyText: string       // plain-text version of body used exclusively for search
+  keywords: string[]     // additional search terms alongside title + bodyText
+  routePattern?: string  // React Router v6 pattern, e.g. '/projects/:projectId/board'
 }
 
 type Shortcut = {
-  keys: string[]             // e.g. ['?'] or ['Ctrl', 'K']
+  keys: string[]         // e.g. ['?'] or ['Ctrl', 'K']
   description: string
   group: 'navigation' | 'issues' | 'search' | 'editor'
 }
@@ -67,6 +72,8 @@ type FaqEntry = {
 }
 ```
 
+`body` (JSX) and `bodyText` (plain string) are kept separate so that `body` can be rich/interactive while `bodyText` remains trivially searchable without attempting to stringify a `ReactNode`.
+
 ---
 
 ## UI Layout
@@ -75,28 +82,35 @@ Two-column layout inside the existing `AppLayout` shell.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  ← Back   Help Center                    🔍 Search...   │
+│  ← Voltar   Central de Ajuda              🔍 Pesquisar  │
 ├───────────────┬─────────────────────────────────────────┤
-│  Categories   │  Article content                        │
+│  Categorias   │  Article list / Article content         │
 │               │                                         │
-│  • General    │  ## Board                               │
-│  • Board   ◀  │  The Board view shows your issues...    │
-│  • Backlog    │                                         │
-│  • Cycles     │  ### Moving issues                      │
-│  • Gantt      │  Drag a card between columns to...      │
+│  • Geral      │  [list of article titles]               │
+│  • Board   ◀  │    or                                   │
+│  • Backlog    │  [rendered HelpArticle body]             │
+│  • Ciclos     │                                         │
+│  • Gantt      │                                         │
 │  • Wiki       │                                         │
-│  • Portfolio  │                                         │
-│  • Modules    │                                         │
-│  • Milestones │                                         │
-│  • Risks      │                                         │
-│  • Resources  ├─────────────────────────────────────────┤
-│  ───────────  │  Keyboard Shortcuts  (tab)              │
-│  ⌨ Shortcuts  │  FAQ                 (tab)              │
+│  • Portfólio  │                                         │
+│  • Issues     │                                         │
+│  • Módulos    │                                         │
+│  • Marcos     │                                         │
+│  • Riscos     │                                         │
+│  • Recursos   │                                         │
+│  ───────────  │                                         │
+│  ⌨ Atalhos   │                                         │
 │  ❓ FAQ       │                                         │
 └───────────────┴─────────────────────────────────────────┘
 ```
 
-The left sidebar lists all categories; clicking one updates the main panel. Shortcuts and FAQ appear as the last two items in the left nav and render their own dedicated panels (not article format).
+**Navigation flow:**
+1. Clicking a category shows `HelpArticleList` — a list of article titles for that category.
+2. Clicking an article title shows `HelpArticle` — the full article body.
+3. A breadcrumb / back chevron in the main panel returns to the article list for that category.
+4. The `← Voltar` button in the top header navigates to `navigate(-1)` (browser history back). If there is no history entry (direct URL access), it navigates to `/`.
+
+Shortcuts and FAQ appear as the last two items in the left nav and render `ShortcutsPanel` / `FaqPanel` respectively (not the article list/article flow).
 
 ---
 
@@ -104,23 +118,25 @@ The left sidebar lists all categories; clicking one updates the main panel. Shor
 
 | Trigger | Behavior |
 |---|---|
-| `HelpCircle` icon in Sidebar bottom section | Navigates to `/help` |
-| Keyboard shortcut `?` (Shift+/) | Navigates to `/help` from anywhere; does not fire inside `<input>` or `<textarea>` |
-| Direct URL `/help` | Opens to General category by default |
+| `HelpCircle` icon in Sidebar **bottom section** (same section as Settings and collapse toggle) | Navigates to `/help` |
+| Keyboard shortcut `?` (Shift+/) | Navigates to `/help` from anywhere; does **not** fire when focus is inside `<input>`, `<textarea>`, or `[contenteditable]` |
+| Direct URL `/help` | Opens to Geral (General) category by default |
 
 ### Context Awareness
 
-`useHelp` reads `useLocation()` on mount and calls `matchPath` against each article's `routePattern`. The first match sets the initial active category. Example:
+`useHelp` reads the referrer location stored in React Router's `location.state.from` (set by the sidebar link before navigating to `/help`). It then calls `matchPath` (React Router v6) against each article's `routePattern` to find the best-matching category, which is pre-selected on mount.
 
-| Current route | Auto-selected category |
+Route patterns use React Router v6 param syntax (`:projectId`, not `:id`):
+
+| Referrer route | Auto-selected category |
 |---|---|
-| `/projects/:id/board` | Board |
-| `/projects/:id/backlog` | Backlog |
-| `/projects/:id/cycles` | Cycles |
-| `/projects/:id/gantt` | Gantt |
-| `/projects/:id/wiki` | Wiki |
-| `/portfolio` | Portfolio |
-| `/` | General |
+| `/projects/:projectId/board` | Board |
+| `/projects/:projectId/backlog` | Backlog |
+| `/projects/:projectId/cycles` | Ciclos |
+| `/projects/:projectId/gantt` | Gantt |
+| `/projects/:projectId/wiki` | Wiki |
+| `/portfolio` | Portfólio |
+| `/` or no match | Geral |
 
 ---
 
@@ -130,83 +146,85 @@ The left sidebar lists all categories; clicking one updates the main panel. Shor
 
 | Category | Articles |
 |---|---|
-| General | Getting started, Workspace overview |
-| Board | Using the Kanban board, Drag & drop issues |
-| Backlog | Managing the backlog, Filtering & sorting |
-| Cycles | Creating cycles, Adding issues to a cycle |
-| Gantt | Reading the Gantt chart, CPM critical path explained |
-| Wiki | Creating pages, Collaborative editing |
-| Portfolio | Portfolio dashboard, RAG status explained, EVM metrics |
-| Issues | Creating issues, Issue relations, Priorities & types |
-| Modules | Grouping issues with modules |
-| Milestones | Setting milestones & tracking progress |
-| Risks | Logging and monitoring project risks |
-| Resources | Managing workspace resources |
+| Geral | Primeiros passos, Visão geral do workspace |
+| Board | Usando o quadro Kanban, Arrastar e soltar issues |
+| Backlog | Gerenciando o backlog, Filtros e ordenação |
+| Ciclos | Criando ciclos, Adicionando issues a um ciclo |
+| Gantt | Lendo o gráfico de Gantt, Caminho crítico (CPM) |
+| Wiki | Criando páginas, Edição colaborativa |
+| Portfólio | Painel do portfólio, Status RAG explicado, Métricas EVM |
+| Issues | Criando issues, Relações entre issues, Prioridades e tipos |
+| Módulos | Agrupando issues com módulos |
+| Marcos | Definindo marcos e acompanhando progresso |
+| Riscos | Registrando e monitorando riscos |
+| Recursos | Gerenciando recursos do workspace |
 
 ### Keyboard Shortcuts
 
 Grouped into four sections, rendered as a two-column key + description grid:
 
-**Navigation**
-- `?` — Open Help
-- `/` — Global search
-- `Esc` — Close modal / panel
+**Navegação**
+- `?` — Abrir Ajuda
+- `/` — Busca global
+- `Esc` — Fechar modal / painel
 
 **Issues**
-- `N` — New issue (Board / Backlog context)
+- `N` — Nova issue (contexto Board / Backlog)
 
-**Search**
-- `Ctrl+K` — Command palette (reserved for future)
+**Busca**
+- `Ctrl+K` — Paleta de comandos (reservado para versão futura)
 
 **Editor (Wiki)**
-- `Ctrl+B` — Bold
-- `Ctrl+I` — Italic
-- `Ctrl+Z` — Undo
+- `Ctrl+B` — Negrito
+- `Ctrl+I` — Itálico
+- `Ctrl+Z` — Desfazer
 
 ### FAQ
 
-~15 entries covering common confusion points, including:
-- "Why can't I delete a project?"
-- "How do I change issue state colors?"
-- "What is RAG status and how is it calculated?"
-- "What is CPM / critical path?"
-- "How do I add a member to a project?"
-- "Can I restore a deleted wiki page?"
-- "How do notifications work?"
-- "What is the difference between Cycles and Modules?"
+~15 entries, including:
+- "Por que não consigo excluir um projeto?"
+- "Como altero as cores dos estados de uma issue?"
+- "O que é o status RAG e como é calculado?"
+- "O que é CPM / caminho crítico?"
+- "Como adiciono um membro a um projeto?"
+- "Posso restaurar uma página de Wiki excluída?"
+- "Como funcionam as notificações?"
+- "Qual a diferença entre Ciclos e Módulos?"
 
 ---
 
 ## Search
 
 - Client-side, in-memory
-- Searches across: `article.title`, `article.keywords`, stringified `article.body` text, `faq.question`
+- Searches across: `article.title`, `article.keywords`, `article.bodyText`, `faq.question`
 - Debounced 150 ms
-- Results replace the article panel; clicking a result navigates to that article/section
-- "No results" empty state with a suggestion to browse categories
+- Results replace the main panel; clicking a result navigates to that article
+- "Nenhum resultado" empty state with suggestion to browse categories
 
 ---
 
 ## Accessibility
 
+All labels are in Portuguese, consistent with the rest of the application.
+
 - Left category nav: `<nav aria-label="Categorias de ajuda">`, `aria-current="page"` on active item
 - Search: `role="search"`, `aria-label="Pesquisar na ajuda"`
 - FAQ: Radix Accordion with `aria-expanded` managed by the component
-- `?` keyboard shortcut skips when focus is inside `<input>`, `<textarea>`, or `[contenteditable]`
+- `?` keyboard shortcut handler in `useHelp`: skips when `document.activeElement` is `INPUT`, `TEXTAREA`, or has `contenteditable` attribute
 - All interactive elements reachable via Tab; focus rings visible
-- Sidebar help button: `aria-label="Ajuda"` + tooltip label
+- Sidebar help button: `aria-label="Ajuda"` + tooltip (same pattern as other `NavItem` entries)
 
 ---
 
 ## Routing
 
-Add to `App.tsx` inside the `<AppLayout>` protected block:
+Add to `App.tsx` inside the `<AppLayout>` protected block (alongside `/inbox`, `/settings`, etc.):
 
 ```tsx
 <Route path="/help" element={<HelpPage />} />
 ```
 
-Add `HelpCircle` `NavItem` to `Sidebar.tsx` bottom section, between Inbox and Settings.
+Add `HelpCircle` `NavItem` to `Sidebar.tsx` **bottom section** — the `<div>` that already contains `NavItem to="/workspace/settings"` and the collapse toggle button. Place it above Settings.
 
 ---
 
@@ -214,18 +232,22 @@ Add `HelpCircle` `NavItem` to `Sidebar.tsx` bottom section, between Inbox and Se
 
 | File | What it tests |
 |---|---|
-| `HelpPage.test.tsx` | Renders without crashing, route registration |
-| `HelpSearch.test.tsx` | Filters by keyword, "no results" state, debounce |
-| `useHelp.test.ts` | Context detection: given route → correct category selected |
-| `ShortcutsPanel.test.tsx` | All shortcut entries render |
-| `FaqPanel.test.tsx` | Accordion expand/collapse |
-| `routeMap.test.ts` | Each route pattern maps to a valid article id |
+| `HelpPage.test.tsx` | Renders without crashing; category nav visible; article list shown on category click |
+| `HelpSearch.test.tsx` | Filters by keyword; shows "no results" state; debounce (fake timers) |
+| `useHelp.test.ts` | Context detection: given referrer route → correct category pre-selected |
+| `useHelp.test.ts` | Keyboard shortcut `?`: fires when focus is on body; does NOT fire inside `<input>` |
+| `HelpArticle.test.tsx` | Renders a known article by id; title and bodyText present in DOM |
+| `ShortcutsPanel.test.tsx` | All shortcut entries render with their key labels |
+| `FaqPanel.test.tsx` | Accordion: first item collapsed by default; expands on click; collapses on second click |
+| `routeMap.test.ts` | Each route pattern maps to a valid, existing article category |
 
 ---
 
 ## Out of Scope
 
 - Video tutorials
+- Inbox/notifications help category (deferred to next iteration)
 - CMS or backend-driven content
 - In-app tooltip overlays / product tours
 - Admin interface for editing help content
+- Command palette (`Ctrl+K`) — shortcut listed as reference only
