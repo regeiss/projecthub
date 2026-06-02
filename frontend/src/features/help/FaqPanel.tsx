@@ -24,6 +24,7 @@ export function FaqPanel() {
               <button
                 onClick={() => toggle(entry.id)}
                 aria-expanded={isOpen}
+                aria-controls={`faq-answer-${entry.id}`}
                 className={cn(
                   'flex w-full items-center justify-between gap-4 py-4 text-left text-sm',
                   'text-gray-800 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 transition-colors',
@@ -36,7 +37,7 @@ export function FaqPanel() {
               </button>
 
               {isOpen && (
-                <div className="pb-4">
+                <div id={`faq-answer-${entry.id}`} className="pb-4">
                   {entry.answer}
                 </div>
               )}

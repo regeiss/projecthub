@@ -4,6 +4,16 @@ import { MemoryRouter } from 'react-router-dom'
 import { createElement } from 'react'
 import { useHelp } from '../useHelp'
 
+const mockNavigate = vi.fn()
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('react-router-dom')>()
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
+
 function wrapper(initialPath: string, state?: object) {
   return ({ children }: { children: React.ReactNode }) =>
     createElement(MemoryRouter, {
@@ -67,10 +77,22 @@ describe('useHelp — panel and article state', () => {
 })
 
 describe('useHelp — keyboard shortcut guard', () => {
-  beforeEach(() => { vi.useFakeTimers() })
+  beforeEach(() => {
+    vi.useFakeTimers()
+    mockNavigate.mockClear()
+  })
   afterEach(() => { vi.useRealTimers() })
 
-  it('does not fire when activeElement is an INPUT', () => {
+  it('navigates to /help when ? is pressed with focus on body', () => {
+    renderHook(() => useHelp(), { wrapper: wrapper('/other-page') })
+    document.body.focus()
+    act(() => {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }))
+    })
+    expect(mockNavigate).toHaveBeenCalledWith('/help', { state: { from: expect.any(String) } })
+  })
+
+  it('does not navigate when activeElement is an INPUT', () => {
     renderHook(() => useHelp(), { wrapper: wrapper('/other-page') })
     const input = document.createElement('input')
     document.body.appendChild(input)
@@ -78,11 +100,11 @@ describe('useHelp — keyboard shortcut guard', () => {
     act(() => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }))
     })
-    expect(true).toBe(true) // guard ran without error
+    expect(mockNavigate).not.toHaveBeenCalled()
     document.body.removeChild(input)
   })
 
-  it('does not fire when activeElement is a TEXTAREA', () => {
+  it('does not navigate when activeElement is a TEXTAREA', () => {
     renderHook(() => useHelp(), { wrapper: wrapper('/other-page') })
     const ta = document.createElement('textarea')
     document.body.appendChild(ta)
@@ -90,8 +112,8 @@ describe('useHelp — keyboard shortcut guard', () => {
     act(() => {
       document.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true }))
     })
+    expect(mockNavigate).not.toHaveBeenCalled()
     document.body.removeChild(ta)
-    expect(true).toBe(true)
   })
 })
 

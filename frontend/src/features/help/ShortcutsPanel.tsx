@@ -23,9 +23,9 @@ export function ShortcutsPanel() {
                 {SHORTCUT_GROUP_LABELS[group]}
               </h3>
               <div className="flex flex-col gap-2">
-                {items.map((shortcut, i) => (
+                {items.map((shortcut) => (
                   <div
-                    key={i}
+                    key={shortcut.keys.join('-')}
                     className="flex items-center justify-between rounded-lg px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
                     <span className="text-sm text-gray-700 dark:text-gray-300">

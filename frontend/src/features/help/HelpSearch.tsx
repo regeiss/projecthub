@@ -42,25 +42,26 @@ export function HelpSearch({ query, onQueryChange, debouncedQuery, onSelectArtic
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative">
-        <Search
-          className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-          aria-hidden="true"
-        />
-        <input
-          type="search"
-          role="searchbox"
-          aria-label="Pesquisar na ajuda"
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="Pesquisar na ajuda…"
-          className={cn(
-            'w-full rounded-lg border border-gray-200 dark:border-gray-700',
-            'bg-white dark:bg-gray-900 py-2 pl-9 pr-4 text-sm',
-            'text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500',
-            'outline-none focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 dark:focus:ring-indigo-900/40',
-          )}
-        />
+      <div role="search">
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            aria-hidden="true"
+          />
+          <input
+            type="search"
+            aria-label="Pesquisar na ajuda"
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Pesquisar na ajuda…"
+            className={cn(
+              'w-full rounded-lg border border-gray-200 dark:border-gray-700',
+              'bg-white dark:bg-gray-900 py-2 pl-9 pr-4 text-sm',
+              'text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500',
+              'outline-none focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-1 focus:ring-indigo-100 dark:focus:ring-indigo-900/40',
+            )}
+          />
+        </div>
       </div>
 
       {!inputOnly && debouncedQuery.trim() && (

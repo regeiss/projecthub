@@ -11,22 +11,6 @@ import { ARTICLES } from './content/articles'
 import { FAQ } from './content/faq'
 import type { HelpCategory } from './content/types'
 
-const CATEGORY_LABELS: Record<HelpCategory, string> = {
-  general: 'Geral',
-  board: 'Board',
-  backlog: 'Backlog',
-  cycles: 'Ciclos',
-  gantt: 'Gantt',
-  wiki: 'Wiki',
-  portfolio: 'Portfólio',
-  issues: 'Issues',
-  modules: 'Módulos',
-  milestones: 'Marcos',
-  risks: 'Riscos',
-  resources: 'Recursos',
-  workspace: 'Workspace',
-}
-
 export function HelpPage() {
   const navigate = useNavigate()
   const { panel, setPanel, articleId, setArticleId, query, setQuery, debouncedQuery } = useHelp()
