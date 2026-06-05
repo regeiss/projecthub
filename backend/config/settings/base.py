@@ -144,9 +144,10 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Filas separadas por domínio
 CELERY_TASK_ROUTES = {
-    "apps.cpm.tasks.*":           {"queue": "cpm"},
-    "apps.notifications.tasks.*": {"queue": "notifications"},
-    "apps.portfolio.tasks.*":     {"queue": "sync"},
+    "apps.cpm.tasks.*":              {"queue": "cpm"},
+    "apps.notifications.tasks.*":    {"queue": "notifications"},
+    "apps.portfolio.tasks.*":        {"queue": "sync"},
+    "apps.access_requests.tasks.*":  {"queue": "notifications"},
 }
 
 # =============================================================================
