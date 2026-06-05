@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useWorkspaceAccessRequests, useResolveAccessRequest } from '@/hooks/useAccessRequest'
 import { Button } from '@/components/ui/Button'
@@ -6,16 +6,17 @@ import { cn } from '@/lib/utils'
 import type { AccessRequestDetail } from '@/types/accessRequest'
 
 function useWorkspaceList() {
-  const { workspace } = useWorkspaceStore()
   const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([])
-  const [loaded, setLoaded] = useState(false)
 
-  if (!loaded && workspace) {
-    setLoaded(true)
+  useEffect(() => {
+    let cancelled = false
     import('@/services/workspace.service').then(({ workspaceService }) => {
-      workspaceService.list().then((ws) => setWorkspaces(ws.map((w) => ({ id: w.id, name: w.name }))))
+      workspaceService.list().then((ws) => {
+        if (!cancelled) setWorkspaces(ws.map((w) => ({ id: w.id, name: w.name })))
+      })
     })
-  }
+    return () => { cancelled = true }
+  }, [])
 
   return workspaces
 }

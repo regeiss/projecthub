@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { workspaceService } from '@/services/workspace.service'
@@ -26,6 +26,7 @@ function WorkspaceAutocomplete({
   return (
     <div className="relative">
       <input
+        id="req-workspace"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onFocus={() => setOpen(true)}
@@ -34,10 +35,13 @@ function WorkspaceAutocomplete({
         placeholder="Nome do workspace ou secretaria"
         aria-autocomplete="list"
         aria-label="Workspace"
+        aria-controls="req-workspace-listbox"
+        aria-expanded={open && filtered.length > 0}
         className="h-9 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
       />
       {open && filtered.length > 0 && (
         <ul
+          id="req-workspace-listbox"
           role="listbox"
           className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg text-sm"
         >
@@ -252,8 +256,8 @@ export function RequestAccessPage() {
   const { data: currentReq, isLoading } = useMyAccessRequest()
   const [workspaceSuggestions, setWorkspaceSuggestions] = useState<{ id: string; name: string }[]>([])
 
-  const locationState = (window.history.state as { usr?: { denied?: AccessRequest } })?.usr
-  const deniedFromNav = locationState?.denied ?? null
+  const location = useLocation()
+  const deniedFromNav = (location.state as { denied?: AccessRequest } | null)?.denied ?? null
 
   useEffect(() => {
     workspaceService
