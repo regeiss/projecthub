@@ -1,13 +1,18 @@
 import logging
 
+from django.db import transaction
+from django.utils import timezone
+from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.authentication.authentication import _decode_jwt
-from apps.workspaces.models import Workspace
+from apps.authentication.authentication import KeycloakJWTAuthentication, _decode_jwt
+from apps.workspaces.models import Workspace, WorkspaceMember
+from core.pagination import StandardPagination
 
 from .models import AccessRequest
-from .serializers import AccessRequestSerializer
+from .serializers import AccessRequestDetailSerializer, AccessRequestSerializer, AdminResolveSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -111,5 +116,93 @@ class AccessRequestStatusView(APIView):
 
         if not req:
             return Response({"detail": "Nenhuma solicitação encontrada."}, status=404)
+
+        return Response(AccessRequestSerializer(req).data)
+
+
+def _get_workspace_or_404(slug):
+    try:
+        return Workspace.objects.get(slug=slug)
+    except Workspace.DoesNotExist:
+        raise NotFound(f"Workspace '{slug}' não encontrado.")
+
+
+class AdminAccessRequestListView(APIView):
+    authentication_classes = [KeycloakJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, slug):
+        ws = _get_workspace_or_404(slug)
+        if request.user.workspace_id != ws.id or request.user.role != "admin":
+            raise PermissionDenied()
+        status_filter = request.query_params.get("status", "pending")
+        qs = AccessRequest.objects.filter(workspace=ws)
+        if status_filter != "all":
+            qs = qs.filter(status=status_filter)
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(qs, request)
+        return paginator.get_paginated_response(
+            AccessRequestDetailSerializer(page, many=True).data
+        )
+
+
+class AdminAccessRequestResolveView(APIView):
+    authentication_classes = [KeycloakJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, slug, pk):
+        ws = _get_workspace_or_404(slug)
+        if request.user.workspace_id != ws.id or request.user.role != "admin":
+            raise PermissionDenied()
+
+        try:
+            req = AccessRequest.objects.get(pk=pk, workspace=ws)
+        except AccessRequest.DoesNotExist:
+            raise NotFound()
+
+        serializer = AdminResolveSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        with transaction.atomic():
+            now = timezone.now()
+            if data["action"] == "approve":
+                workspace_ids = [ws.id] + list(data.get("extra_workspace_ids", []))
+                for wid in workspace_ids:
+                    target_ws = Workspace.objects.filter(pk=wid).first()
+                    if not target_ws:
+                        continue
+                    WorkspaceMember.objects.get_or_create(
+                        keycloak_sub=req.keycloak_sub,
+                        workspace=target_ws,
+                        defaults={
+                            "email": req.email,
+                            "name": req.name,
+                            "role": data.get("role", "member"),
+                        },
+                    )
+                req.status = AccessRequest.Status.APPROVED
+                req.resolved_at = now
+                req.resolved_by = request.user
+                req.save(update_fields=["status", "resolved_at", "resolved_by", "updated_at"])
+
+                from .tasks import send_requester_email
+                granted_names = list(
+                    Workspace.objects.filter(pk__in=workspace_ids).values_list("name", flat=True)
+                )
+                send_requester_email.delay(
+                    str(req.id), "approved",
+                    extra={"workspace_names": granted_names},
+                )
+
+            else:
+                req.status = AccessRequest.Status.DENIED
+                req.denial_reason = data.get("denial_reason", "")
+                req.resolved_at = now
+                req.resolved_by = request.user
+                req.save(update_fields=["status", "denial_reason", "resolved_at", "resolved_by", "updated_at"])
+
+                from .tasks import send_requester_email
+                send_requester_email.delay(str(req.id), "denied")
 
         return Response(AccessRequestSerializer(req).data)

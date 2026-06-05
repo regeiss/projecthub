@@ -126,3 +126,117 @@ class StatusPollViewTests(TestCase):
             HTTP_AUTHORIZATION="Bearer faketoken",
         )
         self.assertEqual(resp.status_code, 404)
+
+
+class AdminListViewTests(TestCase):
+    def setUp(self):
+        self.ws = _workspace()
+        self.admin = WorkspaceMember.objects.create(
+            workspace=self.ws, keycloak_sub=uuid.uuid4().hex,
+            email="admin@test.com", name="Admin", role="admin",
+        )
+        self.req = AccessRequest.objects.create(
+            keycloak_sub=uuid.uuid4().hex, email="user@test.com",
+            name="User", workspace=self.ws, workspace_name=self.ws.name,
+            secretaria="TI",
+        )
+
+    @patch("apps.authentication.authentication.KeycloakJWTAuthentication.authenticate")
+    def test_admin_can_list_requests(self, mock_auth):
+        mock_auth.return_value = (self.admin, None)
+        resp = self.client.get(
+            f"/api/v1/workspaces/{self.ws.slug}/access-requests/",
+            HTTP_AUTHORIZATION="Bearer faketoken",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(len(resp.data["results"]), 1)
+
+    @patch("apps.authentication.authentication.KeycloakJWTAuthentication.authenticate")
+    def test_non_admin_gets_403(self, mock_auth):
+        member = WorkspaceMember.objects.create(
+            workspace=self.ws, keycloak_sub=uuid.uuid4().hex,
+            email="member@test.com", name="Member", role="member",
+        )
+        mock_auth.return_value = (member, None)
+        resp = self.client.get(
+            f"/api/v1/workspaces/{self.ws.slug}/access-requests/",
+            HTTP_AUTHORIZATION="Bearer faketoken",
+        )
+        self.assertEqual(resp.status_code, 403)
+
+
+class AdminResolveViewTests(TestCase):
+    def setUp(self):
+        self.ws = _workspace()
+        self.admin = WorkspaceMember.objects.create(
+            workspace=self.ws, keycloak_sub=uuid.uuid4().hex,
+            email="admin@test.com", name="Admin", role="admin",
+        )
+        self.req = AccessRequest.objects.create(
+            keycloak_sub=uuid.uuid4().hex, email="user@test.com",
+            name="User", workspace=self.ws, workspace_name=self.ws.name,
+            secretaria="TI",
+        )
+
+    @patch("apps.authentication.authentication.KeycloakJWTAuthentication.authenticate")
+    @patch("apps.access_requests.tasks.send_requester_email")
+    def test_approve_creates_workspace_member(self, mock_email, mock_auth):
+        mock_auth.return_value = (self.admin, None)
+        resp = self.client.patch(
+            f"/api/v1/workspaces/{self.ws.slug}/access-requests/{self.req.id}/",
+            data={"action": "approve"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer faketoken",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, AccessRequest.Status.APPROVED)
+        self.assertTrue(
+            WorkspaceMember.objects.filter(
+                keycloak_sub=self.req.keycloak_sub, workspace=self.ws
+            ).exists()
+        )
+        mock_email.delay.assert_called_once()
+
+    @patch("apps.authentication.authentication.KeycloakJWTAuthentication.authenticate")
+    @patch("apps.access_requests.tasks.send_requester_email")
+    def test_approve_with_extra_workspaces(self, mock_email, mock_auth):
+        mock_auth.return_value = (self.admin, None)
+        ws2 = _workspace("WS2")
+        resp = self.client.patch(
+            f"/api/v1/workspaces/{self.ws.slug}/access-requests/{self.req.id}/",
+            data={"action": "approve", "extra_workspace_ids": [str(ws2.id)]},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer faketoken",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            WorkspaceMember.objects.filter(keycloak_sub=self.req.keycloak_sub).count(), 2
+        )
+
+    @patch("apps.authentication.authentication.KeycloakJWTAuthentication.authenticate")
+    @patch("apps.access_requests.tasks.send_requester_email")
+    def test_deny_sets_denial_reason(self, mock_email, mock_auth):
+        mock_auth.return_value = (self.admin, None)
+        resp = self.client.patch(
+            f"/api/v1/workspaces/{self.ws.slug}/access-requests/{self.req.id}/",
+            data={"action": "deny", "denial_reason": "Sem vagas."},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer faketoken",
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.req.refresh_from_db()
+        self.assertEqual(self.req.status, AccessRequest.Status.DENIED)
+        self.assertEqual(self.req.denial_reason, "Sem vagas.")
+        mock_email.delay.assert_called_once()
+
+    @patch("apps.authentication.authentication.KeycloakJWTAuthentication.authenticate")
+    def test_deny_without_reason_returns_400(self, mock_auth):
+        mock_auth.return_value = (self.admin, None)
+        resp = self.client.patch(
+            f"/api/v1/workspaces/{self.ws.slug}/access-requests/{self.req.id}/",
+            data={"action": "deny"},
+            content_type="application/json",
+            HTTP_AUTHORIZATION="Bearer faketoken",
+        )
+        self.assertEqual(resp.status_code, 400)
