@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (workspaces.length > 0) {
             setWorkspace(workspaces[0])
           } else {
-            navigate('/onboarding', { replace: true })
+            navigate('/request-access', { replace: true })
           }
         } catch (err: unknown) {
           console.error('[AuthProvider] bootstrap error:', err)
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Send to onboarding — the user has a valid session and just needs
           // to land somewhere useful. ProtectedRoute → /sign-in would loop
           // because AuthProvider would redirect to Keycloak again.
-          if (!cancelled) navigate('/onboarding', { replace: true })
+          if (!cancelled) navigate('/request-access', { replace: true })
         } finally {
           if (!cancelled) setReady(true)
         }

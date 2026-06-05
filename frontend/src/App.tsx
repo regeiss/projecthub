@@ -32,6 +32,7 @@ import { InboxPage } from './features/notifications/InboxPage'
 import { HelpPage } from './features/help'
 import { OnboardingPage } from './features/onboarding/OnboardingPage'
 import { SignInPage } from './features/auth/SignInPage'
+import { RequestAccessPage } from './features/auth/RequestAccessPage'
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
       <Routes>
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/request-access" element={<RequestAccessPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/" element={<WorkspacePage />} />
