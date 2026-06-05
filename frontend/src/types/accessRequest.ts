@@ -4,7 +4,7 @@ export interface AccessRequest {
   id: string
   status: AccessRequestStatus
   workspaceName: string
-  denialReason: string
+  denialReason: string | null
   requestedAt: string
   resolvedAt: string | null
 }

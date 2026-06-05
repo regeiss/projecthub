@@ -7,7 +7,7 @@ function mapAccessRequest(raw: Record<string, unknown>): AccessRequest {
     id: raw.id as string,
     status: raw.status as AccessRequest['status'],
     workspaceName: (raw.workspace_name ?? raw.workspaceName) as string,
-    denialReason: (raw.denial_reason ?? raw.denialReason ?? '') as string,
+    denialReason: (raw.denial_reason ?? raw.denialReason ?? null) as string | null,
     requestedAt: (raw.requested_at ?? raw.requestedAt) as string,
     resolvedAt: (raw.resolved_at ?? raw.resolvedAt ?? null) as string | null,
   }
