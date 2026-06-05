@@ -5,68 +5,14 @@ Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
-========================================================================================================================================================
-
- The git diff is inflated — comparing our initial commit against the remote brings in hundreds of pre-existing files. Here are the files
- actually edited in this session and the previous one (since 29/05):
-
-  Gantt chart
-  frontend/src/features/gantt/GanttChart.tsx
-  frontend/src/hooks/useCpm.ts          (read, not modified)
-  frontend/src/services/cpm.service.ts  (read, not modified)
-
-  Keycloak auth fixes
-  frontend/src/features/auth/AuthProvider.tsx
-  frontend/src/features/auth/SignInPage.tsx
-  frontend/src/lib/keycloak.ts
-  frontend/vite.config.ts
-  backend/config/settings/base.py
-  backend/apps/authentication/authentication.py
-  assets/meu-tema/login/theme.properties
-
-  Keycloak login theme CSS
-  assets/meu-tema/login/resources/css/style.css
-
-  Project/infra
-  .gitignore
-  .env                      (DATABASE_URL, KEYCLOAK_ISSUER, VITE_* vars)
-  changelog.md
-
-⏺ Modified files:
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/CHANGELOG.md
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/assets/meu-tema/login/resources/css/style.css
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/models.py
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/serializers.py
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectsPage.tsx
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/hooks/useProjects.ts
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/types/project.ts
-
-  Created files:
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/migrations/0002_project_dates.py
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectWizard.test.tsx
-  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectWizard.tsx
-
-
-
-========================================================================================================================================================
-
+=
 ## [Unreleased]
 
 ### Added
 
-- **Help module — central help centre (2026-06-01)**:
-  - New `/help` route with a two-column layout (category sidebar on the left, content area on the right).
-  - `HelpCircle` icon entry point added to the Sidebar bottom section (below the workspace nav items).
-  - `?` keyboard shortcut opens the help centre from anywhere in the app (implemented in `useHelp` hook with a global `keydown` listener; suppressed when focus is inside an `<input>`, `<textarea>`, or `[contenteditable]`).
-  - Context-aware: navigating to `/help` from a project route (e.g. `/projects/:id/board`) auto-selects the most relevant category via `categoryFromPath()` in `routeMap.ts`.
-  - 24 help articles across 13 categories (all content in Portuguese): Início Rápido, Projetos, Issues, Ciclos, Backlog, Board, Módulos, Marcos, Wiki, Gantt, Portfolio, Recursos, Riscos.
-  - Keyboard shortcuts reference panel (`ShortcutsPanel`) listing all app-wide shortcuts grouped by section.
-  - 10 FAQ entries with expandable accordion (`FaqPanel`), covering common onboarding and workflow questions.
-  - In-memory debounced search (300 ms) across articles and FAQ entries (`HelpSearch` component + `useHelp` hook); matching term is highlighted in results.
-  - Full test suite: **55 tests across 7 test files** covering `routeMap`, `useHelp` hook, `HelpSearch`, `HelpArticle`, `ShortcutsPanel`, `FaqPanel`, and `HelpPage` integration.
-  - Files added under `frontend/src/features/help/`: `types.ts`, `content/articles.ts`, `content/shortcuts.ts`, `content/faq.ts`, `routeMap.ts`, `useHelp.ts`, `HelpSidebar.tsx`, `HelpSearch.tsx`, `HelpArticleList.tsx`, `HelpArticle.tsx`, `ShortcutsPanel.tsx`, `FaqPanel.tsx`, `HelpPage.tsx`, `index.ts`, and corresponding `__tests__/` files.
-  - `App.tsx` wired with `<Route path="/help" element={<HelpPage />} />`.
-  - `Sidebar.tsx` updated with `HelpCircle` nav item and `?` shortcut handler.
+- **Access Request Flow (2026-06-05)**: new users arriving via any Keycloak provider see a "Request Access" form instead of the create-workspace wizard. Admins receive in-app notifications and can approve/deny requests from a new "Solicitações" tab in workspace settings (deep-linked via `?tab=requests`). Approval creates `WorkspaceMember` records for the requested workspace plus any extras selected by the admin. Email notifications sent to requesters on approval and denial via Celery (`notifications` queue). Denied users can re-request; admin's denial reason is shown as a `role="alert"` banner. Backend: new `apps/access_requests/` Django app with `AccessRequest` model, DRF serializers, bootstrap endpoints (JWT-only, no WorkspaceMember required), admin endpoints, and Celery tasks. Frontend: `RequestAccessPage` (form/pending/denial states), `AccessRequestsTab`, `useAccessRequest` hooks. Files: `backend/apps/access_requests/`, `frontend/src/features/auth/RequestAccessPage.tsx`, `frontend/src/features/workspace/AccessRequestsTab.tsx`, `frontend/src/hooks/useAccessRequest.ts`, `frontend/src/services/accessRequest.service.ts`, `frontend/src/types/accessRequest.ts`.
+
+- **Microinterações — camada completa (2026-06-02)**: três camadas de animação adicionadas ao ProjectHub. **Camada 1 (CSS/@keyframes):** `@keyframes shimmer` substitui `animate-pulse` nos skeletons; `@keyframes draw-check` desenha o checkmark ao concluir tarefa; `@keyframes badge-pop` aplica spring na badge de notificações; `@keyframes page-enter` (fade+slide 5 px) no `<h1>` das páginas principais; `@keyframes spinner-sweep` refinamento do spinner de loading. **Camada 2 (Tailwind):** `active:scale-95` no Button; regra global `button:not([disabled]):active { scale: 0.97 }` em `index.css`; `transition-all duration-150` nos NavItems da Sidebar. **Camada 3 (Framer Motion):** Modal com spring enter/exit (`scale 0.96→1`, `y 8→0`) + overlay fade; GlobalSearch com slide-down (`y -6→0`); NotificationToast com slide da direita (spring stiffness 400); BoardPage — cards fazem fade+slide na montagem, escalam 1.03 e sombreiam mais ao arrastar; WorkspacePage — tiles entram em stagger (0.055 s/tile) com spring; ProjectsPage — cards entram em stagger (0.05 s/card); InboxList — itens saem com `x -20, height 0` via `AnimatePresence`. Arquivos: `index.css`, `Button.tsx`, `Sidebar.tsx`, `Modal.tsx`, `GlobalSearch.tsx`, `NotificationToast.tsx`, `NotificationBell.tsx`, `TaskListTile.tsx`, `BoardPage.tsx`, `WorkspacePage.tsx`, `ProjectsPage.tsx`, `InboxList.tsx`.
 
 ### Fixed
 
