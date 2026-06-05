@@ -213,6 +213,7 @@ class AdminResolveViewTests(TestCase):
         self.assertEqual(
             WorkspaceMember.objects.filter(keycloak_sub=self.req.keycloak_sub).count(), 2
         )
+        mock_email.delay.assert_called_once()
 
     @patch("apps.authentication.authentication.KeycloakJWTAuthentication.authenticate")
     @patch("apps.access_requests.tasks.send_requester_email")

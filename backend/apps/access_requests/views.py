@@ -184,7 +184,7 @@ class AdminAccessRequestResolveView(APIView):
                 req.status = AccessRequest.Status.APPROVED
                 req.resolved_at = now
                 req.resolved_by = request.user
-                req.save(update_fields=["status", "resolved_at", "resolved_by", "updated_at"])
+                req.save(update_fields=["status", "resolved_at", "resolved_by"])
 
                 from .tasks import send_requester_email
                 granted_names = list(
@@ -200,7 +200,7 @@ class AdminAccessRequestResolveView(APIView):
                 req.denial_reason = data.get("denial_reason", "")
                 req.resolved_at = now
                 req.resolved_by = request.user
-                req.save(update_fields=["status", "denial_reason", "resolved_at", "resolved_by", "updated_at"])
+                req.save(update_fields=["status", "denial_reason", "resolved_at", "resolved_by"])
 
                 from .tasks import send_requester_email
                 send_requester_email.delay(str(req.id), "denied")
