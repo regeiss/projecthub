@@ -7,7 +7,7 @@ import { RequestAccessPage } from './RequestAccessPage'
 // ── Mock hooks ────────────────────────────────────────────────────────────────
 
 vi.mock('@/hooks/useAccessRequest', () => ({
-  useMyAccessRequest: vi.fn(() => ({ data: undefined, isLoading: true })),
+  useMyAccessRequest: vi.fn(() => ({ data: undefined, isLoading: false })),
   useSubmitAccessRequest: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
 }))
 
@@ -95,7 +95,8 @@ describe('RequestAccessPage', () => {
       expect(screen.getByRole('status')).toBeInTheDocument()
     })
 
-    expect(screen.getByText('Aguardando aprovação')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(/solicitação enviada/i)
+    expect(screen.getByRole('heading', { name: /aguardando aprovação/i })).toBeInTheDocument()
   })
 
   it('shows denial banner when request was denied', async () => {

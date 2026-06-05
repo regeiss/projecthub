@@ -31,7 +31,7 @@ vi.mock('@/services/workspace.service', () => ({
 }))
 
 // Import after mocks
-import { useWorkspaceAccessRequests } from '@/hooks/useAccessRequest'
+import { useWorkspaceAccessRequests, useResolveAccessRequest } from '@/hooks/useAccessRequest'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -100,6 +100,11 @@ describe('AccessRequestsTab', () => {
 
   it('deny button requires non-empty reason before confirm is enabled', async () => {
     const user = userEvent.setup()
+    const mutate = vi.fn()
+    vi.mocked(useResolveAccessRequest).mockReturnValue({
+      mutate,
+      isPending: false,
+    } as unknown as ReturnType<typeof useResolveAccessRequest>)
 
     vi.mocked(useWorkspaceAccessRequests).mockReturnValue({
       data: { results: [baseRequest], count: 1 },
@@ -108,21 +113,24 @@ describe('AccessRequestsTab', () => {
 
     renderTab()
 
-    // Click the "Negar" button (deny button)
     const denyBtn = screen.getByRole('button', { name: /negar solicitação de joão silva/i })
     await user.click(denyBtn)
 
-    // Confirm negação button should be visible but disabled (no reason typed yet)
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /confirmar negação para joão silva/i })).toBeInTheDocument()
     })
     expect(screen.getByRole('button', { name: /confirmar negação para joão silva/i })).toBeDisabled()
 
-    // Type a reason in the textarea
     const textarea = screen.getByPlaceholderText(/explique o motivo/i)
     await user.type(textarea, 'Sem vagas disponíveis.')
 
-    // Confirm button should now be enabled
     expect(screen.getByRole('button', { name: /confirmar negação para joão silva/i })).not.toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: /confirmar negação para joão silva/i }))
+
+    expect(mutate).toHaveBeenCalledWith({
+      requestId: 'req-1',
+      payload: { action: 'deny', denialReason: 'Sem vagas disponíveis.' },
+    })
   })
 })
