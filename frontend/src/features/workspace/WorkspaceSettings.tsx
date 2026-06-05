@@ -1,13 +1,16 @@
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { UserPlus, Pencil, Trash2 } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useWorkspaceMembers, useUpdateMemberRole, useUpdateWorkspace, useMe, useRemoveMember } from '@/hooks/useWorkspace'
+import { useWorkspaceAccessRequests } from '@/hooks/useAccessRequest'
 import type { WorkspaceMember } from '@/types'
 import { Avatar } from '@/components/ui/Avatar'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { AddMemberModal } from './AddMemberModal'
+import { AccessRequestsTab } from './AccessRequestsTab'
 import { cn } from '@/lib/utils'
 
 const ROLES: { value: WorkspaceMember['role']; label: string; description: string }[] = [
@@ -155,6 +158,10 @@ export function WorkspaceSettings() {
   const [editingInfo, setEditingInfo] = useState(false)
   const [nameValue, setNameValue] = useState('')
   const updateWorkspace = useUpdateWorkspace()
+  const [searchParams] = useSearchParams()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') ?? 'members')
+  const { data: pendingRequests } = useWorkspaceAccessRequests(workspace?.slug ?? '', 'pending')
+  const pendingCount = pendingRequests?.results?.length ?? 0
 
   if (!workspace) return null
 
@@ -189,99 +196,160 @@ export function WorkspaceSettings() {
         Configurações do Workspace
       </h1>
 
-      <section className="mb-8">
-        <div className="mb-3">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Informações</h2>
-        </div>
-        <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          {editingInfo ? (
-            <div className="p-4 space-y-3">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Nome
-                </label>
-                <input
-                  autoFocus
-                  value={nameValue}
-                  onChange={e => setNameValue(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') saveInfo(); if (e.key === 'Escape') cancelEditInfo() }}
-                  className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:outline-none"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
-                  Slug
-                </label>
-                <p className="text-sm text-gray-400 dark:text-gray-500">{workspace.slug}</p>
-              </div>
-              <div className="flex justify-end gap-2 pt-1">
-                <Button size="sm" variant="ghost" onClick={cancelEditInfo}>
-                  Cancelar
-                </Button>
-                <Button
-                  size="sm"
-                  variant="primary"
-                  disabled={!nameValue.trim() || updateWorkspace.isPending}
-                  loading={updateWorkspace.isPending}
-                  onClick={saveInfo}
-                >
-                  Salvar
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={startEditInfo}
-              className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors group"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{workspace.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{workspace.slug}</p>
-                </div>
-                <Pencil className="h-3.5 w-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-            </button>
+      <div
+        className="mb-6 flex gap-1 border-b border-gray-200 dark:border-gray-700"
+        role="tablist"
+        aria-label="Abas de configurações do workspace"
+      >
+        <button
+          role="tab"
+          aria-selected={activeTab === 'members'}
+          aria-controls="tab-panel-members"
+          onClick={() => setActiveTab('members')}
+          className={cn(
+            'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
+            activeTab === 'members'
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200',
           )}
-        </div>
-      </section>
-
-      <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-            Membros ({members.length})
-          </h2>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={() => setAddOpen(true)}
-            aria-label="Adicionar membro ao workspace"
-          >
-            <UserPlus className="h-4 w-4" />
-            Adicionar membro
-          </Button>
-        </div>
-        <div className="divide-y divide-gray-100 dark:divide-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-          {members.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setEditing(m)}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+        >
+          Membros
+        </button>
+        <button
+          role="tab"
+          aria-selected={activeTab === 'requests'}
+          aria-controls="tab-panel-requests"
+          onClick={() => setActiveTab('requests')}
+          className={cn(
+            'px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px inline-flex items-center',
+            activeTab === 'requests'
+              ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200',
+          )}
+        >
+          Solicitações
+          {pendingCount > 0 && (
+            <span
+              aria-label={`${pendingCount} solicitação${pendingCount !== 1 ? 'ões' : ''} pendente${pendingCount !== 1 ? 's' : ''}`}
+              className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white"
             >
-              <Avatar src={m.avatarUrl} name={m.name} size="sm" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{m.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
-              </div>
-              <Badge variant={m.role === 'admin' ? 'info' : 'default'}>
-                {m.role}
-              </Badge>
-            </button>
-          ))}
+              {pendingCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'members' && (
+        <div
+          id="tab-panel-members"
+          role="tabpanel"
+          aria-labelledby="tab-members"
+        >
+          <section className="mb-8">
+            <div className="mb-3">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Informações</h2>
+            </div>
+            <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              {editingInfo ? (
+                <div className="p-4 space-y-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                      Nome
+                    </label>
+                    <input
+                      autoFocus
+                      value={nameValue}
+                      onChange={e => setNameValue(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveInfo(); if (e.key === 'Escape') cancelEditInfo() }}
+                      className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-900 dark:text-gray-100 focus:border-indigo-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-500 dark:text-gray-400">
+                      Slug
+                    </label>
+                    <p className="text-sm text-gray-400 dark:text-gray-500">{workspace.slug}</p>
+                  </div>
+                  <div className="flex justify-end gap-2 pt-1">
+                    <Button size="sm" variant="ghost" onClick={cancelEditInfo}>
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      disabled={!nameValue.trim() || updateWorkspace.isPending}
+                      loading={updateWorkspace.isPending}
+                      onClick={saveInfo}
+                    >
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={startEditInfo}
+                  className="w-full text-left p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg transition-colors group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{workspace.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{workspace.slug}</p>
+                    </div>
+                    <Pencil className="h-3.5 w-3.5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </button>
+              )}
+            </div>
+          </section>
+
+          <section>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                Membros ({members.length})
+              </h2>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => setAddOpen(true)}
+                aria-label="Adicionar membro ao workspace"
+              >
+                <UserPlus className="h-4 w-4" />
+                Adicionar membro
+              </Button>
+            </div>
+            <div className="divide-y divide-gray-100 dark:divide-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+              {members.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setEditing(m)}
+                  className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                >
+                  <Avatar src={m.avatarUrl} name={m.name} size="sm" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{m.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
+                  </div>
+                  <Badge variant={m.role === 'admin' ? 'info' : 'default'}>
+                    {m.role}
+                  </Badge>
+                </button>
+              ))}
+            </div>
+          </section>
         </div>
-      </section>
+      )}
+
+      {activeTab === 'requests' && (
+        <div
+          id="tab-panel-requests"
+          role="tabpanel"
+          aria-labelledby="tab-requests"
+        >
+          <AccessRequestsTab />
+        </div>
+      )}
 
       <AddMemberModal
         open={addOpen}
