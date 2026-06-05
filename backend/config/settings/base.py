@@ -52,6 +52,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.health",  # Must be first to register health checks
     "apps.authentication",
+    "apps.access_requests",
     "apps.workspaces",
     "apps.projects",
     "apps.issues",
