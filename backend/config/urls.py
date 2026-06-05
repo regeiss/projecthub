@@ -13,6 +13,7 @@ urlpatterns = [
 
     # API v1
     path("api/v1/auth/", include("apps.authentication.urls")),
+    path("api/v1/auth/access-requests/", include("apps.access_requests.urls_auth")),
     path("api/v1/workspaces/", include("apps.workspaces.urls")),
     path("api/v1/projects/", include("apps.projects.urls")),
     path("api/v1/issues/", include("apps.issues.urls")),
