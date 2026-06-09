@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { useParams } from 'react-router-dom'
 import {
   DndContext,
@@ -66,11 +67,23 @@ function IssueCard({ issue }: { issue: Issue }) {
   }
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      className="cursor-grab rounded-md border border-gray-200 dark:border-gray-700 border-l-4 bg-white dark:bg-gray-900 p-3 shadow-sm hover:shadow-md active:cursor-grabbing"
+      initial={{ opacity: 0, y: -10 }}
+      animate={{
+        opacity: isDragging ? 0.4 : 1,
+        y: 0,
+        scale: isDragging ? 1.03 : 1,
+        boxShadow: isDragging
+          ? '0 16px 40px rgba(0,0,0,0.18)'
+          : '0 1px 3px rgba(0,0,0,0.08)',
+        transition: isDragging
+          ? { duration: 0.15 }
+          : { type: 'spring', stiffness: 300, damping: 28 },
+      }}
+      className="cursor-grab rounded-md border border-gray-200 dark:border-gray-700 border-l-4 bg-white dark:bg-gray-900 p-3 active:cursor-grabbing"
       style={{ ...style, borderLeftColor: PRIORITY_LEFT_COLOR[issue.priority] ?? PRIORITY_LEFT_COLOR.none }}
       onClick={() => navigate(`/projects/${projectId}/issues/${issue.id}`, { state: { from: `/projects/${projectId}/board` } })}
     >
@@ -121,7 +134,7 @@ function IssueCard({ issue }: { issue: Issue }) {
           <Avatar src={issue.assignee.avatarUrl} name={issue.assignee.name} size="xs" className="shrink-0" />
         )}
       </div>
-    </div>
+    </motion.div>
   )
 }
 

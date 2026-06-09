@@ -40,7 +40,10 @@ class WorkspaceListView(generics.ListCreateAPIView):
         return WorkspaceSerializer
 
     def get_queryset(self):
-        return Workspace.objects.filter(members__keycloak_sub=self.request.user.keycloak_sub)
+        user = self.request.user
+        if getattr(user, "role", None) == "admin":
+            return Workspace.objects.all().order_by("name")
+        return Workspace.objects.filter(members__keycloak_sub=user.keycloak_sub)
 
     def perform_create(self, serializer):
         workspace = serializer.save()

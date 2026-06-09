@@ -17,6 +17,7 @@
   --color-primary-text:  29  78 216;   /* blue-700  */
 
   --color-bg-space:   241 245 249;     /* slate-100  — page canvas */
+  --color-bg-space-end: 148 163 184;   /* slate-400  — gradient end */
   --color-bg-card:    255 255 255;     /* white      — card surface */
   --color-bg-sidebar: 248 250 252;     /* slate-50   — sidebar      */
   --color-border:     226 232 240;     /* slate-200  — borders      */
@@ -33,6 +34,7 @@
   --color-primary-text:  109  40 217;  /* violet-700 */
 
   --color-bg-space:   247 245 255;     /* violet-50 tinted canvas  */
+  --color-bg-space-end: 167 139 250;   /* violet-400 — gradient end */
   --color-bg-card:    253 252 255;     /* near-white with violet cast */
   --color-bg-sidebar: 245 243 255;     /* violet-50 sidebar */
   --color-border:     237 233 254;     /* violet-100 borders */
@@ -48,7 +50,8 @@
   --color-primary-muted:  204 251 241; /* teal-100 */
   --color-primary-text:   15 118 110;  /* teal-700 */
 
-  --color-bg-space:   236 254 252;     /* teal-50 canvas  */
+  --color-bg-space:   236 244 238;     /* #ECF4EE canvas  */
+  --color-bg-space-end:  45 212 191;   /* teal-400 — gradient end */
   --color-bg-card:    250 255 254;     /* near-white with teal cast */
   --color-bg-sidebar: 240 253 250;     /* teal-50 sidebar */
   --color-border:     153 234 214;     /* teal-200 borders */
@@ -65,6 +68,7 @@
   --color-primary-text:   92  40  10;
 
   --color-bg-space:   250 248 245;     /* warm off-white canvas */
+  --color-bg-space-end: 155 147 136;   /* warm gray-500 — gradient end */
   --color-bg-card:    255 255 255;
   --color-bg-sidebar: 245 243 238;     /* warm gray sidebar */
   --color-border:     231 224 215;     /* warm gray-200 */
@@ -81,6 +85,7 @@
   --color-primary-text:  133  99   0;
 
   --color-bg-space:   254 252 232;     /* yellow-50 canvas */
+  --color-bg-space-end: 180 144   0;   /* amber-600 — gradient end */
   --color-bg-card:    255 255 255;
   --color-bg-sidebar: 254 250 220;     /* warm yellow-tinted sidebar */
   --color-border:     253 224 132;     /* yellow-300 borders */
@@ -172,6 +177,29 @@
   .react-flow__attribution {
     display: none;
   }
+
+  /* Global press feedback — covers all raw <button> elements */
+  button:not([disabled]):active,
+  [role="button"]:not([disabled]):active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* =============================================================================
+   App canvas gradient — diagonal, theme-aware, darker towards bottom-right.
+   Applied to the AppLayout root div. Dark mode goes from slate-900 → gray-950.
+   ============================================================================= */
+.bg-app-canvas {
+  background: linear-gradient(
+    135deg,
+    rgb(var(--color-bg-space))     0%,
+    rgb(var(--color-bg-space-end)) 100%
+  );
+}
+
+.dark .bg-app-canvas {
+  background: linear-gradient(135deg, rgb(15 23 42) 0%, rgb(0 0 0) 100%);
 }
 
 /* =============================================================================
@@ -340,4 +368,86 @@ html:not(.dark) .sidebar-bg {
   .border-theme {
     border-color: rgb(var(--color-border));
   }
+
+  /* Shimmer skeleton */
+  .animate-shimmer {
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+    background-size: 1200px 100%;
+    animation: shimmer 1.6s infinite linear;
+  }
+  .dark .animate-shimmer {
+    background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+    background-size: 1200px 100%;
+  }
+
+  /* Checkmark draw */
+  .animate-draw-check {
+    stroke-dasharray: 12;
+    stroke-dashoffset: 12;
+    animation: draw-check 0.25s ease-out forwards;
+  }
+
+  /* Badge pop */
+  .animate-badge-pop {
+    animation: badge-pop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  /* Success ring */
+  .animate-success-ring {
+    animation: success-ring 0.65s ease-out;
+  }
+
+  /* Page title entrance */
+  .animate-page-enter {
+    animation: page-enter 0.22s ease-out both;
+  }
+
+  /* Spinner sweep */
+  .animate-spinner-sweep {
+    stroke-dasharray: 56;
+    animation: spinner-sweep 1.2s ease-in-out infinite,
+               spin       1.2s linear        infinite;
+  }
+}
+
+/* ─── Microinteraction keyframes ─────────────────────────────────────────── */
+
+/* Shimmer — replaces animate-pulse on skeleton divs */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+
+/* Checkmark stroke draw */
+@keyframes draw-check {
+  from { stroke-dashoffset: 12; }
+  to   { stroke-dashoffset: 0; }
+}
+
+/* Badge pop on new notification */
+@keyframes badge-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.5); }
+  70%  { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
+/* Success ring pulse on form submit */
+@keyframes success-ring {
+  0%   { box-shadow: 0 0 0 0   rgba(34,197,94,0.55); }
+  60%  { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+  100% { box-shadow: 0 0 0 0   rgba(34,197,94,0); }
+}
+
+/* Page title entrance */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Indeterminate spinner sweep */
+@keyframes spinner-sweep {
+  0%   { stroke-dashoffset: 56; }
+  50%  { stroke-dashoffset: 14; }
+  100% { stroke-dashoffset: 56; }
 }

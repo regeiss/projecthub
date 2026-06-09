@@ -57,7 +57,14 @@ function TaskRow({ task }: { task: PersonalTask }) {
       >
         {task.done && (
           <svg viewBox="0 0 10 10" className="h-full w-full text-white" fill="none">
-            <path d="M2 5l2.5 2.5L8 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              className="animate-draw-check"
+              d="M2 5l2.5 2.5L8 3"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         )}
       </button>

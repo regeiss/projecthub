@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowLeft, Plus, X, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -167,7 +168,7 @@ function ProjectDetailsStep({ onSuccess }: { onSuccess: (p: Project) => void }) 
 
       <fieldset className="flex flex-col gap-2">
         <legend className="text-sm font-medium text-gray-700">Cor</legend>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap pt-2">
           {COLOR_PALETTE.map((c) => (
             <button
               key={c}
@@ -186,24 +187,24 @@ function ProjectDetailsStep({ onSuccess }: { onSuccess: (p: Project) => void }) 
       </fieldset>
 
       <label className="flex items-center gap-3 cursor-pointer select-none">
-        <button
+        <motion.button
           type="button"
           role="switch"
           aria-checked={isPrivate}
           onClick={() => setIsPrivate((v) => !v)}
+          whileTap={{ scale: 0.92 }}
           className={cn(
-            'relative w-10 h-5 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
+            'relative w-10 h-5 rounded-full overflow-hidden transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500',
             isPrivate ? 'bg-indigo-600' : 'bg-gray-200',
           )}
         >
-          <span
-            className={cn(
-              'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform',
-              isPrivate ? 'translate-x-5' : 'translate-x-0.5',
-            )}
+          <motion.span
+            className="absolute top-0.5 left-0 w-4 h-4 rounded-full bg-white shadow-sm"
+            animate={{ x: isPrivate ? 20 : 2 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 0.8 }}
           />
           <span className="sr-only">{isPrivate ? 'Projeto privado' : 'Projeto público'}</span>
-        </button>
+        </motion.button>
         <span className="text-sm text-gray-700">Projeto privado</span>
       </label>
 

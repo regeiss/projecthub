@@ -50,6 +50,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "diff": "^9.0.0",
+    "framer-motion": "^12.40.0",
     "keycloak-js": "^26.0.6",
     "lowlight": "^3.1.0",
     "lucide-react": "^0.468.0",

@@ -36,7 +36,7 @@ const WIDGET_DEFS: WidgetDef[] = [
   { id: 'issues-by-state', label: 'Issues por status', span: 'half', component: IssuesByStateWidget },
   { id: 'issues-by-assignee', label: 'Issues por responsável', span: 'half', component: IssuesByAssigneeWidget },
   { id: 'cycle-progress', label: 'Progresso do ciclo', span: 'half', component: CycleProgressWidget },
-  { id: 'milestones', label: 'Milestones', span: 'half', component: MilestonesWidget },
+  { id: 'milestones', label: 'Marcos', span: 'half', component: MilestonesWidget },
   { id: 'risk-summary', label: 'Riscos', span: 'half', component: RiskSummaryWidget },
   { id: 'time-logged', label: 'Horas apontadas', span: 'half', component: TimeLoggedWidget },
 ]

@@ -249,7 +249,7 @@ services:
   # Comentar este bloco se já tiver Keycloak rodando no OCI
   # ---------------------------------------------------------------------------
   keycloak:
-    image: quay.io/keycloak/keycloak:23.0
+    image: quay.io/keycloak/keycloak:latest
     container_name: projecthub_keycloak
     restart: unless-stopped
     environment:
@@ -262,7 +262,7 @@ services:
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HTTP_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
-      KC_PROXY: edge
+      KC_PROXY_HEADERS: xforwarded
     command: start-dev --import-realm
     ports:
       - "8080:8080"

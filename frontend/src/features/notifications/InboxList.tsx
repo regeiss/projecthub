@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { Notification } from '@/types'
 import { InboxItem } from './InboxItem'
 
@@ -58,15 +59,29 @@ export function InboxList({ notifications, onMarkRead, onMarkUnread, onArchive }
           <div className="px-6 py-2 text-[10px] font-mono uppercase tracking-widest text-gray-400">
             {group.label}
           </div>
-          {group.items.map((n) => (
-            <InboxItem
-              key={n.id}
-              notification={n}
-              onMarkRead={onMarkRead}
-              onMarkUnread={onMarkUnread}
-              onArchive={onArchive}
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {group.items.map((n) => (
+              <motion.div
+                key={n.id}
+                initial={{ opacity: 1 }}
+                exit={{
+                  opacity: 0,
+                  x: -20,
+                  height: 0,
+                  marginBottom: 0,
+                  transition: { duration: 0.22, ease: 'easeOut' },
+                }}
+                layout
+              >
+                <InboxItem
+                  notification={n}
+                  onMarkRead={onMarkRead}
+                  onMarkUnread={onMarkUnread}
+                  onArchive={onArchive}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       ))}
     </div>

@@ -31,11 +31,13 @@ import {
 function NavItem({
   to,
   icon: Icon,
+  iconClassName,
   label,
   expanded,
 }: {
   to: string
   icon: React.ElementType
+  iconClassName?: string
   label: string
   expanded: boolean
 }) {
@@ -45,14 +47,14 @@ function NavItem({
         to={to}
         className={({ isActive }) =>
           cn(
-            'flex h-8 items-center rounded-md text-white/50 transition-colors hover:bg-white/10 hover:text-white',
+            'flex h-8 items-center rounded-md text-white/50 transition-all duration-150 hover:bg-white/10 hover:text-white',
             expanded ? 'w-full gap-3 px-2' : 'w-8 justify-center',
             isActive && 'bg-white/15 text-white',
           )
         }
         aria-label={label}
       >
-        <Icon className="h-4 w-4 shrink-0" />
+        <Icon className={cn('h-4 w-4 shrink-0', iconClassName)} />
         {expanded && <span className="truncate text-sm">{label}</span>}
       </NavLink>
 
@@ -162,12 +164,12 @@ export function Sidebar() {
           expanded ? 'px-3' : 'items-center px-2',
         )}
       >
-        <NavItem to="/" icon={LayoutDashboard} label="Dashboard" expanded={expanded} />
-        <NavItem to="/projects" icon={FolderKanban} label="Projetos" expanded={expanded} />
-        <NavItem to="/portfolio" icon={BarChart3} label="Portfolio" expanded={expanded} />
-        <NavItem to="/wiki" icon={BookOpen} label="Wiki" expanded={expanded} />
-        <NavItem to="/inbox" icon={Bell} label="Inbox" expanded={expanded} />
-        <NavItem to="/workspace/resources" icon={Users} label="Recursos" expanded={expanded} />
+        <NavItem to="/" icon={LayoutDashboard} iconClassName="text-indigo-400" label="Dashboard" expanded={expanded} />
+        <NavItem to="/projects" icon={FolderKanban} iconClassName="text-emerald-400" label="Projetos" expanded={expanded} />
+        <NavItem to="/portfolio" icon={BarChart3} iconClassName="text-amber-400" label="Portfolio" expanded={expanded} />
+        <NavItem to="/wiki" icon={BookOpen} iconClassName="text-sky-400" label="Wiki" expanded={expanded} />
+        <NavItem to="/inbox" icon={Bell} iconClassName="text-rose-400" label="Inbox" expanded={expanded} />
+        <NavItem to="/workspace/resources" icon={Users} iconClassName="text-violet-400" label="Recursos" expanded={expanded} />
       </nav>
 
       {/* Projects quick list */}
@@ -251,7 +253,7 @@ export function Sidebar() {
               expanded ? 'w-full gap-3 px-2' : 'w-8 justify-center',
             )}
           >
-            <HelpCircle className="h-4 w-4 shrink-0" />
+            <HelpCircle className="h-4 w-4 shrink-0 text-yellow-400" />
             {expanded && <span className="text-sm">Ajuda</span>}
           </button>
 
@@ -264,7 +266,7 @@ export function Sidebar() {
           )}
         </div>
 
-        <NavItem to="/workspace/settings" icon={Settings} label="Configurações" expanded={expanded} />
+        <NavItem to="/workspace/settings" icon={Settings} iconClassName="text-slate-400" label="Configurações" expanded={expanded} />
 
         <button
           onClick={toggleExpanded}

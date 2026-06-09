@@ -1,4 +1,5 @@
 import * as Dialog from '@radix-ui/react-dialog'
+import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -20,6 +21,17 @@ const sizeClasses: Record<string, string> = {
   full: 'max-w-5xl',
 }
 
+const overlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+}
+
+const contentVariants = {
+  hidden: { opacity: 0, scale: 0.96, x: '-50%', y: '-50%' },
+  visible: { opacity: 1, scale: 1, x: '-50%', y: '-50%', transition: { type: 'spring' as const, stiffness: 320, damping: 30 } },
+  exit:    { opacity: 0, scale: 0.97, x: '-50%', y: '-50%', transition: { duration: 0.15, ease: 'easeIn' as const } },
+}
+
 export function Modal({
   open,
   onClose,
@@ -30,44 +42,60 @@ export function Modal({
   className,
 }: ModalProps) {
   return (
-    <Dialog.Root open={open} onOpenChange={(v: boolean) => !v && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50 animate-in fade-in-0" />
-        <Dialog.Content
-          className={cn(
-            'fixed left-1/2 top-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2',
-            'rounded-lg bg-white dark:bg-gray-900 p-6 shadow-xl dark:shadow-black/40',
-            'animate-in fade-in-0 zoom-in-95',
-            'max-h-[90vh] overflow-y-auto',
-            sizeClasses[size],
-            className,
-          )}
-        >
-          {(title || description) && (
-            <div className="mb-4">
-              {title && (
-                <Dialog.Title className="text-base font-semibold text-gray-900 dark:text-gray-100">
-                  {title}
-                </Dialog.Title>
-              )}
-              {description && (
-                <Dialog.Description className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {description}
-                </Dialog.Description>
-              )}
-            </div>
-          )}
-
-          <Dialog.Close
-            className="absolute right-4 top-4 rounded-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            aria-label="Fechar"
-          >
-            <X className="h-4 w-4" />
-          </Dialog.Close>
-
-          {children}
-        </Dialog.Content>
-      </Dialog.Portal>
+    <Dialog.Root open={open} onOpenChange={(v) => !v && onClose()}>
+      <AnimatePresence>
+        {open && (
+          <Dialog.Portal forceMount>
+            <Dialog.Overlay asChild>
+              <motion.div
+                className="fixed inset-0 z-40 bg-black/50"
+                variants={overlayVariants}
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                transition={{ duration: 0.18 }}
+              />
+            </Dialog.Overlay>
+            <Dialog.Content asChild>
+              <motion.div
+                className={cn(
+                  'fixed left-1/2 top-1/2 z-50 w-full',
+                  'rounded-lg bg-white dark:bg-gray-900 p-6 shadow-xl dark:shadow-black/40',
+                  'max-h-[90vh] overflow-y-auto',
+                  sizeClasses[size],
+                  className,
+                )}
+                variants={contentVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+              >
+                {(title || description) && (
+                  <div className="mb-4">
+                    {title && (
+                      <Dialog.Title className="text-base font-semibold text-gray-900 dark:text-gray-100">
+                        {title}
+                      </Dialog.Title>
+                    )}
+                    {description && (
+                      <Dialog.Description className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {description}
+                      </Dialog.Description>
+                    )}
+                  </div>
+                )}
+                <Dialog.Close
+                  className="absolute right-4 top-4 rounded-sm text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  aria-label="Fechar"
+                >
+                  <X className="h-4 w-4" />
+                </Dialog.Close>
+                {children}
+              </motion.div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        )}
+      </AnimatePresence>
     </Dialog.Root>
   )
 }

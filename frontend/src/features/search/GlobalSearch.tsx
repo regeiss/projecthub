@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useGlobalSearch } from '@/hooks/useGlobalSearch'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -134,14 +135,22 @@ export function GlobalSearch({ expanded = false }: Props) {
 
   // ── Overlay panel (command-palette style) ──────────────────────────────────
 
-  const overlay = isOpen
-    ? createPortal(
+  const overlay = createPortal(
+    <AnimatePresence>
+      {isOpen && (
         <div className="fixed inset-0 z-50 flex flex-col items-center pt-20 px-4">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/25 dark:bg-black/40" />
 
           {/* Panel */}
-          <div ref={panelRef} className="relative w-full max-w-2xl" role="search">
+          <motion.div
+            ref={panelRef}
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0, transition: { duration: 0.15, ease: 'easeOut' } }}
+            exit={{ opacity: 0, y: -6, transition: { duration: 0.1, ease: 'easeIn' } }}
+            className="relative w-full max-w-2xl"
+            role="search"
+          >
             <div className="flex items-center gap-2 h-10 px-3 rounded-t-lg border border-indigo-400 dark:border-indigo-500 bg-white dark:bg-gray-900 shadow-2xl ring-2 ring-indigo-100 dark:ring-indigo-900/40">
               <Search className="h-4 w-4 text-indigo-500 dark:text-indigo-400 shrink-0" aria-hidden="true" />
               <input
@@ -197,11 +206,12 @@ export function GlobalSearch({ expanded = false }: Props) {
                 resultIds={resultIds}
               />
             )}
-          </div>
-        </div>,
-        document.body,
-      )
-    : null
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
+    document.body,
+  )
 
   return (
     <>

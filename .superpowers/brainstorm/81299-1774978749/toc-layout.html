@@ -1,0 +1,97 @@
+<h2>Table of Contents — where should it live?</h2>
+<p class="subtitle">Phase 1 requires a layout decision that affects the whole wiki page structure</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="right-sidebar" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:12px;font-size:0.75em">
+      <div style="display:flex;height:160px;gap:6px">
+        <div style="width:180px;background:#e2e8f0;border-radius:4px;padding:8px;flex-shrink:0">
+          <div style="font-size:0.7em;font-weight:700;color:#64748b;margin-bottom:6px">SPACE</div>
+          <div style="background:#cbd5e1;height:10px;border-radius:3px;margin-bottom:4px"></div>
+          <div style="background:#cbd5e1;height:10px;border-radius:3px;margin-bottom:4px;width:80%"></div>
+          <div style="background:#3b82f6;height:10px;border-radius:3px;margin-bottom:4px;width:90%"></div>
+          <div style="background:#cbd5e1;height:10px;border-radius:3px;width:70%"></div>
+        </div>
+        <div style="flex:1;background:#fff;border-radius:4px;padding:8px;border:1px solid #e2e8f0">
+          <div style="font-size:0.8em;color:#94a3b8;margin-bottom:4px">Space › Parent › <strong style="color:#1e293b">Current Page</strong></div>
+          <div style="background:#1e293b;height:12px;border-radius:2px;width:60%;margin-bottom:6px"></div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;margin-bottom:3px"></div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;width:90%;margin-bottom:3px"></div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;width:80%"></div>
+        </div>
+        <div style="width:120px;background:#f1f5f9;border-radius:4px;padding:8px;flex-shrink:0;border:1px solid #e2e8f0">
+          <div style="font-size:0.65em;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase">On this page</div>
+          <div style="background:#3b82f6;height:7px;border-radius:2px;margin-bottom:4px;width:80%"></div>
+          <div style="background:#cbd5e1;height:7px;border-radius:2px;margin-bottom:4px;margin-left:8px;width:60%"></div>
+          <div style="background:#cbd5e1;height:7px;border-radius:2px;margin-bottom:4px;margin-left:8px;width:70%"></div>
+          <div style="background:#cbd5e1;height:7px;border-radius:2px;width:50%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Right Sidebar (3-column)</h3>
+      <p>Persistent TOC panel on the right. Always visible. Needs layout restructure (left nav + content + TOC). Nuclino-style.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="floating" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:12px;font-size:0.75em">
+      <div style="display:flex;height:160px;gap:6px">
+        <div style="width:180px;background:#e2e8f0;border-radius:4px;padding:8px;flex-shrink:0">
+          <div style="font-size:0.7em;font-weight:700;color:#64748b;margin-bottom:6px">SPACE</div>
+          <div style="background:#cbd5e1;height:10px;border-radius:3px;margin-bottom:4px"></div>
+          <div style="background:#3b82f6;height:10px;border-radius:3px;margin-bottom:4px;width:90%"></div>
+          <div style="background:#cbd5e1;height:10px;border-radius:3px;width:70%"></div>
+        </div>
+        <div style="flex:1;background:#fff;border-radius:4px;padding:8px;border:1px solid #e2e8f0;position:relative">
+          <div style="font-size:0.8em;color:#94a3b8;margin-bottom:4px">Space › Parent › <strong style="color:#1e293b">Current Page</strong></div>
+          <div style="background:#1e293b;height:12px;border-radius:2px;width:60%;margin-bottom:6px"></div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;margin-bottom:3px"></div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;width:90%;margin-bottom:3px"></div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;width:80%"></div>
+          <!-- Floating TOC -->
+          <div style="position:absolute;top:30px;right:8px;width:90px;background:#fff;border:1px solid #3b82f6;border-radius:4px;padding:6px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+            <div style="font-size:0.6em;font-weight:700;color:#3b82f6;margin-bottom:4px">≡ Contents</div>
+            <div style="background:#cbd5e1;height:5px;border-radius:2px;margin-bottom:3px;width:80%"></div>
+            <div style="background:#cbd5e1;height:5px;border-radius:2px;width:60%;margin-left:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Floating Panel (toggle)</h3>
+      <p>TOC icon in the toolbar opens a floating overlay. Doesn't change the layout. Collapses when not needed. Less screen space used.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="inline" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#f8f9fa;padding:12px;font-size:0.75em">
+      <div style="display:flex;height:160px;gap:6px">
+        <div style="width:180px;background:#e2e8f0;border-radius:4px;padding:8px;flex-shrink:0">
+          <div style="font-size:0.7em;font-weight:700;color:#64748b;margin-bottom:6px">SPACE</div>
+          <div style="background:#cbd5e1;height:10px;border-radius:3px;margin-bottom:4px"></div>
+          <div style="background:#3b82f6;height:10px;border-radius:3px;margin-bottom:4px;width:90%"></div>
+          <div style="background:#cbd5e1;height:10px;border-radius:3px;width:70%"></div>
+        </div>
+        <div style="flex:1;background:#fff;border-radius:4px;padding:8px;border:1px solid #e2e8f0">
+          <div style="font-size:0.8em;color:#94a3b8;margin-bottom:4px">Space › Parent › <strong style="color:#1e293b">Current Page</strong></div>
+          <div style="background:#1e293b;height:12px;border-radius:2px;width:60%;margin-bottom:4px"></div>
+          <!-- Inline TOC box -->
+          <div style="background:#f0f4ff;border:1px solid #c7d7fd;border-radius:4px;padding:5px;margin-bottom:5px">
+            <div style="font-size:0.6em;color:#3b82f6;font-weight:700;margin-bottom:3px">Contents</div>
+            <div style="background:#a5b4fc;height:5px;border-radius:2px;margin-bottom:2px;width:80%"></div>
+            <div style="background:#c7d7fd;height:5px;border-radius:2px;width:60%;margin-left:6px"></div>
+          </div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;margin-bottom:3px"></div>
+          <div style="background:#e2e8f0;height:7px;border-radius:2px;width:90%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Inline Block (auto-inserted)</h3>
+      <p>TOC rendered as a styled block at the top of the page content. Simple. No layout change. Reminds of Notion/Confluence.</p>
+    </div>
+  </div>
+
+</div>

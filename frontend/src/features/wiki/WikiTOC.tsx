@@ -71,7 +71,7 @@ export function WikiTOC({ editor, className }: WikiTOCProps) {
       className={cn('flex flex-col gap-0.5', className)}
     >
       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-        On this page
+        nesta página
       </p>
       {headings.map((h) => (
         <button

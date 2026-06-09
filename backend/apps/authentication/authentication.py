@@ -87,6 +87,13 @@ def is_session_blacklisted(sid: str) -> bool:
     return bool(cache.get(f"{_SID_BLACKLIST_PREFIX}{sid}"))
 
 
+def _is_realm_admin(payload: dict) -> bool:
+    """True if the JWT carries a Keycloak realm role matching KEYCLOAK_ADMIN_ROLE (default 'admin')."""
+    admin_role = getattr(settings, "KEYCLOAK_ADMIN_ROLE", "admin")
+    realm_roles = payload.get("realm_access", {}).get("roles", [])
+    return admin_role in realm_roles
+
+
 # ---------------------------------------------------------------------------
 # DRF authenticator
 # ---------------------------------------------------------------------------
@@ -141,6 +148,7 @@ class KeycloakJWTAuthentication(BaseAuthentication):
 
         email = payload.get("email", "")
         name = payload.get("name") or payload.get("preferred_username", "")
+        is_admin = _is_realm_admin(payload)
 
         workspace = None
         workspace_id = request.headers.get("X-Workspace-ID") if request else None
@@ -160,30 +168,44 @@ class KeycloakJWTAuthentication(BaseAuthentication):
             if existing:
                 workspace = existing.workspace
             else:
-                return WorkspaceMember(keycloak_sub=sub, email=email, name=name)
+                role = WorkspaceMember.Role.ADMIN if is_admin else WorkspaceMember.Role.MEMBER
+                return WorkspaceMember(keycloak_sub=sub, email=email, name=name, role=role)
 
         if not workspace:
             raise AuthenticationFailed("Nenhum workspace configurado.")
 
-        member, created = WorkspaceMember.objects.get_or_create(
-            keycloak_sub=sub,
-            workspace=workspace,
-            defaults={"email": email, "name": name},
-        )
+        # Only auto-create when no specific workspace was requested (fallback path).
+        # When X-Workspace-ID is present, the user must already be a member.
+        if workspace_id:
+            try:
+                member = WorkspaceMember.objects.get(keycloak_sub=sub, workspace=workspace)
+            except WorkspaceMember.DoesNotExist:
+                raise AuthenticationFailed("Usuário não é membro deste workspace.")
+        else:
+            defaults = {"email": email, "name": name}
+            if is_admin:
+                defaults["role"] = "admin"
+            member, _ = WorkspaceMember.objects.get_or_create(
+                keycloak_sub=sub,
+                workspace=workspace,
+                defaults=defaults,
+            )
 
         if not member.is_active:
             raise AuthenticationFailed("Usuário inativo.")
 
-        if not created:
-            update_fields = []
-            if member.email != email:
-                member.email = email
-                update_fields.append("email")
-            if member.name != name:
-                member.name = name
-                update_fields.append("name")
-            if update_fields:
-                update_fields.append("updated_at")
-                member.save(update_fields=update_fields)
+        update_fields = []
+        if member.email != email:
+            member.email = email
+            update_fields.append("email")
+        if member.name != name:
+            member.name = name
+            update_fields.append("name")
+        if is_admin and member.role != "admin":
+            member.role = "admin"
+            update_fields.append("role")
+        if update_fields:
+            update_fields.append("updated_at")
+            member.save(update_fields=update_fields)
 
         return member

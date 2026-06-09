@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Bell } from 'lucide-react'
 import * as Popover from '@radix-ui/react-popover'
 import { useNotificationStore } from '@/stores/notificationStore'
@@ -10,6 +10,16 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const { unreadCount } = useNotificationStore()
   useUnreadCount()
+
+  // Re-key the badge when count increases to retrigger the CSS animation
+  const [badgeKey, setBadgeKey] = useState(0)
+  const prevCount = useRef(unreadCount)
+  useEffect(() => {
+    if (unreadCount > prevCount.current) {
+      setBadgeKey((k) => k + 1)
+    }
+    prevCount.current = unreadCount
+  }, [unreadCount])
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -23,7 +33,10 @@ export function NotificationBell() {
         >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[10px] font-bold text-white">
+            <span
+              key={badgeKey}
+              className="animate-badge-pop absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-0.5 text-[10px] font-bold text-white"
+            >
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}

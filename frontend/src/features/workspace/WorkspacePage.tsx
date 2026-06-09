@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useQueries } from '@tanstack/react-query'
 import {
@@ -16,7 +18,32 @@ import { milestoneService } from '@/services/milestone.service'
 import { Avatar } from '@/components/ui/Avatar'
 import { cn, relativeTime } from '@/lib/utils'
 import { TaskListTile } from './TaskListTile'
+import { useTheme } from '@/features/theme/ThemeContext'
 import type { Issue, Cycle, Notification } from '@/types'
+
+function useTileHover() {
+  const [hovered, setHovered] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const dark = resolvedTheme === 'dark'
+  return {
+    hovered,
+    handlers: { onMouseEnter: () => setHovered(true), onMouseLeave: () => setHovered(false) },
+    style: {
+      transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+      boxShadow: hovered
+        ? dark
+          ? `0 0 0 1.5px rgb(var(--color-primary) / 0.45), 0 8px 32px rgb(var(--color-primary) / 0.28)`
+          : `0 0 0 1.5px rgb(var(--color-primary) / 0.25), 0 8px 28px rgb(var(--color-primary) / 0.10)`
+        : dark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06)',
+      borderColor: hovered ? `rgb(var(--color-primary) / ${dark ? '0.5' : '0.3'})` : undefined,
+    },
+    stripStyle: {
+      background: `linear-gradient(to right, transparent, rgb(var(--color-primary) / ${dark ? '0.9' : '0.7'}), transparent)`,
+      opacity: hovered ? 1 : 0,
+      transition: 'opacity 0.2s ease',
+    },
+  }
+}
 import type { Milestone } from '@/types/milestone'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -75,14 +102,18 @@ function Tile({
   footer?: React.ReactNode
   children: React.ReactNode
 }) {
+  const { handlers, style, stripStyle } = useTileHover()
   return (
     <section
       aria-label={title}
+      {...handlers}
       className={cn(
-        'flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 overflow-hidden',
+        'relative flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4',
         rowSpan && 'row-span-2',
       )}
+      style={style}
     >
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px" style={stripStyle} />
       <button
         type="button"
         onClick={onHeaderClick}
@@ -131,10 +162,10 @@ function TileSkeleton({ rowSpan }: { rowSpan?: boolean }) {
         rowSpan && 'row-span-2',
       )}
     >
-      <div className="animate-pulse space-y-2.5">
-        <div className="h-4 w-1/3 rounded bg-gray-100 dark:bg-gray-800" />
+      <div className="space-y-2.5">
+        <div className="h-4 w-1/3 rounded animate-shimmer" />
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-8 rounded bg-gray-50 dark:bg-gray-800/60" />
+          <div key={i} className="h-8 rounded animate-shimmer" />
         ))}
       </div>
     </div>
@@ -176,7 +207,7 @@ function MyWorkTile({ issues, isLoading }: { issues: Issue[]; isLoading: boolean
       {isLoading && (
         <div className="space-y-1.5" aria-busy="true" aria-label="Carregando issues">
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="animate-pulse h-8 rounded bg-gray-50 dark:bg-gray-800/60" />
+            <div key={i} className="animate-shimmer h-8 rounded" />
           ))}
         </div>
       )}
@@ -239,13 +270,13 @@ function activityDescription(event: ActivityEvent): string {
 
 function ActivityTile({ events, isLoading }: { events: ActivityEvent[]; isLoading: boolean }) {
   return (
-    <Tile title="activity" badge="hoje">
+    <Tile title="atividades" badge="hoje">
       {isLoading && (
         <div className="space-y-2" aria-busy="true" aria-label="Carregando atividade">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="animate-pulse flex gap-2 items-center">
-              <div className="h-5 w-5 rounded-full bg-gray-100 dark:bg-gray-800 shrink-0" />
-              <div className="h-3 flex-1 rounded bg-gray-100 dark:bg-gray-800" />
+            <div key={i} className="flex gap-2 items-center">
+              <div className="animate-shimmer h-5 w-5 rounded-full shrink-0" />
+              <div className="animate-shimmer h-3 flex-1 rounded" />
             </div>
           ))}
         </div>
@@ -280,14 +311,13 @@ function CyclesTile({
 }) {
   const navigate = useNavigate()
   return (
-    <Tile
-      title="ciclos"
+    <Tile title="ciclos"
       badge={`${cycles.length} ativo${cycles.length !== 1 ? 's' : ''}`}
     >
       {isLoading && (
         <div className="space-y-1.5" aria-busy="true">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse h-7 rounded bg-gray-50 dark:bg-gray-800/60" />
+            <div key={i} className="animate-shimmer h-7 rounded" />
           ))}
         </div>
       )}
@@ -344,7 +374,7 @@ function NotificationsTile({
       {isLoading && (
         <div className="space-y-1.5" aria-busy="true">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse h-7 rounded bg-gray-50 dark:bg-gray-800/60" />
+            <div key={i} className="animate-shimmer h-7 rounded" />
           ))}
         </div>
       )}
@@ -406,11 +436,11 @@ function MilestonesTile({ milestones, isLoading }: { milestones: Milestone[]; is
       onHeaderClick={() => navigate('/portfolio')}
     >
       {isLoading && (
-        <div className="animate-pulse flex items-end gap-1 h-16 px-1" aria-busy="true">
+        <div className="flex items-end gap-1 h-16 px-1" aria-busy="true">
           {[40, 65, 80, 45, 70, 30, 55, 50].map((h, i) => (
             <div
               key={i}
-              className="flex-1 rounded-sm bg-gray-100 dark:bg-gray-800"
+              className="animate-shimmer flex-1 rounded-sm"
               style={{ height: `${h}%` }}
             />
           ))}
@@ -455,7 +485,33 @@ function MilestonesTile({ milestones, isLoading }: { milestones: Milestone[]; is
   )
 }
 
+// ─── Task list tile wrapper ───────────────────────────────────────────────────
+
+function TaskListTileWrapper() {
+  const { handlers, style, stripStyle } = useTileHover()
+  return (
+    <section
+      aria-label="minhas tarefas"
+      {...handlers}
+      className="relative flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
+      style={style}
+    >
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px" style={stripStyle} />
+      <TaskListTile />
+    </section>
+  )
+}
+
 // ─── Main page ────────────────────────────────────────────────────────────────
+
+const gridVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.055 } },
+}
+const tileVariants = {
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 280, damping: 26 } },
+}
 
 export function WorkspacePage() {
   const { workspace } = useWorkspaceStore()
@@ -533,11 +589,11 @@ export function WorkspacePage() {
           <p className="text-xs text-gray-400 dark:text-gray-500 mb-0.5">
             {greeting()}, {firstName}
           </p>
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Início</h1>
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 animate-page-enter">Início</h1>
         </div>
         <button
           type="button"
-          onClick={() => {}}
+          onClick={() => { }}
           className="flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
           aria-label="Personalizar dashboard"
         >
@@ -546,61 +602,61 @@ export function WorkspacePage() {
         </button>
       </div>
       {/* Tile grid — 3 cols × 2 rows, col 1: MyWork top / TaskList bottom */}
-       <div
-         className="flex-1 min-h-0 grid gap-3"
-         style={{
-           gridTemplateColumns: '1.4fr 1fr 1fr',
-           gridTemplateRows: '1fr 1fr',
-         }}
-       >
-         {/* 1 — My Work (col 1, row 1) */}
-         {loadingWork ? (
-           <TileSkeleton />
-         ) : (
-           <MyWorkTile issues={myIssues} isLoading={loadingWork} />
-         )}
+      <motion.div
+        className="flex-1 min-h-0 grid gap-3"
+        style={{
+          gridTemplateColumns: '1.4fr 1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
+        }}
+        variants={gridVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* 1 — My Work (col 1, row 1) */}
+        {loadingWork ? (
+          <motion.div variants={tileVariants}><TileSkeleton /></motion.div>
+        ) : (
+          <motion.div variants={tileVariants}><MyWorkTile issues={myIssues} isLoading={loadingWork} /></motion.div>
+        )}
 
-         {/* 2 — Activity (col 2, row 1) */}
-         {loadingActivity ? (
-           <TileSkeleton />
-         ) : (
-           <ActivityTile events={recentActivity} isLoading={loadingActivity} />
-         )}
+        {/* 2 — Activity (col 2, row 1) */}
+        {loadingActivity ? (
+          <motion.div variants={tileVariants}><TileSkeleton /></motion.div>
+        ) : (
+          <motion.div variants={tileVariants}><ActivityTile events={recentActivity} isLoading={loadingActivity} /></motion.div>
+        )}
 
-         {/* 3 — Cycles (col 3, row 1) */}
-         {loadingCycles ? (
-           <TileSkeleton />
-         ) : (
-           <CyclesTile cycles={activeCycles} isLoading={loadingCycles} />
-         )}
+        {/* 3 — Cycles (col 3, row 1) */}
+        {loadingCycles ? (
+          <motion.div variants={tileVariants}><TileSkeleton /></motion.div>
+        ) : (
+          <motion.div variants={tileVariants}><CyclesTile cycles={activeCycles} isLoading={loadingCycles} /></motion.div>
+        )}
 
-         {/* 4 — Personal task list (col 1, row 2) */}
-         <section
-           aria-label="Minhas tarefas"
-           className="flex flex-col rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 overflow-hidden"
-         >
-           <TaskListTile />
-         </section>
+        {/* 4 — Personal task list (col 1, row 2) */}
+        <motion.div variants={tileVariants}><TaskListTileWrapper /></motion.div>
 
-         {/* 5 — Notifications (col 2, row 2) */}
-         {loadingNotifs ? (
-           <TileSkeleton />
-         ) : (
-           <NotificationsTile
-             notifications={unreadNotifs}
-             isLoading={loadingNotifs}
-             unreadCount={unreadCount}
-           />
-         )}
+        {/* 5 — Notifications (col 2, row 2) */}
+        {loadingNotifs ? (
+          <motion.div variants={tileVariants}><TileSkeleton /></motion.div>
+        ) : (
+          <motion.div variants={tileVariants}>
+            <NotificationsTile
+              notifications={unreadNotifs}
+              isLoading={loadingNotifs}
+              unreadCount={unreadCount}
+            />
+          </motion.div>
+        )}
 
-         {/* 6 — Upcoming Milestones (col 3, row 2) */}
-         {loadingMilestones ? (
-           <TileSkeleton />
-         ) : (
-           <MilestonesTile milestones={upcomingMilestones} isLoading={loadingMilestones} />
-         )}
-       </div>
-     </div>
-   )
- }
+        {/* 6 — Upcoming Milestones (col 3, row 2) */}
+        {loadingMilestones ? (
+          <motion.div variants={tileVariants}><TileSkeleton /></motion.div>
+        ) : (
+          <motion.div variants={tileVariants}><MilestonesTile milestones={upcomingMilestones} isLoading={loadingMilestones} /></motion.div>
+        )}
+      </motion.div>
+    </div>
+  )
+}
 

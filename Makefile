@@ -16,7 +16,7 @@ _RSYNC := sshpass -p '$(REMOTE_PASS)' rsync -avz --no-perms --no-group \
             --exclude='node_modules' --exclude='.git' --exclude='__pycache__' \
             --exclude='*.pyc' --exclude='staticfiles' --exclude='.env'
 
-.PHONY: help up down build logs shell migrate seed test lint sync-backend sync-frontend sync-remote
+.PHONY: help up down build logs shell migrate seed test lint sync-backend sync-frontend sync-remote rebuild-frontend
 
 # Exibe ajuda
 help:
@@ -40,8 +40,9 @@ help:
 	@echo "  make keycloak     Sobe com o Keycloak local"
 	@echo "  make psql         Abre o psql no container do banco"
 	@echo "  make redis-cli    Abre o redis-cli no container"
-	@echo "  make sync-backend Sincroniza backend → remoto e reinicia containers"
-	@echo "  make sync-frontend Sincroniza frontend/src → remoto"
+	@echo "  make sync-backend  Sincroniza backend → remoto e reinicia containers"
+	@echo "  make sync-frontend Sincroniza frontend/src → remoto (hot-reload dev)"
+	@echo "  make rebuild-frontend Sincroniza manifests + reconstrói imagem Docker"
 	@echo "  make sync-remote  Sincroniza projeto inteiro → remoto"
 	@echo "  ─────────────────────────────────────────────────────────"
 	@echo ""
@@ -138,6 +139,18 @@ sync-frontend:
 		/mnt/d/projecthub/frontend/src/ \
 		$(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)/frontend/src/
 	@echo "Done. Vite irá recarregar automaticamente."
+
+# Sincroniza frontend completo (manifests + src) → remoto e reconstrói a imagem Docker
+# Usar quando package.json / package-lock.json mudaram (ex: nova dependência)
+rebuild-frontend:
+	@echo "Sincronizando frontend (manifests + src) → $(REMOTE_USER)@$(REMOTE_HOST)..."
+	sshpass -p '$(REMOTE_PASS)' rsync -avz --no-perms --no-group \
+		-e "ssh -o StrictHostKeyChecking=no" \
+		--exclude='node_modules' --exclude='dist' --exclude='.env' --exclude='*.log' \
+		/mnt/d/projecthub/frontend/ \
+		$(REMOTE_USER)@$(REMOTE_HOST):$(REMOTE_DIR)/frontend/
+	$(_SSH) "cd $(REMOTE_DIR) && docker compose build frontend && docker compose up -d frontend"
+	@echo "Done."
 
 # Sincroniza o projeto inteiro → remoto
 sync-remote:

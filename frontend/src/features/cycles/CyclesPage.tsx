@@ -113,7 +113,7 @@ function EmptyState({ onNew }: { onNew: () => void }) {
   return (
     <button
       onClick={onNew}
-      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 py-10 text-gray-400 dark:text-gray-500 hover:border-primary/40 hover:text-primary transition-colors"
+      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700 py-10 text-gray-400 dark:text-gray-500 hover:border-primary/40 hover:text-primary hover:-translate-y-1 hover:shadow-md transition-all duration-200"
     >
       <Plus className="h-4 w-4" />
       <span className="text-sm">Criar primeiro ciclo</span>

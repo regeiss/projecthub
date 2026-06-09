@@ -1,5 +1,5 @@
 // Shared widget primitives and all project dashboard widgets
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AlertTriangle, CalendarClock, CheckCircle2, Clock, TrendingUp } from 'lucide-react'
 import { useIssues } from '@/hooks/useIssues'
@@ -9,6 +9,34 @@ import { useRisks } from '@/hooks/useRisks'
 import { useTimeReport } from '@/hooks/useResources'
 import { useProjectMembers } from '@/hooks/useProjects'
 import type { StateCategory } from '@/types'
+import { useTheme } from '@/features/theme/ThemeContext'
+
+function useCardHover() {
+  const [hovered, setHovered] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const dark = resolvedTheme === 'dark'
+  const handlers = {
+    onMouseEnter: () => setHovered(true),
+    onMouseLeave: () => setHovered(false),
+  }
+  const style = {
+    transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
+    boxShadow: hovered
+      ? dark
+        ? `0 0 0 1.5px rgb(var(--color-primary) / 0.45), 0 8px 32px rgb(var(--color-primary) / 0.28)`
+        : `0 0 0 1.5px rgb(var(--color-primary) / 0.25), 0 8px 28px rgb(var(--color-primary) / 0.10)`
+      : dark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06)',
+    borderColor: hovered
+      ? `rgb(var(--color-primary) / ${dark ? '0.5' : '0.3'})`
+      : undefined,
+  }
+  const stripStyle = {
+    background: `linear-gradient(to right, transparent, rgb(var(--color-primary) / ${dark ? '0.9' : '0.7'}), transparent)`,
+    opacity: hovered ? 1 : 0,
+    transition: 'opacity 0.2s ease',
+  }
+  return { hovered, handlers, style, stripStyle, dark }
+}
 
 // ─── Primitives ──────────────────────────────────────────────────────────────
 
@@ -21,8 +49,14 @@ export function WidgetCard({
   children: React.ReactNode
   className?: string
 }) {
+  const { handlers, style, stripStyle } = useCardHover()
   return (
-    <div className={`rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 ${className}`}>
+    <div
+      {...handlers}
+      className={`relative rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 ${className}`}
+      style={style}
+    >
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px" style={stripStyle} />
       <h3 className="mb-4 text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</h3>
       {children}
     </div>
@@ -118,6 +152,23 @@ function BarChart({ data }: { data: { label: string; value: number; color?: stri
   )
 }
 
+// ─── Stat card ───────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, color, bg }: { label: string; value: number; color: string; bg: string }) {
+  const { handlers, style, stripStyle } = useCardHover()
+  return (
+    <div
+      {...handlers}
+      className={`relative rounded-xl border border-gray-200 dark:border-gray-700 ${bg} p-4`}
+      style={style}
+    >
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px" style={stripStyle} />
+      <p className="text-xs text-gray-500 dark:text-gray-400">{label}</p>
+      <p className={`mt-1 text-2xl font-bold ${color}`}>{value}</p>
+    </div>
+  )
+}
+
 // ─── STATE_COLORS ─────────────────────────────────────────────────────────────
 
 const STATE_COLORS: Record<StateCategory, string> = {
@@ -165,10 +216,7 @@ export function StatCardsWidget() {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {cards.map((c) => (
-        <div key={c.label} className={`rounded-xl border border-gray-200 dark:border-gray-700 ${c.bg} p-4`}>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{c.label}</p>
-          <p className={`mt-1 text-2xl font-bold ${c.color}`}>{c.value}</p>
-        </div>
+        <StatCard key={c.label} label={c.label} value={c.value} color={c.color} bg={c.bg} />
       ))}
     </div>
   )
@@ -303,9 +351,9 @@ export function MilestonesWidget() {
   }
 
   return (
-    <WidgetCard title="Milestones">
+    <WidgetCard title="Marcos">
       {sorted.length === 0 ? (
-        <EmptyState label="Nenhum milestone pendente" />
+        <EmptyState label="Nenhum marco pendente" />
       ) : (
         <ul className="flex flex-col divide-y divide-gray-100 dark:divide-gray-800">
           {sorted.map((m) => {

@@ -1,0 +1,68 @@
+<h2>Phase 1 Design — Section 2: Backend API</h2>
+<p class="subtitle">Two backend changes: serializer ancestors field + updated consumer</p>
+
+<div class="mockup">
+  <div class="mockup-header">WikiPageDetailSerializer — add ancestors</div>
+  <div class="mockup-body" style="padding:12px">
+    <pre style="font-size:0.8em;background:#f8fafc;padding:10px;border-radius:6px;line-height:1.6">class WikiPageDetailSerializer(serializers.ModelSerializer):
+    ancestors = serializers.SerializerMethodField()
+
+    def get_ancestors(self, obj):
+        """Walk parent chain, return ordered list root→parent."""
+        chain, page = [], obj.parent
+        while page:
+            chain.append({"id": str(page.id), "title": page.title})
+            page = page.parent
+        return list(reversed(chain))
+        # e.g. [{"id":"..","title":"Engineering"},
+        #        {"id":"..","title":"Backend"}]</pre>
+    <div style="margin-top:10px;padding:8px;background:#fffbeb;border-radius:6px;font-size:0.85em">
+      <strong>Performance note:</strong> ancestors query walks up the parent chain with one DB hit per level.
+      Typical wiki depth is 2–4 levels — acceptable. For deep trees (&gt;10 levels), can add
+      <code>select_related</code> chain or switch to django-mptt later without API change.
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">WikiPageConsumer — updated connect + save</div>
+  <div class="mockup-body" style="padding:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.85em">
+      <div style="background:#f0f4ff;padding:10px;border-radius:6px">
+        <strong>connect() — send initial state</strong>
+        <pre style="margin-top:6px;font-size:0.9em;background:#e8eeff;padding:8px;border-radius:4px;line-height:1.5">await self.send(json.dumps({
+  "type": "init",
+  "content": page.content,   # TipTap JSON
+}))
+if page.yjs_state:
+    await self.send(
+        bytes_data=page.yjs_state
+    )  # raw Yjs binary</pre>
+      </div>
+      <div style="background:#f0fff4;padding:10px;border-radius:6px">
+        <strong>save_yjs_state task — updated</strong>
+        <pre style="margin-top:6px;font-size:0.9em;background:#e8ffee;padding:8px;border-radius:4px;line-height:1.5">page.yjs_state = bytes.fromhex(
+    yjs_hex
+)
+# No longer touches content field
+page.save(
+    update_fields=["yjs_state"]
+)</pre>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:8px;background:#fdf4ff;border-radius:6px;font-size:0.85em">
+      <strong>WikiPageDetailView (PATCH) — updated:</strong>
+      Content field now expects TipTap JSON directly.
+      On save, also calls <code>create_page_version</code> Celery task (existing behaviour, unchanged).
+      Word count computed from TipTap JSON node text on backend.
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">No new endpoints needed</div>
+  <div class="mockup-body" style="padding:12px;font-size:0.88em;line-height:1.8">
+    Ancestors are embedded in <code>GET /wiki/pages/{pk}/</code> — no new route.
+    Breadcrumbs on the frontend just read <code>page.ancestors</code> from the existing detail response.
+  </div>
+</div>

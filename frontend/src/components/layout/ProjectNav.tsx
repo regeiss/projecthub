@@ -14,7 +14,7 @@ const tabs = [
   { path: 'backlog', label: 'Backlog', icon: List },
   { path: 'epics', label: 'Épicos', icon: BookMarked },
   { path: 'cycles', label: 'Ciclos', icon: RotateCcw },
-  { path: 'milestones', label: 'Milestones', icon: Flag },
+  { path: 'milestones', label: 'Marcos', icon: Flag },
   { path: 'reports', label: 'Relatórios', icon: BarChart3 },
   { path: 'gantt', label: 'Gantt / CPM', icon: Network },
   { path: 'wiki', label: 'Wiki', icon: BookOpen },

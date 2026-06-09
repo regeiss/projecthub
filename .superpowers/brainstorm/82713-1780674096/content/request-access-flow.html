@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Access Request Flow – Mockups</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #f1f5f9; color: #0f172a; padding: 32px 24px; }
+
+  h1 { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #64748b; margin-bottom: 36px; }
+
+  .section-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase;
+    color: #94a3b8; margin-bottom: 12px; margin-top: 32px;
+  }
+
+  /* ── FLOW DIAGRAM ── */
+  .flow {
+    display: flex; align-items: center; gap: 0; margin-bottom: 40px;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .flow-step {
+    background: #fff; border: 1.5px solid #e2e8f0; border-radius: 10px;
+    padding: 10px 16px; font-size: 12px; font-weight: 500; color: #334155;
+    text-align: center; min-width: 120px;
+  }
+  .flow-step.highlight { background: #6366f1; border-color: #6366f1; color: #fff; }
+  .flow-arrow { color: #94a3b8; font-size: 18px; flex-shrink: 0; }
+
+  /* ── SCREENS GRID ── */
+  .screens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  @media (max-width: 900px) { .screens { grid-template-columns: 1fr; } }
+
+  .screen-card {
+    background: #fff; border-radius: 14px; border: 1.5px solid #e2e8f0;
+    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  .screen-label {
+    padding: 10px 14px; font-size: 11px; font-weight: 700; letter-spacing: .07em;
+    text-transform: uppercase; color: #94a3b8; border-bottom: 1px solid #f1f5f9;
+    background: #f8fafc;
+  }
+  .screen-body { padding: 0; }
+
+  /* ── MOCK BROWSER CHROME ── */
+  .browser { background: #f8fafc; border-bottom: 1px solid #e2e8f0; padding: 8px 12px; display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .dot-r { background: #fca5a5; }
+  .dot-y { background: #fcd34d; }
+  .dot-g { background: #86efac; }
+  .url-bar { flex: 1; background: #e2e8f0; border-radius: 4px; height: 18px; font-size: 9px; color: #64748b; display: flex; align-items: center; padding: 0 8px; }
+
+  /* ── SCREEN 1: REQUEST ACCESS ── */
+  .rq-page {
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px;
+  }
+  .rq-logo { width: 32px; height: 32px; background: #6366f1; border-radius: 7px; transform: rotate(45deg); }
+  .rq-title { font-size: 17px; font-weight: 700; color: #0f172a; text-align: center; }
+  .rq-sub { font-size: 11px; color: #64748b; text-align: center; max-width: 220px; line-height: 1.5; }
+  .rq-card {
+    background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+    padding: 18px; width: 100%; display: flex; flex-direction: column; gap: 12px;
+  }
+  .rq-field { display: flex; flex-direction: column; gap: 4px; }
+  .rq-field label { font-size: 10px; font-weight: 600; color: #374151; }
+  .rq-field .input { background: #f9fafb; border: 1px solid #d1d5db; border-radius: 7px; padding: 7px 10px; font-size: 11px; color: #374151; }
+  .rq-field .input.filled { color: #6366f1; background: #eef2ff; border-color: #c7d2fe; }
+  .rq-field .input.text { min-height: 52px; }
+  .rq-btn { background: #0f172a; color: #fff; border-radius: 8px; padding: 9px; font-size: 12px; font-weight: 600; text-align: center; }
+  .rq-note { font-size: 10px; color: #94a3b8; text-align: center; }
+
+  /* ── SCREEN 2: PENDING STATE ── */
+  .pending-page {
+    background: linear-gradient(135deg, #f8fafc 0%, #f0fdf4 100%);
+    padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .pending-icon { width: 48px; height: 48px; background: #fef9c3; border: 2px solid #fde047; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+  .pending-title { font-size: 16px; font-weight: 700; color: #0f172a; text-align: center; }
+  .pending-sub { font-size: 11px; color: #64748b; text-align: center; max-width: 200px; line-height: 1.6; }
+  .pending-details { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 16px; width: 100%; }
+  .pending-row { display: flex; justify-content: space-between; font-size: 11px; padding: 4px 0; border-bottom: 1px solid #f1f5f9; }
+  .pending-row:last-child { border: none; }
+  .pending-row .k { color: #94a3b8; }
+  .pending-row .v { color: #374151; font-weight: 500; }
+  .pending-badge { display: inline-flex; align-items: center; gap: 4px; background: #fef9c3; color: #92400e; border-radius: 999px; padding: 2px 8px; font-size: 10px; font-weight: 600; }
+
+  /* ── SCREEN 3: ADMIN PANEL ── */
+  .admin-page { background: #fff; }
+  .admin-header { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
+  .admin-header-title { font-size: 13px; font-weight: 700; color: #0f172a; }
+  .badge-count { background: #fef2f2; color: #dc2626; border-radius: 999px; padding: 1px 8px; font-size: 10px; font-weight: 700; }
+  .admin-list { display: flex; flex-direction: column; }
+  .admin-item { padding: 12px 16px; border-bottom: 1px solid #f8fafc; }
+  .admin-item-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: #e0e7ff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #6366f1; flex-shrink: 0; }
+  .admin-name { font-size: 12px; font-weight: 600; color: #0f172a; }
+  .admin-email { font-size: 10px; color: #64748b; }
+  .admin-reason { font-size: 10px; color: #475569; background: #f8fafc; border-radius: 6px; padding: 6px 8px; margin-bottom: 8px; border-left: 2px solid #c7d2fe; font-style: italic; }
+  .admin-meta { font-size: 10px; color: #94a3b8; margin-bottom: 8px; }
+  .admin-ws-row { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 10px; color: #374151; }
+  .ws-select { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; font-size: 10px; flex: 1; }
+  .role-select { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 8px; font-size: 10px; width: 80px; }
+  .action-row { display: flex; gap: 6px; }
+  .btn-approve { background: #16a34a; color: #fff; border-radius: 6px; padding: 5px 12px; font-size: 10px; font-weight: 600; }
+  .btn-deny { background: #f1f5f9; color: #64748b; border-radius: 6px; padding: 5px 12px; font-size: 10px; font-weight: 600; }
+  .btn-deny-red { background: #fef2f2; color: #dc2626; border-radius: 6px; padding: 5px 12px; font-size: 10px; font-weight: 600; }
+
+  /* ── SCREEN 4: NOTIFICATION ── */
+  .notif-bar {
+    position: relative; background: #fff; border-bottom: 1px solid #f1f5f9;
+    padding: 12px 16px; display: flex; align-items: center; gap: 10px;
+  }
+  .notif-dot { position: absolute; top: 10px; right: 12px; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; }
+  .notif-icon { width: 32px; height: 32px; background: #fef3c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .notif-text .t { font-size: 11px; font-weight: 600; color: #0f172a; }
+  .notif-text .s { font-size: 10px; color: #64748b; }
+  .notif-action { margin-left: auto; background: #6366f1; color: #fff; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-weight: 600; white-space: nowrap; }
+
+  /* ── SCREEN 5: APPROVED / DENIED ── */
+  .result-page { padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .result-page.approved { background: linear-gradient(135deg, #f0fdf4, #ecfdf5); }
+  .result-page.denied { background: linear-gradient(135deg, #fff1f2, #fef2f2); }
+  .result-icon { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+  .result-icon.ok { background: #dcfce7; }
+  .result-icon.no { background: #fee2e2; }
+  .result-title { font-size: 16px; font-weight: 700; text-align: center; }
+  .result-sub { font-size: 11px; color: #64748b; text-align: center; max-width: 200px; line-height: 1.6; }
+  .result-btn { background: #0f172a; color: #fff; border-radius: 8px; padding: 9px 24px; font-size: 12px; font-weight: 600; }
+  .result-btn.red { background: #dc2626; }
+</style>
+</head>
+<body>
+
+<h1>Access Request Flow</h1>
+<p class="subtitle">End-to-end user journey for new users arriving via any Keycloak provider</p>
+
+<!-- FLOW DIAGRAM -->
+<div class="section-label">Complete Flow</div>
+<div class="flow">
+  <div class="flow-step">User logs in<br><span style="font-size:10px;opacity:.7">any KC provider</span></div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">No workspace<br>membership found</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step highlight">Request Access<br>form</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Pending screen<br>+ admin notified</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Admin reviews<br>in workspace settings</div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step">Approved / Denied<br>→ user notified</div>
+</div>
+
+<!-- SCREENS -->
+<div class="section-label">Screens</div>
+<div class="screens">
+
+  <!-- 1. REQUEST ACCESS FORM -->
+  <div class="screen-card">
+    <div class="screen-label">① User — Request Access</div>
+    <div class="screen-body">
+      <div class="browser">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="url-bar">projecthub.local/request-access</div>
+      </div>
+      <div class="rq-page">
+        <div class="rq-logo"></div>
+        <div class="rq-title">Solicitar Acesso</div>
+        <div class="rq-sub">Seu acesso ainda não foi configurado. Informe por que precisa de acesso.</div>
+        <div class="rq-card">
+          <div class="rq-field">
+            <label>Nome completo</label>
+            <div class="input filled">João da Silva</div>
+          </div>
+          <div class="rq-field">
+            <label>E-mail</label>
+            <div class="input filled">joao@prefeitura.nh.rs.gov.br</div>
+          </div>
+          <div class="rq-field">
+            <label>Secretaria / Área</label>
+            <div class="input">CGTIC – Departamento de TI</div>
+          </div>
+          <div class="rq-field">
+            <label>Por que precisa de acesso?</label>
+            <div class="input text">Preciso acompanhar os projetos da secretaria e colaborar com a equipe de infraestrutura.</div>
+          </div>
+          <div class="rq-btn">Enviar solicitação</div>
+        </div>
+        <div class="rq-note">Um administrador irá revisar em breve.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PENDING STATE -->
+  <div class="screen-card">
+    <div class="screen-label">② User — Awaiting Approval</div>
+    <div class="screen-body">
+      <div class="browser">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="url-bar">projecthub.local/pending</div>
+      </div>
+      <div class="pending-page">
+        <div class="pending-icon">⏳</div>
+        <div class="pending-title">Solicitação enviada</div>
+        <div class="pending-sub">Os administradores foram notificados e irão revisar em breve.</div>
+        <div class="pending-details">
+          <div class="pending-row"><span class="k">Status</span><span class="v"><span class="pending-badge">● Em análise</span></span></div>
+          <div class="pending-row"><span class="k">Enviada em</span><span class="v">05/06/2026, 14:32</span></div>
+          <div class="pending-row"><span class="k">E-mail</span><span class="v">joao@prefeitura...</span></div>
+        </div>
+        <div class="rq-note" style="max-width:220px;line-height:1.6">Você receberá um e-mail quando sua solicitação for aprovada ou recusada.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. ADMIN — NOTIFICATION -->
+  <div class="screen-card">
+    <div class="screen-label">③ Admin — In-app Notification</div>
+    <div class="screen-body">
+      <div class="browser">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="url-bar">projecthub.local/…</div>
+      </div>
+      <div style="background:#f8fafc;padding:10px 14px;font-size:10px;color:#64748b;border-bottom:1px solid #e2e8f0;">Notification panel (bell icon)</div>
+      <div class="notif-bar">
+        <div class="notif-dot"></div>
+        <div class="notif-icon">🔑</div>
+        <div class="notif-text">
+          <div class="t">Nova solicitação de acesso</div>
+          <div class="s">João da Silva · joao@prefeitura... · agora</div>
+        </div>
+        <div class="notif-action">Revisar →</div>
+      </div>
+      <div class="notif-bar" style="opacity:.55">
+        <div class="notif-icon">🔑</div>
+        <div class="notif-text">
+          <div class="t">Nova solicitação de acesso</div>
+          <div class="s">Maria Santos · maria@... · 2h atrás</div>
+        </div>
+        <div class="notif-action">Revisar →</div>
+      </div>
+      <div style="padding:12px 16px;font-size:10px;color:#94a3b8;font-style:italic;">
+        All workspace admins receive this notification. "Revisar →" deep-links to the request in workspace settings.
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. ADMIN — WORKSPACE SETTINGS PANEL -->
+  <div class="screen-card" style="grid-column: span 2;">
+    <div class="screen-label">④ Admin — Workspace Settings › Access Requests</div>
+    <div class="screen-body">
+      <div class="browser">
+        <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+        <div class="url-bar">projecthub.local/settings/workspaces/cgtic/members</div>
+      </div>
+      <div class="admin-page">
+        <div class="admin-header">
+          <div class="admin-header-title">Solicitações de Acesso</div>
+          <div class="badge-count">2 pendentes</div>
+        </div>
+        <div class="admin-list">
+
+          <!-- REQUEST ITEM 1 -->
+          <div class="admin-item">
+            <div class="admin-item-top">
+              <div class="avatar">JS</div>
+              <div>
+                <div class="admin-name">João da Silva</div>
+                <div class="admin-email">joao@prefeitura.nh.rs.gov.br · Google SSO</div>
+              </div>
+            </div>
+            <div class="admin-reason">"Preciso acompanhar os projetos da secretaria e colaborar com a equipe de infraestrutura."</div>
+            <div class="admin-meta">Solicitado em 05/06/2026, 14:32 · Secretaria: CGTIC</div>
+            <div class="admin-ws-row">
+              <span>Workspace:</span>
+              <select class="ws-select"><option>CGTIC</option><option>Prefeitura de NH</option></select>
+              <span>Papel:</span>
+              <select class="role-select"><option>membro</option><option>admin</option><option>visualizador</option></select>
+            </div>
+            <div class="action-row">
+              <div class="btn-approve">✓ Aprovar e adicionar</div>
+              <div class="btn-deny-red">✕ Recusar</div>
+            </div>
+          </div>
+
+          <!-- REQUEST ITEM 2 -->
+          <div class="admin-item" style="opacity:.7">
+            <div class="admin-item-top">
+              <div class="avatar" style="background:#f0fdf4;color:#16a34a;">MS</div>
+              <div>
+                <div class="admin-name">Maria Santos</div>
+                <div class="admin-email">maria@prefeitura.nh.rs.gov.br · SAML</div>
+              </div>
+            </div>
+            <div class="admin-reason">"Gestora de projetos da SMDEI, preciso acesso para acompanhar indicadores."</div>
+            <div class="admin-meta">Solicitado em 05/06/2026, 12:15 · Secretaria: SMDEI</div>
+            <div class="admin-ws-row">
+              <span>Workspace:</span>
+              <select class="ws-select"><option>SMDEI</option><option>Prefeitura de NH</option></select>
+              <span>Papel:</span>
+              <select class="role-select"><option>membro</option><option>admin</option></select>
+            </div>
+            <div class="action-row">
+              <div class="btn-approve">✓ Aprovar e adicionar</div>
+              <div class="btn-deny-red">✕ Recusar</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. USER RESULT SCREENS -->
+  <div class="screen-card">
+    <div class="screen-label">⑤ User — Result (Approved / Denied)</div>
+    <div class="screen-body">
+      <div style="display:grid;grid-template-columns:1fr 1fr;height:100%;">
+        <div style="border-right:1px solid #f1f5f9;">
+          <div class="browser" style="gap:4px;">
+            <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+            <div class="url-bar" style="font-size:8px;">…/pending (polling)</div>
+          </div>
+          <div class="result-page approved">
+            <div class="result-icon ok">✓</div>
+            <div class="result-title" style="color:#15803d;font-size:13px;">Acesso aprovado!</div>
+            <div class="result-sub">Você foi adicionado ao workspace <strong>CGTIC</strong> como membro.</div>
+            <div class="result-btn" style="font-size:10px;padding:7px 16px;">Acessar agora →</div>
+          </div>
+        </div>
+        <div>
+          <div class="browser" style="gap:4px;">
+            <div class="dot dot-r"></div><div class="dot dot-y"></div><div class="dot dot-g"></div>
+            <div class="url-bar" style="font-size:8px;">…/pending (polling)</div>
+          </div>
+          <div class="result-page denied">
+            <div class="result-icon no">✕</div>
+            <div class="result-title" style="color:#dc2626;font-size:13px;">Acesso recusado</div>
+            <div class="result-sub">Seu acesso foi recusado. Entre em contato com o administrador.</div>
+            <div class="result-btn red" style="font-size:10px;padding:7px 16px;background:#dc2626;">Contatar admin</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div style="margin-top:32px;padding:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;font-size:12px;color:#92400e;line-height:1.7;">
+  <strong>Questions for next step:</strong><br>
+  • Should denied users be able to re-request access, or are they permanently blocked?<br>
+  • Should the admin be able to approve into <em>multiple</em> workspaces at once?<br>
+  • Should the "Secretaria / Área" field be a free-text or a pre-defined list?
+</div>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+<h2>Phase 1 Design — Section 4: Tests</h2>
+<p class="subtitle">Wiki currently has zero tests. Phase 1 establishes the full test foundation.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Backend tests — Django TestCase (apps/wiki/tests/)</div>
+  <div class="mockup-body" style="padding:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.84em">
+      <div style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <strong>test_models.py</strong>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>WikiSpace creation (global + project-scoped)</li>
+          <li>WikiPage parent/child hierarchy</li>
+          <li>sort_order midpoint logic</li>
+          <li>WikiPageVersion auto-increment</li>
+          <li>WikiIssueLink link types</li>
+        </ul>
+      </div>
+      <div style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <strong>test_views.py</strong>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>Space CRUD (list, create, update, delete)</li>
+          <li>Page CRUD + move + publish</li>
+          <li>Page detail includes <code>ancestors</code> field</li>
+          <li>Version list + restore</li>
+          <li>Comment create, resolve, delete</li>
+          <li>Private space access control</li>
+          <li>Locked page edit blocked</li>
+          <li>Public page (no auth) endpoint</li>
+        </ul>
+      </div>
+      <div style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <strong>test_consumers.py</strong>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>Connect sends TipTap JSON init message</li>
+          <li>Connect sends Yjs binary if yjs_state set</li>
+          <li>Binary message relayed to group (not sender)</li>
+          <li>Archived page connect rejected</li>
+          <li>Unauthenticated connect rejected</li>
+        </ul>
+      </div>
+      <div style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <strong>test_tasks.py</strong>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>save_yjs_state writes to yjs_state field</li>
+          <li>save_yjs_state does not touch content field</li>
+          <li>create_page_version snapshots title + content</li>
+          <li>version_number auto-increments correctly</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:16px">
+  <div class="mockup-header">Frontend tests — Vitest + React Testing Library (features/wiki/__tests__/)</div>
+  <div class="mockup-body" style="padding:12px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:0.84em">
+      <div style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <strong>WikiBreadcrumb.test.tsx</strong>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>Renders space + ancestor links</li>
+          <li>Current page not a link</li>
+          <li>Empty ancestors = space only</li>
+          <li>Each segment navigates correctly</li>
+        </ul>
+      </div>
+      <div style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <strong>WikiTOC.test.tsx</strong>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>Renders headings from TipTap JSON</li>
+          <li>H2 indented under H1</li>
+          <li>Hidden when &lt;3 headings</li>
+          <li>Click calls scrollIntoView</li>
+        </ul>
+      </div>
+      <div style="background:#f8fafc;padding:10px;border-radius:6px;border:1px solid #e2e8f0">
+        <strong>useWiki.test.ts</strong>
+        <ul style="margin-top:6px;padding-left:16px;line-height:1.8">
+          <li>useWikiPage returns ancestors array</li>
+          <li>useUpdateWikiPage sends TipTap JSON</li>
+          <li>useWikiSpaces filters by workspace</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:10px;padding:8px;background:#fffbeb;border-radius:6px;font-size:0.84em">
+      <strong>Scope note:</strong> WikiEditor.tsx (TipTap + Yjs) is excluded from unit tests — too many browser APIs to mock reliably. Covered by integration tests in a future phase when Playwright is added.
+    </div>
+  </div>
+</div>

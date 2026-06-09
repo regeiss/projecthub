@@ -62,14 +62,6 @@ backups/*.gz
 *.swo
 *~
 
-# Claude Code / tool internals
-.claude/
-.superpowers/
-.worktrees/
-
-# Root node_modules (dev tooling only)
-node_modules/
-
 # OS
 .DS_Store
 Thumbs.db

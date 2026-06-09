@@ -11,7 +11,7 @@ function NotificationSocketMount() {
 
 export function AppLayout() {
   return (
-    <div className="flex h-screen overflow-hidden bg-space dark:bg-gray-950">
+    <div className="flex h-screen overflow-hidden bg-app-canvas">
       <NotificationSocketMount />
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">

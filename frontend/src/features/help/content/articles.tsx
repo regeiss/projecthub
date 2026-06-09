@@ -463,7 +463,7 @@ export const ARTICLES: HelpArticle[] = [
     category: 'milestones',
     title: 'Definindo marcos e acompanhando progresso',
     routePattern: '/projects/:projectId/milestones',
-    keywords: ['marco', 'milestone', 'entrega', 'data'],
+    keywords: ['marco', 'marcos', 'entrega', 'data'],
     bodyText:
       'Marcos marcam eventos importantes ou entregas no projeto. Associe issues a marcos para acompanhar o progresso.',
     body: (

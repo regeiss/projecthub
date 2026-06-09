@@ -9,7 +9,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<string, string> = {
   primary:
-    'bg-primary text-white hover:bg-primary-hover disabled:opacity-50',
+    'bg-primary text-white hover:bg-primary-hover hover:-translate-y-0.5 hover:shadow-md disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none',
   secondary:
     'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 disabled:bg-gray-50 dark:disabled:bg-gray-900 disabled:text-gray-400',
   ghost:
@@ -45,7 +45,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || loading}
         className={cn(
-          'inline-flex items-center justify-center gap-1.5 font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed',
+          'inline-flex items-center justify-center gap-1.5 font-medium',
+          'transition-all duration-150',
+          'active:scale-95 active:brightness-95',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+          'disabled:cursor-not-allowed disabled:active:scale-100',
           variantClasses[variant],
           sizeClasses[size],
           className,
@@ -59,17 +63,20 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             fill="none"
           >
             <circle
-              className="opacity-25"
+              className="opacity-20"
               cx="12"
               cy="12"
               r="10"
               stroke="currentColor"
-              strokeWidth="4"
+              strokeWidth="3"
             />
             <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+              className="animate-spinner-sweep"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              d="M12 2a10 10 0 0 1 10 10"
             />
           </svg>
         )}

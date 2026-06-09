@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Plus, Search, LayoutGrid, List, Diamond } from 'lucide-react'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -8,6 +9,7 @@ import { Modal } from '@/components/ui/Modal'
 import { AvatarGroup } from '@/components/ui/Avatar'
 import { ProjectWizard } from './ProjectWizard'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/features/theme/ThemeContext'
 import type { Project, ProjectMember } from '@/types'
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -44,11 +46,34 @@ function ProjectMembers({ projectId }: { projectId: string }) {
 // ─── Grid card ────────────────────────────────────────────────────────────────
 
 function ProjectCard({ project, onClick }: { project: Project; onClick: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const dark = resolvedTheme === 'dark'
   return (
     <button
       onClick={onClick}
-      className="group flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-left hover:border-primary/50 hover:shadow-md transition-all duration-150"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-left w-full"
+      style={{
+        transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+        boxShadow: hovered
+          ? dark
+            ? `0 0 0 1.5px rgb(var(--color-primary) / 0.45), 0 8px 32px rgb(var(--color-primary) / 0.28)`
+            : `0 0 0 1.5px rgb(var(--color-primary) / 0.25), 0 8px 28px rgb(var(--color-primary) / 0.10)`
+          : dark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06)',
+        borderColor: hovered ? `rgb(var(--color-primary) / ${dark ? '0.5' : '0.3'})` : undefined,
+      }}
     >
+      <span
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{
+          background: `linear-gradient(to right, transparent, rgb(var(--color-primary) / ${dark ? '0.9' : '0.7'}), transparent)`,
+          opacity: hovered ? 1 : 0,
+          transition: 'opacity 0.2s ease',
+        }}
+      />
       <div className="mb-3 flex items-start gap-2.5">
         <Diamond
           className="mt-0.5 h-4 w-4 shrink-0"
@@ -86,7 +111,7 @@ function NewProjectCard({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-6 text-gray-400 dark:text-gray-500 hover:border-primary/50 hover:text-primary transition-all duration-150 min-h-[140px]"
+      className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-6 text-gray-400 dark:text-gray-500 hover:border-primary/50 hover:text-primary hover:-translate-y-1 hover:shadow-md transition-all duration-200 min-h-[140px]"
     >
       <Plus className="h-5 w-5" />
       <span className="text-xs font-medium">novo projeto</span>
@@ -134,6 +159,15 @@ function CreateProjectModal({ open, onClose }: { open: boolean; onClose: () => v
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+const gridVariants = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+}
+const cardVariants = {
+  hidden:  { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 28 } },
+}
+
 type ViewMode = 'grid' | 'list'
 type StatusFilter = Project['status'] | 'all'
 
@@ -163,7 +197,7 @@ export function ProjectsPage() {
     <div className="mx-auto max-w-5xl px-6 py-6">
       {/* Header */}
       <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Projetos</h1>
+        <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 animate-page-enter">Projetos</h1>
 
         <div className="flex items-center gap-2">
           {/* View toggle */}
@@ -249,16 +283,24 @@ export function ProjectsPage() {
           ))}
         </div>
       ) : view === 'grid' ? (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+        <motion.div
+          className="grid grid-cols-2 gap-4 sm:grid-cols-3"
+          variants={gridVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {filtered.map((p) => (
-            <ProjectCard
-              key={p.id}
-              project={p}
-              onClick={() => navigate(`/projects/${p.id}/board`)}
-            />
+            <motion.div key={p.id} variants={cardVariants}>
+              <ProjectCard
+                project={p}
+                onClick={() => navigate(`/projects/${p.id}/board`)}
+              />
+            </motion.div>
           ))}
-          <NewProjectCard onClick={() => setCreating(true)} />
-        </div>
+          <motion.div variants={cardVariants}>
+            <NewProjectCard onClick={() => setCreating(true)} />
+          </motion.div>
+        </motion.div>
       ) : (
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 overflow-hidden">
           {filtered.length === 0 ? (

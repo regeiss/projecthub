@@ -30,7 +30,7 @@ function CreateMilestoneModal({ projectId, open, onClose }: { projectId: string;
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Novo milestone" size="sm">
+    <Modal open={open} onClose={onClose} title="Novo marco" size="sm">
       <form onSubmit={handleSubmit} className="space-y-4">
         <Input label="Nome" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Entrega v1.0" required autoFocus />
         <Input label="Descrição" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Opcional" />
@@ -71,7 +71,7 @@ function MilestoneCard({ milestone, projectId }: { milestone: Milestone; project
             ))}
           </select>
           <button
-            onClick={() => confirm('Deletar milestone?') && remove.mutate(milestone.id)}
+            onClick={() => confirm('Deletar marco?') && remove.mutate(milestone.id)}
             className="text-gray-400 dark:text-gray-500 hover:text-red-500"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -119,17 +119,17 @@ export function MilestonesPage() {
   return (
     <div className="mx-auto max-w-3xl p-6">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Milestones</h1>
+        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Marcos</h1>
         <Button onClick={() => setCreating(true)}>
           <Plus className="h-3.5 w-3.5" />
-          Novo milestone
+          Novo marco
         </Button>
       </div>
 
       {milestones.length === 0 ? (
         <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-600 p-10 text-center">
           <Flag className="mx-auto mb-2 h-8 w-8 text-gray-400 dark:text-gray-500" />
-          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum milestone ainda</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Nenhum marco ainda</p>
         </div>
       ) : (
         <div className="space-y-3">
