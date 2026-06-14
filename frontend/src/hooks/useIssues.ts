@@ -77,7 +77,7 @@ export function useCreateIssue() {
       if (Array.isArray(data.labelIds) && data.labelIds.length > 0) {
         payload.label_ids = data.labelIds
       }
-      return issueService.create(payload as Parameters<typeof issueService.create>[0])
+      return issueService.create(payload as unknown as Parameters<typeof issueService.create>[0])
     },
     onSuccess: (_, { projectId, data }) => {
       qc.invalidateQueries({ queryKey: ['issues', projectId] })
@@ -134,6 +134,22 @@ export function useUpdateIssue() {
         qc.invalidateQueries({ queryKey: ['cpm-data', projectId] })
         qc.invalidateQueries({ queryKey: ['cpm-network', projectId] })
       }
+    },
+  })
+}
+
+export function useBulkUpdateIssues() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      issueIds,
+      updates,
+    }: {
+      issueIds: string[]
+      updates: { state_id?: string; assignee_id?: string | null; priority?: string }
+    }) => issueService.bulkUpdate(issueIds, updates),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['issues'] })
     },
   })
 }

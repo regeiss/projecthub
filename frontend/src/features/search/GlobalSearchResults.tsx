@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { FileText, AlertCircle } from 'lucide-react'
+import { FileText, AlertCircle, Lightbulb } from 'lucide-react'
 import { relativeTime, cn } from '@/lib/utils'
 import type { GlobalSearchResponse } from '@/types/search'
 
@@ -43,10 +43,12 @@ export function GlobalSearchResults({
 
   const issues = data?.issues ?? []
   const wikiPages = data?.wiki_pages ?? []
-  const isEmpty = !isLoading && !isError && issues.length === 0 && wikiPages.length === 0
+  const ideas = data?.ideas ?? []
+  const isEmpty = !isLoading && !isError && issues.length === 0 && wikiPages.length === 0 && ideas.length === 0
 
   const issueOffset = 0
   const wikiOffset = issues.length
+  const ideaOffset = issues.length + wikiPages.length
 
   return (
     <div
@@ -71,7 +73,7 @@ export function GlobalSearchResults({
       )}
 
       {!isError && (
-        <div className="grid grid-cols-2 divide-x divide-gray-100 dark:divide-gray-800">
+        <div className="grid grid-cols-3 divide-x divide-gray-100 dark:divide-gray-800">
           {/* Issues column */}
           <div>
             <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1.5">
@@ -216,6 +218,64 @@ export function GlobalSearchResults({
                   })}
               {!isLoading && wikiPages.length === 0 && !isEmpty && (
                 <li className="px-4 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">Sem páginas wiki</li>
+              )}
+            </ul>
+          </div>
+
+          {/* Ideas column */}
+          <div>
+            <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center gap-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                Ideias
+              </span>
+              {!isLoading && ideas.length > 0 && (
+                <span className="text-[10px] text-gray-400 dark:text-gray-600">({ideas.length})</span>
+              )}
+            </div>
+            <ul role="presentation">
+              {isLoading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <li key={i} role="presentation"><SkeletonRow /></li>
+                  ))
+                : ideas.map((idea, i) => {
+                    const idx = ideaOffset + i
+                    const resultId = `search-result-${resultIds[idx]}`
+                    return (
+                      <li
+                        key={idea.id}
+                        id={resultId}
+                        role="option"
+                        className={cn(
+                          'px-4 py-2.5 cursor-pointer border-b border-gray-50 dark:border-gray-800/50 last:border-0',
+                          focusedIndex === idx
+                            ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                            : 'hover:bg-gray-50 dark:hover:bg-gray-800/40',
+                        )}
+                        onClick={() => handleClick('/discovery')}
+                        tabIndex={-1}
+                        aria-selected={focusedIndex === idx}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <Lightbulb className="h-3 w-3 text-amber-400 shrink-0" aria-hidden="true" />
+                          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 leading-snug line-clamp-1">
+                            {idea.title}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 ml-[18px]">
+                          <span className="text-xs text-gray-400 dark:text-gray-500">{idea.status}</span>
+                        </div>
+                        {idea.headline && (
+                          <p
+                            className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 ml-[18px] [&_mark]:bg-amber-100 [&_mark]:dark:bg-amber-900/40 [&_mark]:text-amber-800 [&_mark]:dark:text-amber-300 [&_mark]:rounded-sm [&_mark]:px-0.5"
+                            dangerouslySetInnerHTML={{ __html: sanitiseHeadline(idea.headline) }}
+                            aria-label="Trecho do resultado"
+                          />
+                        )}
+                      </li>
+                    )
+                  })}
+              {!isLoading && ideas.length === 0 && !isEmpty && (
+                <li className="px-4 py-4 text-xs text-gray-400 dark:text-gray-500 text-center">Sem ideias</li>
               )}
             </ul>
           </div>

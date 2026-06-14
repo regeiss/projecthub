@@ -50,7 +50,7 @@
   --color-primary-muted:  204 251 241; /* teal-100 */
   --color-primary-text:   15 118 110;  /* teal-700 */
 
-  --color-bg-space:   236 244 238;     /* #ECF4EE canvas  */
+  --color-bg-space:   236 254 252;     /* teal-50 canvas  */
   --color-bg-space-end:  45 212 191;   /* teal-400 — gradient end */
   --color-bg-card:    250 255 254;     /* near-white with teal cast */
   --color-bg-sidebar: 240 253 250;     /* teal-50 sidebar */
@@ -408,6 +408,11 @@ html:not(.dark) .sidebar-bg {
     animation: spinner-sweep 1.2s ease-in-out infinite,
                spin       1.2s linear        infinite;
   }
+
+  /* Marching-ants border */
+  .animate-border-march {
+    animation: border-march 0.4s linear infinite;
+  }
 }
 
 /* ─── Microinteraction keyframes ─────────────────────────────────────────── */
@@ -450,4 +455,9 @@ html:not(.dark) .sidebar-bg {
   0%   { stroke-dashoffset: 56; }
   50%  { stroke-dashoffset: 14; }
   100% { stroke-dashoffset: 56; }
+}
+
+/* Marching-ants border on new project card */
+@keyframes border-march {
+  to { stroke-dashoffset: -13; }
 }

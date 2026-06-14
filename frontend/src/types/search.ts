@@ -42,9 +42,18 @@ export interface WikiPageSearchResult {
   headline: string
 }
 
+export interface IdeaSearchResult {
+  id: string
+  title: string
+  summary: string | null
+  status: string
+  headline: string
+}
+
 export interface GlobalSearchResponse {
   issues: IssueSearchResult[]
   wiki_pages: WikiPageSearchResult[]
+  ideas: IdeaSearchResult[]
   total: number
 }
 

@@ -16,12 +16,11 @@ import { ColorThemeSelector } from '@/features/theme/ColorThemeSelector'
 import keycloak, { buildLogoutUrl } from '@/lib/keycloak'
 
 export function Header() {
-  const { user, logout } = useAuthStore()
+  const { user } = useAuthStore()
   const { currentProject, workspace: currentWorkspace } = useWorkspaceStore()
   const navigate = useNavigate()
 
   function handleLogout() {
-    logout()
     window.location.replace(
       buildLogoutUrl({
         origin: window.location.origin,

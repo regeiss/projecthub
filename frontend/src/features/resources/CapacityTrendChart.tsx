@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { resourceService } from '@/services/resource.service'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Spinner } from '@/components/ui/Spinner'
 
 const RANGE_OPTIONS = [3, 6, 12] as const
@@ -168,11 +169,12 @@ function BarChart({ points }: { points: PeriodPoint[] }) {
 
 export function CapacityTrendChart() {
   const [range, setRange] = useState<Range>(6)
+  const workspaceId = useWorkspaceStore((state) => state.workspace?.id ?? null)
   const periods = generatePeriods(range)
 
   const queries = useQueries({
     queries: periods.map(({ period }) => ({
-      queryKey: ['workspace-workload', period],
+      queryKey: ['workspace-workload', workspaceId, period],
       queryFn: () => resourceService.getWorkload({ period }),
     })),
   })
@@ -184,7 +186,7 @@ export function CapacityTrendChart() {
     return {
       period,
       label,
-      available: rows.reduce((s, r) => s + r.availableDays, 0),
+      available: rows.reduce((s, r) => s + (r.availableDays ?? 0), 0),
       planned:   rows.reduce((s, r) => s + r.plannedDays,   0),
       actual:    rows.reduce((s, r) => s + r.actualDays,    0),
     }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { usePortfolioDashboard } from '@/hooks/usePortfolio'
 import { resourceService } from '@/services/resource.service'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { Avatar } from '@/components/ui/Avatar'
 import { Spinner, PageSpinner } from '@/components/ui/Spinner'
 
@@ -21,13 +22,14 @@ function currentMonthStr() {
 
 export function WorkloadView({ portfolioId }: Props) {
   const [period, setPeriod] = useState(currentMonthStr())
+  const workspaceId = useWorkspaceStore((state) => state.workspace?.id ?? null)
 
   const { data: dashData, isLoading: dashLoading } = usePortfolioDashboard(portfolioId)
   const projects = dashData?.projects ?? []
 
   const workloadQueries = useQueries({
     queries: projects.map((pp) => ({
-      queryKey: ['project-workload', pp.projectId, period],
+      queryKey: ['project-workload', workspaceId, pp.projectId, period],
       queryFn: () => resourceService.getProjectWorkload(pp.projectId, { period }),
       enabled: !!pp.projectId,
     })),

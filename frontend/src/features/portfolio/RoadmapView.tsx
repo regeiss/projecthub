@@ -161,25 +161,26 @@ export function RoadmapView({ portfolioId }: RoadmapViewProps) {
 
   useEffect(() => {
     if (!drag) return
+    const d = drag
 
     document.body.style.userSelect = 'none'
-    document.body.style.cursor = drag.kind === 'move' ? 'grabbing' : 'ew-resize'
+    document.body.style.cursor = d.kind === 'move' ? 'grabbing' : 'ew-resize'
 
-    const currentDraft = { startDate: drag.origStart, endDate: drag.origEnd }
+    const currentDraft = { startDate: d.origStart, endDate: d.origEnd }
 
     function onMouseMove(e: MouseEvent) {
       const deltaDays = Math.round(
-        ((e.clientX - drag.startX) / drag.containerWidth) * drag.totalMs / 86400000,
+        ((e.clientX - d.startX) / d.containerWidth) * d.totalMs / 86400000,
       )
       const deltaMs = deltaDays * 86400000
-      const os = new Date(drag.origStart).getTime()
-      const oe = new Date(drag.origEnd).getTime()
+      const os = new Date(d.origStart).getTime()
+      const oe = new Date(d.origEnd).getTime()
       let ns = os, ne = oe
 
-      if (drag.kind === 'move') {
+      if (d.kind === 'move') {
         ns = os + deltaMs
         ne = oe + deltaMs
-      } else if (drag.kind === 'resize-start') {
+      } else if (d.kind === 'resize-start') {
         ns = Math.min(os + deltaMs, oe - 86400000)
       } else {
         ne = Math.max(oe + deltaMs, os + 86400000)
@@ -187,19 +188,19 @@ export function RoadmapView({ portfolioId }: RoadmapViewProps) {
 
       currentDraft.startDate = toISODate(new Date(ns))
       currentDraft.endDate   = toISODate(new Date(ne))
-      setDrafts((d) => ({ ...d, [drag.projectId]: { ...currentDraft } }))
+      setDrafts((prev) => ({ ...prev, [d.projectId]: { ...currentDraft } }))
     }
 
     function onMouseUp() {
       document.body.style.userSelect = ''
       document.body.style.cursor = ''
       if (
-        currentDraft.startDate !== drag.origStart ||
-        currentDraft.endDate   !== drag.origEnd
+        currentDraft.startDate !== d.origStart ||
+        currentDraft.endDate   !== d.origEnd
       ) {
         updateProject.mutate(
-          { portfolioId, ppId: drag.projectId, data: { startDate: currentDraft.startDate, endDate: currentDraft.endDate } },
-          { onSuccess: () => setDrafts((d) => { const n = { ...d }; delete n[drag.projectId]; return n }) },
+          { portfolioId, ppId: d.projectId, data: { startDate: currentDraft.startDate, endDate: currentDraft.endDate } },
+          { onSuccess: () => setDrafts((prev) => { const n = { ...prev }; delete n[d.projectId]; return n }) },
         )
       }
       setDrag(null)

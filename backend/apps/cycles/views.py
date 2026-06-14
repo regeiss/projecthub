@@ -238,3 +238,80 @@ class SprintPlanApplyView(APIView):
         plan = ensure_sprint_plan(cycle, request.user)
         plan = apply_sprint_plan(plan, request.user)
         return Response(SprintPlanSerializer(plan).data)
+
+
+class CycleBurndownView(APIView):
+    """
+    GET /projects/{project_pk}/cycles/{pk}/burndown/
+    Returns daily burndown data: ideal remaining and actual remaining per day.
+    Uses IssueActivity to find when issues transitioned to a completed state.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, project_pk, pk):
+        from datetime import date, timedelta
+        from apps.issues.models import IssueActivity
+
+        project = _get_project(project_pk, request.user)
+        cycle = _get_cycle(pk, project)
+
+        cycle_issues = CycleIssue.objects.filter(cycle=cycle).select_related("issue__state")
+        total = cycle_issues.count()
+        issue_ids = list(cycle_issues.values_list("issue_id", flat=True))
+
+        if not cycle.start_date or total == 0:
+            return Response({"total": total, "days": []})
+
+        start = cycle.start_date
+        end = cycle.end_date or date.today()
+        today = date.today()
+
+        # Build map: issue_id -> first completion date (from IssueActivity)
+        # Activities store state changes as field='state', new_value=<state_id>
+        from apps.projects.models import IssueState
+        completed_state_ids = set(
+            IssueState.objects.filter(
+                project=project, category="completed"
+            ).values_list("id", flat=True)
+        )
+        completed_state_strs = {str(sid) for sid in completed_state_ids}
+
+        completion_dates: dict = {}
+        activities = (
+            IssueActivity.objects.filter(
+                issue_id__in=issue_ids,
+                field="state",
+            )
+            .order_by("created_at")
+        )
+        for act in activities:
+            if act.new_value and act.new_value in completed_state_strs:
+                iid = str(act.issue_id)
+                if iid not in completion_dates:
+                    completion_dates[iid] = act.created_at.date()
+
+        # For issues that are currently completed but have no activity, use today
+        for ci in cycle_issues:
+            iid = str(ci.issue_id)
+            if ci.issue.state.category == "completed" and iid not in completion_dates:
+                completion_dates[iid] = today
+
+        # Build per-day data
+        days = []
+        current = start
+        while current <= min(end, today):
+            completed_by_day = sum(
+                1 for iid, cdate in completion_dates.items() if cdate <= current
+            )
+            remaining = total - completed_by_day
+            total_days = (end - start).days or 1
+            day_idx = (current - start).days
+            ideal_remaining = round(total * (1 - day_idx / total_days), 2)
+            days.append({
+                "date": current.isoformat(),
+                "remaining": remaining,
+                "ideal": max(0, ideal_remaining),
+            })
+            current += timedelta(days=1)
+
+        return Response({"total": total, "days": days})

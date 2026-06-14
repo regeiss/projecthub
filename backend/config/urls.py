@@ -13,11 +13,10 @@ urlpatterns = [
 
     # API v1
     path("api/v1/auth/", include("apps.authentication.urls")),
-    path("api/v1/auth/access-requests/", include("apps.access_requests.urls_auth")),
     path("api/v1/workspaces/", include("apps.workspaces.urls")),
-    path("api/v1/workspaces/", include("apps.access_requests.urls_workspace")),
     path("api/v1/projects/", include("apps.projects.urls")),
     path("api/v1/issues/", include("apps.issues.urls")),
+    path("api/v1/issue-templates/", include("apps.issues.template_urls")),
     path("api/v1/cycles/", include(("apps.cycles.urls", "cycles"))),
     path("api/v1/modules/", include(("apps.modules.urls", "modules"))),
     path("api/v1/wiki/", include("apps.wiki.urls")),
@@ -25,6 +24,7 @@ urlpatterns = [
     path("api/v1/cpm/", include("apps.cpm.urls")),
     path("api/v1/portfolio/", include("apps.portfolio.urls")),
     path("api/v1/resources/", include(("apps.resources.urls", "resources"))),
+    path("api/v1/discovery/", include(("apps.discovery.urls", "discovery"))),
     path("api/v1/tasks/",     include("apps.workspaces.task_urls")),
     path("api/v1/search/", GlobalSearchView.as_view(), name="global-search"),
 

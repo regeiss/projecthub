@@ -44,7 +44,7 @@ export function WorkloadHeatmap({ period }: Props) {
 
   const workloadQueries = useQueries({
     queries: projects.map((p) => ({
-      queryKey: ['project-workload', p.id, period],
+      queryKey: ['project-workload', workspaceId ?? null, p.id, period],
       queryFn: () => resourceService.getProjectWorkload(p.id, { period }),
       enabled: !!p.id,
     })),
@@ -77,13 +77,13 @@ export function WorkloadHeatmap({ period }: Props) {
           memberId: w.memberId,
           memberName: w.memberName,
           memberAvatar: w.memberAvatar,
-          availableDays: w.availableDays,
+          availableDays: w.availableDays ?? 0,
           cells: new Map(),
         })
       }
       const row = memberMap.get(w.memberId)!
       // availableDays is workspace-wide per period — take max in case of rounding diffs
-      if (w.availableDays > row.availableDays) row.availableDays = w.availableDays
+      if ((w.availableDays ?? 0) > row.availableDays) row.availableDays = w.availableDays ?? 0
       row.cells.set(proj.id, { planned: w.plannedDays, actual: w.actualDays })
     })
   })

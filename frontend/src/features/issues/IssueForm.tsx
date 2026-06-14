@@ -1,14 +1,22 @@
 import { useState } from 'react'
+import { Check, ChevronDown, LayoutTemplate } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useProjectStates, useProjectLabels, useProjectMembers } from '@/hooks/useProjects'
 import { useCreateIssue, useUpdateIssue, useCreateSubtask, useEpics } from '@/hooks/useIssues'
 import { useCycles } from '@/hooks/useCycles'
 import { useMilestones } from '@/hooks/useMilestones'
+import { useIssueTemplates } from '@/hooks/useIssueTemplates'
 import { cycleService } from '@/services/cycle.service'
 import type { Issue, IssueSize, IssueType, Priority } from '@/types'
 import { Modal, ModalFooter } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
+import {
+  Dropdown,
+  DropdownContent,
+  DropdownItem,
+  DropdownTrigger,
+} from '@/components/ui/Dropdown'
 import { MiniEditor } from '@/components/editor/MiniEditor'
 import { EpicColorPicker } from '@/features/epics/EpicColorPicker'
 
@@ -26,6 +34,12 @@ const SIZES: { value: IssueSize; label: string }[] = [
   { value: 'm', label: 'M - Médio' },
   { value: 'l', label: 'L - Grande' },
   { value: 'xl', label: 'XL - Muito grande' },
+]
+
+const ISSUE_TYPES: { value: Extract<IssueType, 'task' | 'bug' | 'story'>; label: string }[] = [
+  { value: 'task', label: 'Tarefa' },
+  { value: 'bug', label: 'Bug' },
+  { value: 'story', label: 'História' },
 ]
 
 interface IssueFormProps {
@@ -69,6 +83,9 @@ export function IssueForm({
   const [description, setDescription] = useState<Record<string, unknown> | null>(issue?.description ?? null)
   const [stateId, setStateId] = useState(issue?.stateId ?? defaultStateId ?? states[0]?.id ?? '')
   const [priority, setPriority] = useState<Priority>(issue?.priority ?? 'none')
+  const [type, setType] = useState<Extract<IssueType, 'task' | 'bug' | 'story'>>(
+    issue?.type === 'bug' || issue?.type === 'story' ? issue.type : 'task',
+  )
   const [assigneeId, setAssigneeId] = useState(issue?.assigneeId ?? '')
   const [size, setSize] = useState<IssueSize | ''>(issue?.size ?? '')
   const [estimateDays, setEstimateDays] = useState(
@@ -86,6 +103,7 @@ export function IssueForm({
   const [continueAdding, setContinueAdding] = useState(false)
 
   const { data: epics = [] } = useEpics(typeOverride !== 'epic' ? projectId : undefined)
+  const { data: templates = [] } = useIssueTemplates()
   const availableLabels = labels.length > 0 ? labels : (issue?.labels ?? [])
   const showLabelLoading = labelsLoading && availableLabels.length === 0
   const showLabelError = labelsError && availableLabels.length === 0
@@ -131,7 +149,7 @@ export function IssueForm({
       description: description || undefined,
       stateId: stateId || defaultState?.id,
       priority,
-      type: typeOverride,
+      type: typeOverride ?? type,
       assigneeId: assigneeId || undefined,
       size: (size || undefined) as IssueSize | undefined,
       estimateDays: estimateDays ? parseFloat(estimateDays) : undefined,
@@ -205,7 +223,17 @@ export function IssueForm({
     )
   }
 
+  function applyTemplate(templateId: string) {
+    const tpl = templates.find((t) => t.id === templateId)
+    if (!tpl) return
+    if (tpl.titleTemplate) setTitle(tpl.titleTemplate)
+    if (tpl.description) setDescription(tpl.description)
+    if (tpl.priority) setPriority(tpl.priority as Priority)
+    if (tpl.size) setSize(tpl.size as IssueSize)
+  }
+
   const isPending = create.isPending || createSubtask.isPending || update.isPending
+  const selectedType = ISSUE_TYPES.find((option) => option.value === type) ?? ISSUE_TYPES[0]
 
   return (
     <Modal
@@ -215,6 +243,23 @@ export function IssueForm({
       size="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!isEdit && templates.length > 0 && (
+          <div className="flex items-center gap-2">
+            <LayoutTemplate className="h-4 w-4 text-gray-400 shrink-0" aria-hidden />
+            <select
+              defaultValue=""
+              onChange={(e) => { if (e.target.value) applyTemplate(e.target.value) }}
+              aria-label="Aplicar template"
+              className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            >
+              <option value="" disabled>Aplicar template…</option>
+              {templates.map((t) => (
+                <option key={t.id} value={t.id}>{t.name}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
         <Input
           label="Título"
           value={title}
@@ -268,20 +313,47 @@ export function IssueForm({
           </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Responsável</label>
-          <select
-            value={assigneeId}
-            onChange={(e) => setAssigneeId(e.target.value)}
-            className="h-8 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-          >
-            <option value="">- sem responsável -</option>
-            {members.map((member) => (
-              <option key={member.id} value={member.memberId}>
-                {member.memberName}
-              </option>
-            ))}
-          </select>
+        <div className="grid grid-cols-2 gap-3">
+          {!typeOverride && (
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
+              <Dropdown>
+                <DropdownTrigger asChild>
+                  <button
+                    type="button"
+                    className="flex h-8 items-center justify-between rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                  >
+                    <span>{selectedType.label}</span>
+                    <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
+                  </button>
+                </DropdownTrigger>
+                <DropdownContent className="min-w-[var(--radix-dropdown-menu-trigger-width)]">
+                  {ISSUE_TYPES.map((option) => (
+                    <DropdownItem key={option.value} onSelect={() => setType(option.value)}>
+                      {option.label}
+                      {type === option.value && <Check className="ml-auto h-3.5 w-3.5 text-primary" />}
+                    </DropdownItem>
+                  ))}
+                </DropdownContent>
+              </Dropdown>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Responsável</label>
+            <select
+              value={assigneeId}
+              onChange={(e) => setAssigneeId(e.target.value)}
+              className="h-8 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <option value="">- sem responsável -</option>
+              {members.map((member) => (
+                <option key={member.id} value={member.memberId}>
+                  {member.memberName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -330,45 +402,49 @@ export function IssueForm({
           />
         </div>
 
-        {milestones.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Marco</label>
-            <select
-              value={milestoneId}
-              onChange={(e) => setMilestoneId(e.target.value)}
-              className="h-8 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-            >
-              <option value="">- sem marco -</option>
-              {milestones.map((milestone) => (
-                <option key={milestone.id} value={milestone.id}>
-                  {milestone.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {(milestones.length > 0 || cycles.length > 0) && (
+          <div className="grid grid-cols-2 gap-3">
+            {milestones.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Marco</label>
+                <select
+                  value={milestoneId}
+                  onChange={(e) => setMilestoneId(e.target.value)}
+                  className="h-8 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                >
+                  <option value="">- sem marco -</option>
+                  {milestones.map((milestone) => (
+                    <option key={milestone.id} value={milestone.id}>
+                      {milestone.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
-        {cycles.length > 0 && (
-          <div className="flex flex-col gap-1">
-            <label
-              htmlFor="issue-cycle-select"
-              className="text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Ciclo
-            </label>
-            <select
-              id="issue-cycle-select"
-              value={cycleId}
-              onChange={(e) => setCycleId(e.target.value)}
-              className="h-8 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
-            >
-              <option value="">- sem ciclo -</option>
-              {cycles.map((cycle) => (
-                <option key={cycle.id} value={cycle.id}>
-                  {cycle.name}
-                </option>
-              ))}
-            </select>
+            {cycles.length > 0 && (
+              <div className="flex flex-col gap-1">
+                <label
+                  htmlFor="issue-cycle-select"
+                  className="text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
+                  Ciclo
+                </label>
+                <select
+                  id="issue-cycle-select"
+                  value={cycleId}
+                  onChange={(e) => setCycleId(e.target.value)}
+                  className="h-8 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-100"
+                >
+                  <option value="">- sem ciclo -</option>
+                  {cycles.map((cycle) => (
+                    <option key={cycle.id} value={cycle.id}>
+                      {cycle.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         )}
 

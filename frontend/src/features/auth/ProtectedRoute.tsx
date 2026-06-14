@@ -1,8 +1,11 @@
-import { Navigate, Outlet } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
+import { PageSpinner } from '@/components/ui/Spinner'
 
 export function ProtectedRoute() {
   const user = useAuthStore((s) => s.user)
-  if (!user) return <Navigate to="/sign-in" replace />
+  // AuthProvider guarantees user is set before rendering children.
+  // The spinner here is a safety net for any edge-case race.
+  if (!user) return <PageSpinner />
   return <Outlet />
 }

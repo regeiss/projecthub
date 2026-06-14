@@ -348,3 +348,23 @@ make sync-wsl       # Sincroniza projeto para WSL (/home/robertogeiss/projecthub
 ## Equipe
 
 Coordenadoria de TI — Prefeitura de Novo Hamburgo / RS
+
+
+
+http:
+  routers:
+    keycloak-http:
+      rule: "Host(`dev-keycloak.novohamburgo.rs.gov.br`)"
+      entryPoints: [web]
+      middlewares: [redirect-https@file]
+      service: keycloak
+    keycloak-https:
+      rule: "Host(`dev-keycloak.novohamburgo.rs.gov.br`)"
+      entryPoints: [websecure]
+      service: keycloak
+      tls: {}
+  services:
+    keycloak:
+      loadBalancer:
+        servers:
+          - url: "http://localhost:80"

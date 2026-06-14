@@ -1,30 +1,43 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { accessRequestService } from '@/services/accessRequest.service'
-import type { AdminResolvePayload } from '@/types/accessRequest'
+import type { CreateAccessRequestInput, ResolveAccessRequestInput } from '@/types/accessRequest'
+
+export function useMyAccessRequests() {
+  return useQuery({
+    queryKey: ['my-access-requests'],
+    queryFn: () => accessRequestService.mine(),
+  })
+}
 
 export function useMyAccessRequest() {
   return useQuery({
-    queryKey: ['access-request-me'],
-    queryFn: () => accessRequestService.getMyStatus(),
-    retry: (failureCount, error: unknown) => {
-      if ((error as { response?: { status?: number } })?.response?.status === 404) return false
-      return failureCount < 2
+    queryKey: ['my-access-request-latest'],
+    queryFn: async () => {
+      const results = await accessRequestService.mine()
+      return results[0] ?? undefined
     },
-    staleTime: 0,
   })
 }
 
-export function useSubmitAccessRequest() {
+export function useCreateAccessRequest() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: accessRequestService.submit,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['access-request-me'] }),
+    mutationFn: (data: CreateAccessRequestInput) => accessRequestService.create(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-access-requests'] })
+      qc.invalidateQueries({ queryKey: ['my-access-request-latest'] })
+    },
   })
 }
 
-export function useWorkspaceAccessRequests(slug: string, status = 'pending') {
+export const useSubmitAccessRequest = useCreateAccessRequest
+
+export function useWorkspaceAccessRequests(
+  slug: string,
+  status?: 'pending' | 'approved' | 'denied',
+) {
   return useQuery({
-    queryKey: ['workspace-access-requests', slug, status],
+    queryKey: ['workspace-access-requests', slug, status ?? 'all'],
     queryFn: () => accessRequestService.listForWorkspace(slug, status),
     enabled: !!slug,
   })
@@ -33,10 +46,11 @@ export function useWorkspaceAccessRequests(slug: string, status = 'pending') {
 export function useResolveAccessRequest(slug: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ requestId, payload }: { requestId: string; payload: AdminResolvePayload }) =>
+    mutationFn: ({ requestId, payload }: { requestId: string; payload: ResolveAccessRequestInput }) =>
       accessRequestService.resolve(slug, requestId, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['workspace-access-requests', slug] })
+      qc.invalidateQueries({ queryKey: ['my-access-requests'] })
     },
   })
 }

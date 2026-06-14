@@ -1,16 +1,154 @@
 # Changelog
 
+## [Unreleased] — 2026-06-14
+
+### Added
+- **Bulk actions on issues** — select multiple issues in Backlog view and update status or priority at once:
+  - `POST /issues/bulk-update/` endpoint (up to 100 issues per request, access-scoped)
+  - Checkbox column added to each `IssueRow` and epic-group rows in `BacklogPage`
+  - Floating action bar appears with Status and Priority dropdowns when issues are selected
+  - `useBulkUpdateIssues` hook + `issueService.bulkUpdate` service method
+
+- **Issue templates** — define reusable templates to pre-fill issue creation forms:
+  - `IssueTemplate` model (workspace-scoped) with `name`, `title_template`, `description`, `priority`, `size`
+  - `GET/POST/PATCH/DELETE /issue-templates/` REST API
+  - Template picker dropdown at the top of `IssueForm` (hidden when no templates exist)
+  - `useIssueTemplates`, `useCreateIssueTemplate`, `useUpdateIssueTemplate`, `useDeleteIssueTemplate` hooks
+  - Migration `0006_add_issue_template`
+
+- **Time tracking on issues** — log hours directly from the issue detail page:
+  - Reuses existing `resources.TimeEntry` model (immutable entries, corrections as negative values)
+  - `GET /issues/{id}/time-entries/` and `POST /issues/{id}/time-entries/` endpoints
+  - `TimeTrackingPanel` component embedded in `IssueDetailPage` below relations
+  - Shows total hours, per-entry list (date, hours, description, member), and an inline log-time form
+  - `useTimeEntries`, `useLogTime`, `useDeleteTimeEntry` hooks + `timeEntryService`
+
+- **Burndown chart with daily data** — `CycleDetail` now shows a real per-day burndown:
+  - `GET /projects/{id}/cycles/{id}/burndown/` endpoint using `IssueActivity` to find completion dates
+  - Falls back to current state for issues without activity records
+  - `BurndownChart` SVG re-implemented to accept `days[]` data points instead of a static snapshot
+  - `useCycleBurndown` hook + `cycleService.burndown` service method
+
+- **Email notifications** — existing `send_email_notification` Celery task already implemented; activated by setting `NOTIFICATIONS_EMAIL_ENABLED=True` + SMTP environment variables
+
+- **Slack webhook notifications** — fire a Slack message on every in-app notification:
+  - `SLACK_WEBHOOK_URL` setting (environment variable, empty = disabled)
+  - `send_slack_notification` Celery task sends a formatted Slack Block Kit message
+  - Auto-triggered alongside email in `create_notification` task when `SLACK_WEBHOOK_URL` is set
+
+- **Discovery roadmap view** — third view option in Product Discovery alongside table and board:
+  - Horizontal swimlane layout with one column per status stage (Nova → Em análise → Planejada → Em execução → Entregue → Estacionada)
+  - Volume bar under each stage header shows relative number of ideas
+  - Cards are clickable (opens IdeaDrawer); score badge shown when score > 0
+  - Toggle button "roadmap" added to the view switcher in `DiscoveryPage`
+
+- **Idea comments** — threaded comments on Discovery ideas, visible in the idea drawer:
+  - `IdeaComment` model with author, body, `is_edited` flag, and timestamps
+  - `GET/POST /discovery/ideas/:id/comments/` and `PATCH/DELETE /discovery/ideas/:id/comments/:comment_pk/`
+  - `IdeaCommentPanel` component with ⌘↵ shortcut to submit, delete button for own comments
+  - `useIdeaComments`, `useAddIdeaComment`, `useDeleteIdeaComment` hooks
+  - Migration `0005_ideacomment`
+
+- **Global search now includes ideas** — ⌘K palette shows a third "Ideias" column:
+  - Backend `_search_ideas` in `GlobalSearchView` using PostgreSQL FTS on title + summary
+  - `IdeaSearchResultSerializer` with headline highlighting
+  - Frontend `GlobalSearchResults` updated to 3-column grid (Issues / Wiki / Ideias)
+  - `IdeaSearchResult` type added to `types/search.ts`
+
+- **Discovery idea detail drawer** — clicking any idea row (table or board) opens a slide-in side panel with:
+  - Inline status selector with live update
+  - Scorecard panel: Impacto, Esforço, Confiança, Importância (0–10) with live score preview and save
+  - Insights panel: add notes, links, or feedback; lists existing insights per idea
+  - Promote-to-issue button (shown when idea is linked to a project and not yet promoted)
+  - `IdeaDrawer` component using Radix Dialog + Framer Motion slide-from-right animation
+  - `discoveryService.updateIdea` method for inline status changes
+  - "Importância" replaces "Alcance" label in scorecard UI
+  - Keyboard accessibility on all clickable rows and cards (Enter/Space to open drawer)
+
+- **Product Discovery module** (Tasks 6–8 of the 2026-06-12 plan)
+  - `IdeaScorecard` model with impact, effort, confidence, reach fields and computed `score = (impact × confidence) / effort`
+  - `PATCH /api/v1/discovery/ideas/:id/scorecard/` endpoint that upserts and returns the scorecard with computed score
+  - `IdeaInsight` model (kind: note/link/feedback, title, JSON content) with `GET`/`POST /api/v1/discovery/ideas/:id/insights/`
+  - `POST /api/v1/discovery/ideas/:id/promote/` action that creates an Issue in the linked project and links `promoted_issue`
+  - `ScorecardPanel` UI component with editable inputs and live score preview
+  - `InsightPanel` UI component with inline add form and kind selector (note/link/feedback)
+  - Score column in `IdeaTableView`; promote button shown per row for ideas with a project but no promoted issue
+  - `discoveryService.updateScorecard`, `listInsights`, `addInsight`, `promoteIdea` service methods
+  - `IdeaScorecard` and `IdeaInsight` TypeScript types in `types/discovery.ts`
+  - 19 backend tests across `test_ideas_api.py`, `test_views_api.py`, `test_scoring_api.py`, `test_insights_api.py`
+  - Discovery Module section in `ARCHITECTURE.md` documenting domain model, API routes, promotion flow, and frontend structure
+  - Migration `0004_ideainsight_ideascorecard`
+
+### Fixed
+- **TypeScript errors** — resolved all type-check failures across the codebase:
+  - `MemberWorkload.availableDays` (`number | null`) properly null-coalesced in `WorkloadHeatmap` and `CapacityTrendChart`
+  - `RoadmapView` drag state captured as local non-null constant inside `useEffect` to satisfy TypeScript control-flow narrowing in closures
+  - `projectService.mapProjectMember` now includes `projectId` and `createdAt` fields required by the `ProjectMember` type
+  - `useIssues.useCreateIssue` double-cast (`as unknown as`) for the `Record<string, unknown>` → `CreateIssueDto` conversion
+  - `CodeBlockWithLineNumbers` replaced `Array.at(-1)` (ES2022) with `[length - 1]` for compatibility with current `lib` target
+  - `useMyAccessRequest`, `useSubmitAccessRequest` hooks added as aliases; `AccessRequest` type alias added for `AccessRequestDetail`; `accessRequestService.getMyStatus()` added; `CreateAccessRequestInput.workspaceId` field added
+  - `CyclePlanningBoard.test.tsx` allocations array explicitly typed as `SprintPlanAllocation[]` to allow `plannedMember: null`
+- **Test failures** — all 169 frontend tests now pass:
+  - `CycleDetail.test.tsx` and `CycleDetailPlanning.test.tsx` mocks updated to include `useCycleBurndown`
+  - `CycleDetail.test.tsx` status button name updated to `ativar` (matching the actual label)
+  - `MentionList.test.tsx` fixture updated with required `role`/`createdAt` fields; `onKeyDown` calls wrapped in `act()` to flush React state between keystrokes; key-press args cast with `as any`
+  - `SlashCommandList.test.tsx` key-press args cast with `as any`
+  - `IssueForm.test.tsx` mock for `useIssueTemplates` added; `getByText('Tarefa')` changed to `getAllByText` to handle Dropdown mock rendering both trigger and item in the DOM
+
 Todas as mudanças notáveis do ProjectHub são documentadas aqui.
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 
 ---
 
-=
+========================================================================================================================================================
+
+ The git diff is inflated — comparing our initial commit against the remote brings in hundreds of pre-existing files. Here are the files
+ actually edited in this session and the previous one (since 29/05):
+
+  Gantt chart
+  frontend/src/features/gantt/GanttChart.tsx
+  frontend/src/hooks/useCpm.ts          (read, not modified)
+  frontend/src/services/cpm.service.ts  (read, not modified)
+
+  Keycloak auth fixes
+  frontend/src/features/auth/AuthProvider.tsx
+  frontend/src/features/auth/SignInPage.tsx
+  frontend/src/lib/keycloak.ts
+  
+  frontend/vite.config.ts
+  backend/config/settings/base.py
+  backend/apps/authentication/authentication.py
+  assets/meu-tema/login/theme.properties
+
+  Keycloak login theme CSS
+  assets/meu-tema/login/resources/css/style.css
+
+  Project/infra
+  .gitignore
+  .env                      (DATABASE_URL, KEYCLOAK_ISSUER, VITE_* vars)
+  changelog.md
+
+⏺ Modified files:
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/CHANGELOG.md
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/assets/meu-tema/login/resources/css/style.css
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/models.py
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/serializers.py
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectsPage.tsx
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/hooks/useProjects.ts
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/types/project.ts
+
+  Created files:
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/backend/apps/projects/migrations/0002_project_dates.py
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectWizard.test.tsx
+  - /Users/robertoedgargeiss/ProjetosWeb/projecthub/frontend/src/features/projects/ProjectWizard.tsx
+
+
+
+========================================================================================================================================================
+
 ## [Unreleased]
 
 ### Added
-
-- **Access Request Flow (2026-06-05)**: new users arriving via any Keycloak provider see a "Request Access" form instead of the create-workspace wizard. Admins receive in-app notifications and can approve/deny requests from a new "Solicitações" tab in workspace settings (deep-linked via `?tab=requests`). Approval creates `WorkspaceMember` records for the requested workspace plus any extras selected by the admin. Email notifications sent to requesters on approval and denial via Celery (`notifications` queue). Denied users can re-request; admin's denial reason is shown as a `role="alert"` banner. Backend: new `apps/access_requests/` Django app with `AccessRequest` model, DRF serializers, bootstrap endpoints (JWT-only, no WorkspaceMember required), admin endpoints, and Celery tasks. Frontend: `RequestAccessPage` (form/pending/denial states), `AccessRequestsTab`, `useAccessRequest` hooks. Files: `backend/apps/access_requests/`, `frontend/src/features/auth/RequestAccessPage.tsx`, `frontend/src/features/workspace/AccessRequestsTab.tsx`, `frontend/src/hooks/useAccessRequest.ts`, `frontend/src/services/accessRequest.service.ts`, `frontend/src/types/accessRequest.ts`.
 
 - **Microinterações — camada completa (2026-06-02)**: três camadas de animação adicionadas ao ProjectHub. **Camada 1 (CSS/@keyframes):** `@keyframes shimmer` substitui `animate-pulse` nos skeletons; `@keyframes draw-check` desenha o checkmark ao concluir tarefa; `@keyframes badge-pop` aplica spring na badge de notificações; `@keyframes page-enter` (fade+slide 5 px) no `<h1>` das páginas principais; `@keyframes spinner-sweep` refinamento do spinner de loading. **Camada 2 (Tailwind):** `active:scale-95` no Button; regra global `button:not([disabled]):active { scale: 0.97 }` em `index.css`; `transition-all duration-150` nos NavItems da Sidebar. **Camada 3 (Framer Motion):** Modal com spring enter/exit (`scale 0.96→1`, `y 8→0`) + overlay fade; GlobalSearch com slide-down (`y -6→0`); NotificationToast com slide da direita (spring stiffness 400); BoardPage — cards fazem fade+slide na montagem, escalam 1.03 e sombreiam mais ao arrastar; WorkspacePage — tiles entram em stagger (0.055 s/tile) com spring; ProjectsPage — cards entram em stagger (0.05 s/card); InboxList — itens saem com `x -20, height 0` via `AnimatePresence`. Arquivos: `index.css`, `Button.tsx`, `Sidebar.tsx`, `Modal.tsx`, `GlobalSearch.tsx`, `NotificationToast.tsx`, `NotificationBell.tsx`, `TaskListTile.tsx`, `BoardPage.tsx`, `WorkspacePage.tsx`, `ProjectsPage.tsx`, `InboxList.tsx`.
 

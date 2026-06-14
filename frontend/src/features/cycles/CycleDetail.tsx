@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { useCycle, useCycleProgress, useUpdateCycle } from '@/hooks/useCycles'
+import { useCycle, useCycleProgress, useCycleBurndown, useUpdateCycle } from '@/hooks/useCycles'
 import { useIssues } from '@/hooks/useIssues'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { PageSpinner } from '@/components/ui/Spinner'
@@ -9,10 +9,6 @@ import { CyclePlanningBoard } from './planning/CyclePlanningBoard'
 import type { Issue } from '@/types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function daysBetween(a: string, b: string) {
-  return Math.max(0, Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86_400_000))
-}
 
 function formatDateShort(d: string) {
   return new Date(d).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })
@@ -32,45 +28,36 @@ function StatCard({ value, label }: { value: number; label: string }) {
 // ─── Burndown SVG ─────────────────────────────────────────────────────────────
 
 function BurndownChart({
+  days,
   total,
-  completed,
-  startDate,
-  endDate,
 }: {
+  days: { date: string; remaining: number; ideal: number }[]
   total: number
-  completed: number
-  startDate: string
-  endDate: string
 }) {
   const W = 560
   const H = 100
   const PAD = { top: 8, right: 8, bottom: 4, left: 8 }
+  const innerW = W - PAD.left - PAD.right
+  const innerH = H - PAD.top - PAD.bottom
 
-  const totalDays = daysBetween(startDate, endDate) || 1
-  const todayDay  = Math.min(totalDays, daysBetween(startDate, new Date().toISOString()))
-  const remaining = Math.max(0, total - completed)
+  if (total === 0 || days.length === 0) return null
 
-  const xScale = (day: number) =>
-    PAD.left + (day / totalDays) * (W - PAD.left - PAD.right)
-  const yScale = (val: number) =>
-    PAD.top + (1 - val / (total || 1)) * (H - PAD.top - PAD.bottom)
+  const n = days.length
+  const xAt = (i: number) => PAD.left + (i / Math.max(n - 1, 1)) * innerW
+  const yAt = (val: number) => PAD.top + (1 - val / total) * innerH
 
-  // Ideal line: (0, total) → (totalDays, 0)
-  const idealD = `M ${xScale(0)} ${yScale(total)} L ${xScale(totalDays)} ${yScale(0)}`
+  // Ideal dashed line
+  const idealD = `M ${xAt(0)} ${yAt(days[0].ideal)} ` +
+    days.map((d, i) => `L ${xAt(i)} ${yAt(d.ideal)}`).join(' ')
 
-  // Actual line: smooth curve from (0, total) to (todayDay, remaining)
-  const x0 = xScale(0)
-  const y0 = yScale(total)
-  const x1 = xScale(todayDay)
-  const y1 = yScale(remaining)
-  const cx = (x0 + x1) / 2
-  const actualD = `M ${x0} ${y0} C ${cx} ${y0}, ${cx} ${y1}, ${x1} ${y1}`
+  // Actual polyline
+  const actualD = `M ${xAt(0)} ${yAt(days[0].remaining)} ` +
+    days.map((d, i) => `L ${xAt(i)} ${yAt(d.remaining)}`).join(' ')
 
-  if (total === 0) return null
+  const lastIdx = days.length - 1
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }}>
-      {/* Ideal dashed line */}
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: H }} role="img" aria-label="Gráfico de burndown">
       <path
         d={idealD}
         fill="none"
@@ -79,7 +66,6 @@ function BurndownChart({
         strokeDasharray="5 3"
         className="text-gray-300 dark:text-gray-700"
       />
-      {/* Actual line */}
       <path
         d={actualD}
         fill="none"
@@ -88,10 +74,9 @@ function BurndownChart({
         strokeLinecap="round"
         className="text-primary"
       />
-      {/* Today dot */}
       <circle
-        cx={x1}
-        cy={y1}
+        cx={xAt(lastIdx)}
+        cy={yAt(days[lastIdx].remaining)}
         r="3"
         fill="currentColor"
         className="text-primary"
@@ -133,10 +118,12 @@ function OverviewTab({
   cycle,
   progress,
   issues,
+  burndownDays,
 }: {
   cycle: { name: string; startDate: string; endDate: string; status: string }
   progress: { totalIssues: number; completedIssues: number } | undefined
   issues: Issue[]
+  burndownDays?: { date: string; remaining: number; ideal: number }[]
 }) {
   const total     = progress?.totalIssues     ?? issues.length
   const done      = progress?.completedIssues ?? issues.filter((i) => i.stateCategory === 'completed').length
@@ -168,9 +155,7 @@ function OverviewTab({
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
             <BurndownChart
               total={total}
-              completed={done}
-              startDate={cycle.startDate}
-              endDate={cycle.endDate}
+              days={burndownDays ?? []}
             />
           </div>
         </section>
@@ -209,6 +194,7 @@ export function CycleDetail() {
   const { workspace } = useWorkspaceStore()
   const { data: cycle, isLoading } = useCycle(projectId, cycleId)
   const { data: progress } = useCycleProgress(projectId, cycleId)
+  const { data: burndownData } = useCycleBurndown(projectId, cycleId)
   const { data: issueData } = useIssues(projectId, { cycleId })
   const updateCycle = useUpdateCycle()
   const [tab, setTab] = useState<Tab>('overview')
@@ -290,7 +276,7 @@ export function CycleDetail() {
 
       {/* Content */}
       {tab === 'overview' ? (
-        <OverviewTab cycle={cycle} progress={p} issues={issues} />
+        <OverviewTab cycle={cycle} progress={p} issues={issues} burndownDays={burndownData?.days} />
       ) : (
         <CyclePlanningBoard
           projectId={projectId}

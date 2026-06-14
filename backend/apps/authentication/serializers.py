@@ -11,7 +11,7 @@ class WorkspaceSerializer(serializers.ModelSerializer):
 
 
 class WorkspaceMemberSerializer(serializers.ModelSerializer):
-    workspace = WorkspaceSerializer(read_only=True)
+    workspace = serializers.SerializerMethodField()
 
     class Meta:
         model = WorkspaceMember
@@ -28,6 +28,12 @@ class WorkspaceMemberSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = fields
+
+    def get_workspace(self, obj):
+        workspace_id = getattr(obj, "workspace_id", None)
+        if not workspace_id:
+            return None
+        return WorkspaceSerializer(obj.workspace).data
 
 
 class WorkspaceMemberUpdateSerializer(serializers.ModelSerializer):

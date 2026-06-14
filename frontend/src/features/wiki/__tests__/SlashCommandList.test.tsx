@@ -74,8 +74,10 @@ describe('SlashCommandList', () => {
     const ref = createRef<SlashCommandListHandle>()
     render(<SlashCommandList ref={ref} items={ALL_ITEMS} command={command} />)
     // starts at pointer=0 (Painel Info); ArrowDown → pointer=1 (Painel Nota)
-    ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'ArrowDown' }) })
-    ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'Enter' }) })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'ArrowDown' }) } as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'Enter' }) } as any)
     const calledWith = command.mock.calls[0][0] as SlashCommandItem
     expect(calledWith.type).toBe('item')
     expect(calledWith.filterKey).toBe('note')

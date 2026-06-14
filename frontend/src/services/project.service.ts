@@ -6,11 +6,13 @@ function mapProjectMember(raw: any): ProjectMember {
   const d = raw.member_detail ?? {}
   return {
     id: raw.id,
+    projectId: raw.project ?? '',
     memberId: d.id ?? raw.member,
     memberName: d.name ?? '',
     memberEmail: d.email ?? '',
     memberAvatar: d.avatar_url ?? null,
     role: raw.role,
+    createdAt: raw.created_at ?? '',
   }
 }
 

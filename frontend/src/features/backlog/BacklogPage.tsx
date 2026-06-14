@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronRight, Plus, Sparkles } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Sparkles, X, CheckSquare } from 'lucide-react'
 import { useProjectStates } from '@/hooks/useProjects'
-import { useIssues, useCreateIssue, useEpics, useUpdateIssue } from '@/hooks/useIssues'
+import { useIssues, useCreateIssue, useEpics, useUpdateIssue, useBulkUpdateIssues } from '@/hooks/useIssues'
 import type { Issue, IssueState } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Avatar } from '@/components/ui/Avatar'
@@ -104,19 +104,45 @@ function GroomingChips({ issue }: { issue: Issue }) {
 // ---------------------------------------------------------------------------
 // IssueRow
 // ---------------------------------------------------------------------------
-function IssueRow({ issue, grooming }: { issue: Issue; grooming: boolean }) {
+function IssueRow({
+  issue,
+  grooming,
+  selected,
+  onSelect,
+}: {
+  issue: Issue
+  grooming: boolean
+  selected: boolean
+  onSelect: (id: string, checked: boolean) => void
+}) {
   const navigate = useNavigate()
   const { projectId } = useParams()
 
   return (
     <div
-      className="flex cursor-pointer items-center gap-2 border-b border-gray-100 dark:border-gray-800 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800"
+      className={cn(
+        'flex cursor-pointer items-center gap-2 border-b border-gray-100 dark:border-gray-800 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800',
+        selected && 'bg-indigo-50 dark:bg-indigo-900/20',
+      )}
       onClick={() =>
         navigate(`/projects/${projectId}/issues/${issue.id}`, {
           state: { from: `/projects/${projectId}/backlog` },
         })
       }
     >
+      {/* Checkbox */}
+      <div
+        className="shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => onSelect(issue.id, e.target.checked)}
+          aria-label={`Selecionar issue ${issue.sequenceId}`}
+          className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600"
+        />
+      </div>
       {/* ID */}
       <span className="w-16 shrink-0 text-xs text-gray-400 dark:text-gray-500">
         #{issue.sequenceId}
@@ -170,11 +196,15 @@ function StateGroup({
   issues,
   projectId,
   grooming,
+  selectedIds,
+  onSelect,
 }: {
   state: IssueState
   issues: Issue[]
   projectId: string
   grooming: boolean
+  selectedIds: Set<string>
+  onSelect: (id: string, checked: boolean) => void
 }) {
   const [collapsed, setCollapsed] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -215,7 +245,7 @@ function StateGroup({
       {!collapsed && (
         <>
           {issues.map((i) => (
-            <IssueRow key={i.id} issue={i} grooming={grooming} />
+            <IssueRow key={i.id} issue={i} grooming={grooming} selected={selectedIds.has(i.id)} onSelect={onSelect} />
           ))}
           {adding ? (
             <form onSubmit={handleAdd} className="flex items-center gap-2 px-4 py-2">
@@ -255,6 +285,35 @@ export function BacklogPage() {
   const [groupByEpic, setGroupByEpic] = useState(false)
   const [grooming, setGrooming] = useState(false)
   const { data: epics = [] } = useEpics(groupByEpic ? projectId : undefined)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const bulkUpdate = useBulkUpdateIssues()
+
+  const handleSelect = useCallback((id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  }, [])
+
+  function clearSelection() {
+    setSelectedIds(new Set())
+  }
+
+  function handleBulkStateChange(stateId: string) {
+    bulkUpdate.mutate(
+      { issueIds: [...selectedIds], updates: { state_id: stateId } },
+      { onSuccess: clearSelection },
+    )
+  }
+
+  function handleBulkPriorityChange(priority: string) {
+    bulkUpdate.mutate(
+      { issueIds: [...selectedIds], updates: { priority } },
+      { onSuccess: clearSelection },
+    )
+  }
 
   const allIssues: Issue[] = issueData?.results ?? []
   const nonEpicIssues = allIssues.filter((i) => i.type !== 'epic')
@@ -262,6 +321,8 @@ export function BacklogPage() {
   const estimatedCount = nonEpicIssues.filter((i) => i.estimatePoints != null).length
 
   if (loadingStates || loadingIssues) return <PageSpinner />
+
+  const selCount = selectedIds.size
 
   return (
     <div className="h-full overflow-auto">
@@ -309,6 +370,7 @@ export function BacklogPage() {
 
       {/* Column headers */}
       <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-950 px-4 py-1.5">
+        <span className="w-3.5 shrink-0" />
         <span className="w-16 shrink-0 text-xs font-medium text-gray-400 dark:text-gray-500">ID</span>
         <span className="flex-1 text-xs font-medium text-gray-400 dark:text-gray-500">Título</span>
         {grooming ? (
@@ -366,7 +428,7 @@ export function BacklogPage() {
                   <p className="px-4 py-3 text-xs text-gray-400 dark:text-gray-500">Nenhuma issue.</p>
                 ) : (
                   group.issues.map((issue) => (
-                    <IssueRow key={issue.id} issue={issue} grooming={grooming} />
+                    <IssueRow key={issue.id} issue={issue} grooming={grooming} selected={selectedIds.has(issue.id)} onSelect={handleSelect} />
                   ))
                 )}
               </div>
@@ -377,12 +439,64 @@ export function BacklogPage() {
         states.map((state) => (
           <StateGroup
             key={state.id}
+            selectedIds={selectedIds}
+            onSelect={handleSelect}
             state={state}
             issues={nonEpicIssues.filter((i) => i.stateId === state.id)}
             projectId={projectId}
             grooming={grooming}
           />
         ))
+      )}
+
+      {/* Floating bulk action bar */}
+      {selCount > 0 && (
+        <div
+          role="toolbar"
+          aria-label="Ações em massa"
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 flex items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-2.5 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+        >
+          <CheckSquare className="h-4 w-4 text-indigo-500 shrink-0" aria-hidden />
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            {selCount} selecionada{selCount !== 1 ? 's' : ''}
+          </span>
+          <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400 dark:text-gray-500">Status:</span>
+            <select
+              aria-label="Alterar status em massa"
+              defaultValue=""
+              onChange={(e) => { if (e.target.value) handleBulkStateChange(e.target.value) }}
+              className="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-1 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            >
+              <option value="" disabled>Selecionar…</option>
+              {states.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400 dark:text-gray-500">Prioridade:</span>
+            <select
+              aria-label="Alterar prioridade em massa"
+              defaultValue=""
+              onChange={(e) => { if (e.target.value) handleBulkPriorityChange(e.target.value) }}
+              className="rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-2 py-1 text-xs text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            >
+              <option value="" disabled>Selecionar…</option>
+              {['urgent', 'high', 'medium', 'low', 'none'].map((p) => (
+                <option key={p} value={p}>{p === 'none' ? 'Nenhuma' : p.charAt(0).toUpperCase() + p.slice(1)}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={clearSelection}
+            aria-label="Cancelar seleção"
+            className="ml-1 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       )}
     </div>
   )

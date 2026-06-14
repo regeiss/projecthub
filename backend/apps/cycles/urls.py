@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    CycleBurndownView,
     CycleDetailView,
     CycleIssueAddView,
     CycleIssueRemoveView,
@@ -50,4 +51,5 @@ nested_urlpatterns = [
         name="cycle-plan-allocation-detail",
     ),
     path("<uuid:pk>/plan/apply/", SprintPlanApplyView.as_view(), name="cycle-plan-apply"),
+    path("<uuid:pk>/burndown/", CycleBurndownView.as_view(), name="cycle-burndown"),
 ]

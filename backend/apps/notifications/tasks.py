@@ -67,10 +67,12 @@ def create_notification(
             "Notificação criada: type=%s recipient=%s", notification_type, recipient_id
         )
 
-        # Send email asynchronously if enabled
+        # Send email and Slack asynchronously if enabled
         from django.conf import settings
         if getattr(settings, "NOTIFICATIONS_EMAIL_ENABLED", False):
             send_email_notification.delay(str(notification.pk))
+        if getattr(settings, "SLACK_WEBHOOK_URL", ""):
+            send_slack_notification.delay(str(notification.pk))
 
         return str(notification.pk)
 
@@ -111,4 +113,60 @@ def send_email_notification(self, notification_id: str):
 
     except Exception as exc:
         logger.exception("Erro ao enviar e-mail para notification %s", notification_id)
+        raise self.retry(exc=exc, countdown=120)
+
+
+@shared_task(bind=True, max_retries=3, queue="notifications")
+def send_slack_notification(self, notification_id: str):
+    """
+    Envia notificação para Slack via webhook.
+    Só executa se SLACK_WEBHOOK_URL estiver configurado.
+    """
+    try:
+        import json
+        import urllib.request
+
+        from django.conf import settings
+
+        webhook_url = getattr(settings, "SLACK_WEBHOOK_URL", "")
+        if not webhook_url:
+            return
+
+        from apps.notifications.models import Notification
+
+        notification = Notification.objects.select_related("recipient").get(pk=notification_id)
+        action_url = notification.action_url or ""
+
+        payload = {
+            "text": f"*{notification.title}*",
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": f"*{notification.title}*\n{notification.message or ''}",
+                    },
+                    **({"accessory": {
+                        "type": "button",
+                        "text": {"type": "plain_text", "text": "Ver"},
+                        "url": action_url,
+                    }} if action_url else {}),
+                }
+            ],
+        }
+
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(
+            webhook_url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            if resp.status != 200:
+                raise RuntimeError(f"Slack returned {resp.status}")
+
+        logger.info("Notificação Slack enviada (notification %s)", notification_id)
+
+    except Exception as exc:
+        logger.exception("Erro ao enviar notificação Slack %s", notification_id)
         raise self.retry(exc=exc, countdown=120)

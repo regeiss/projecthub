@@ -12,6 +12,7 @@ import {
   PanelLeft,
   PanelLeftClose,
   HelpCircle,
+  Lightbulb,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -167,6 +168,7 @@ export function Sidebar() {
         <NavItem to="/" icon={LayoutDashboard} iconClassName="text-indigo-400" label="Dashboard" expanded={expanded} />
         <NavItem to="/projects" icon={FolderKanban} iconClassName="text-emerald-400" label="Projetos" expanded={expanded} />
         <NavItem to="/portfolio" icon={BarChart3} iconClassName="text-amber-400" label="Portfolio" expanded={expanded} />
+        <NavItem to="/discovery" icon={Lightbulb} iconClassName="text-yellow-300" label="Discovery" expanded={expanded} />
         <NavItem to="/wiki" icon={BookOpen} iconClassName="text-sky-400" label="Wiki" expanded={expanded} />
         <NavItem to="/inbox" icon={Bell} iconClassName="text-rose-400" label="Inbox" expanded={expanded} />
         <NavItem to="/workspace/resources" icon={Users} iconClassName="text-violet-400" label="Recursos" expanded={expanded} />

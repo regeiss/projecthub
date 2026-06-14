@@ -1,5 +1,6 @@
 from django.db import IntegrityError
 from django.db.models import Q
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import generics, status
 from rest_framework.exceptions import NotFound
@@ -12,8 +13,11 @@ from core.pagination import StandardPagination
 from core.permissions import IsWorkspaceAdmin
 
 from .filters import WorkspaceMemberFilter
-from .models import Workspace, WorkspaceMember
+from .models import AccessRequest, Workspace, WorkspaceMember
 from .serializers import (
+    AccessRequestCreateSerializer,
+    AccessRequestResolveSerializer,
+    AccessRequestSerializer,
     WorkspaceCreateSerializer,
     WorkspaceMemberCreateSerializer,
     WorkspaceMemberRoleSerializer,
@@ -253,6 +257,130 @@ class WorkspaceMemberCreateView(APIView):
             return Response({"detail": "already_member"}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response(WorkspaceMemberSerializer(member).data, status=status.HTTP_201_CREATED)
+
+
+class MyAccessRequestListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        requests = AccessRequest.objects.filter(keycloak_sub=request.user.keycloak_sub)
+        serializer = AccessRequestSerializer(requests, many=True)
+        return Response(serializer.data)
+
+
+class AccessRequestCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = AccessRequestCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        if AccessRequest.objects.filter(
+            keycloak_sub=request.user.keycloak_sub,
+            status=AccessRequest.Status.PENDING,
+        ).exists():
+            return Response({"detail": "pending_exists"}, status=status.HTTP_409_CONFLICT)
+
+        workspace_name = serializer.validated_data["workspace_name"].strip()
+        workspace = Workspace.objects.filter(
+            Q(name__iexact=workspace_name) | Q(slug__iexact=workspace_name)
+        ).first()
+
+        previous_denial_count = AccessRequest.objects.filter(
+            keycloak_sub=request.user.keycloak_sub,
+            status=AccessRequest.Status.DENIED,
+        ).count()
+
+        access_request = AccessRequest.objects.create(
+            workspace=workspace,
+            workspace_name=workspace.name if workspace else workspace_name,
+            keycloak_sub=request.user.keycloak_sub,
+            email=request.user.email,
+            name=request.user.name,
+            secretaria=serializer.validated_data["secretaria"].strip(),
+            reason=serializer.validated_data["reason"].strip(),
+            previous_denial_count=previous_denial_count,
+        )
+        return Response(AccessRequestSerializer(access_request).data, status=status.HTTP_201_CREATED)
+
+
+class WorkspaceAccessRequestListView(generics.ListAPIView):
+    permission_classes = [IsWorkspaceAdmin]
+    serializer_class = AccessRequestSerializer
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        workspace = _get_workspace(self.kwargs["slug"])
+        queryset = AccessRequest.objects.filter(workspace=workspace)
+        status_value = self.request.query_params.get("status")
+        if status_value in {
+            AccessRequest.Status.PENDING,
+            AccessRequest.Status.APPROVED,
+            AccessRequest.Status.DENIED,
+        }:
+            queryset = queryset.filter(status=status_value)
+        return queryset.order_by("-requested_at")
+
+
+class WorkspaceAccessRequestResolveView(APIView):
+    permission_classes = [IsWorkspaceAdmin]
+
+    def post(self, request, slug, pk):
+        workspace = _get_workspace(slug)
+        serializer = AccessRequestResolveSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            access_request = AccessRequest.objects.get(pk=pk, workspace=workspace)
+        except AccessRequest.DoesNotExist:
+            raise NotFound("Solicitação não encontrada.")
+
+        action = serializer.validated_data["action"]
+        access_request.resolved_at = timezone.now()
+        access_request.resolved_by = request.user.keycloak_sub
+
+        if action == "approve":
+            role = serializer.validated_data["role"]
+            target_workspaces = [workspace]
+            extra_workspace_ids = serializer.validated_data.get("extra_workspace_ids", [])
+            if extra_workspace_ids:
+                target_workspaces.extend(Workspace.objects.filter(id__in=extra_workspace_ids))
+
+            for target_workspace in target_workspaces:
+                member, created = WorkspaceMember.objects.get_or_create(
+                    workspace=target_workspace,
+                    keycloak_sub=access_request.keycloak_sub,
+                    defaults={
+                        "email": access_request.email,
+                        "name": access_request.name,
+                        "role": role,
+                    },
+                )
+                if not created:
+                    update_fields = []
+                    if member.email != access_request.email:
+                        member.email = access_request.email
+                        update_fields.append("email")
+                    if member.name != access_request.name:
+                        member.name = access_request.name
+                        update_fields.append("name")
+                    if member.role != WorkspaceMember.Role.ADMIN and member.role != role:
+                        member.role = role
+                        update_fields.append("role")
+                    if update_fields:
+                        update_fields.append("updated_at")
+                        member.save(update_fields=update_fields)
+
+            access_request.status = AccessRequest.Status.APPROVED
+            access_request.denial_reason = None
+        else:
+            access_request.status = AccessRequest.Status.DENIED
+            access_request.denial_reason = serializer.validated_data["denial_reason"]
+
+        access_request.save(
+            update_fields=["status", "denial_reason", "resolved_at", "resolved_by"]
+        )
+        return Response(AccessRequestSerializer(access_request).data)
 
 
 # ─── Personal Tasks ───────────────────────────────────────────────────────────

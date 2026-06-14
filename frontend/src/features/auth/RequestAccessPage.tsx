@@ -74,6 +74,7 @@ function PendingScreen({ req }: { req: AccessRequest }) {
       try {
         const { accessRequestService } = await import('@/services/accessRequest.service')
         const latest = await accessRequestService.getMyStatus()
+        if (!latest) return
         if (latest.status === 'approved') {
           polled.current = true
           clearInterval(id)

@@ -52,7 +52,6 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.health",  # Must be first to register health checks
     "apps.authentication",
-    "apps.access_requests",
     "apps.workspaces",
     "apps.projects",
     "apps.issues",
@@ -66,6 +65,7 @@ LOCAL_APPS = [
     "apps.risks",
     "apps.resources",
     "apps.search",
+    "apps.discovery",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -144,10 +144,9 @@ CELERY_BEAT_SCHEDULER = "django_celery_beat.schedulers:DatabaseScheduler"
 
 # Filas separadas por domínio
 CELERY_TASK_ROUTES = {
-    "apps.cpm.tasks.*":              {"queue": "cpm"},
-    "apps.notifications.tasks.*":    {"queue": "notifications"},
-    "apps.portfolio.tasks.*":        {"queue": "sync"},
-    "apps.access_requests.tasks.*":  {"queue": "notifications"},
+    "apps.cpm.tasks.*":           {"queue": "cpm"},
+    "apps.notifications.tasks.*": {"queue": "notifications"},
+    "apps.portfolio.tasks.*":     {"queue": "sync"},
 }
 
 # =============================================================================
@@ -276,6 +275,7 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="ProjectHub <noreply@projecthub.local>")
 NOTIFICATIONS_EMAIL_ENABLED = config("NOTIFICATIONS_EMAIL_ENABLED", default=False, cast=bool)
+SLACK_WEBHOOK_URL = config("SLACK_WEBHOOK_URL", default="")
 
 # =============================================================================
 # INTERNACIONALIZAÇÃO

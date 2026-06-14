@@ -124,6 +124,9 @@ export const issueService = {
   updateState: (id: string, stateId: string, sortOrder: number) =>
     api.post(`/issues/${id}/update-state/`, { state_id: stateId, sort_order: sortOrder }).then((r) => r.data),
 
+  bulkUpdate: (issueIds: string[], updates: { state_id?: string; assignee_id?: string | null; priority?: string }) =>
+    api.post<{ updated: number }>('/issues/bulk-update/', { issue_ids: issueIds, updates }).then((r) => r.data),
+
   // Comments
   comments: (issueId: string) =>
     api.get<PaginatedResponse<unknown>>(`/issues/${issueId}/comments/`).then((r) => (r.data.results as unknown[]).map(mapComment)),

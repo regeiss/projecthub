@@ -1,14 +1,14 @@
 // frontend/src/features/wiki/__tests__/MentionList.test.tsx
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createRef } from 'react'
 import { MentionList, type MentionListHandle } from '../MentionList'
 import type { ProjectMember } from '@/types'
 
 const members: ProjectMember[] = [
-  { id: 'pm1', projectId: 'p1', memberId: 'u1', memberName: 'Alice Silva',  memberEmail: 'alice@test.com', memberAvatar: null },
-  { id: 'pm2', projectId: 'p1', memberId: 'u2', memberName: 'Bob Santos',   memberEmail: 'bob@test.com',   memberAvatar: null },
+  { id: 'pm1', projectId: 'p1', memberId: 'u1', memberName: 'Alice Silva',  memberEmail: 'alice@test.com', memberAvatar: null, role: 'member', createdAt: '' },
+  { id: 'pm2', projectId: 'p1', memberId: 'u2', memberName: 'Bob Santos',   memberEmail: 'bob@test.com',   memberAvatar: null, role: 'member', createdAt: '' },
 ]
 
 describe('MentionList', () => {
@@ -34,8 +34,10 @@ describe('MentionList', () => {
     const command = vi.fn()
     const ref = createRef<MentionListHandle>()
     render(<MentionList ref={ref} items={members} command={command} />)
-    ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'ArrowDown' }) })
-    ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'Enter' }) })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    act(() => { ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'ArrowDown' }) } as any) })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    act(() => { ref.current!.onKeyDown({ event: new KeyboardEvent('keydown', { key: 'Enter' }) } as any) })
     // ArrowDown moves from index 0 → 1 (Bob Santos)
     expect(command).toHaveBeenCalledWith({ id: 'u2', label: 'Bob Santos' })
   })

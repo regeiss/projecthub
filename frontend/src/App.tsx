@@ -31,17 +31,14 @@ import { UserSettingsPage } from './features/user/UserSettingsPage'
 import { InboxPage } from './features/notifications/InboxPage'
 import { HelpPage } from './features/help'
 import { OnboardingPage } from './features/onboarding/OnboardingPage'
-import { SignInPage } from './features/auth/SignInPage'
-import { RequestAccessPage } from './features/auth/RequestAccessPage'
+import { DiscoveryPage } from './features/discovery/DiscoveryPage'
 
 export default function App() {
   return (
     <TooltipProvider>
     <AuthProvider>
       <Routes>
-        <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
-        <Route path="/request-access" element={<RequestAccessPage />} />
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/" element={<WorkspacePage />} />
@@ -72,6 +69,7 @@ export default function App() {
             </Route>
 
             <Route path="/portfolio" element={<PortfolioPage />} />
+            <Route path="/discovery" element={<DiscoveryPage />} />
             <Route path="/wiki" element={<WorkspaceWikiLayout />}>
               <Route index element={<WikiPage />} />
               <Route path=":pageId" element={<WikiPage />} />

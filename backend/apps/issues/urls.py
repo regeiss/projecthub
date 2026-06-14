@@ -11,12 +11,18 @@ from .views import (
     IssueRelationDestroyView,
     IssueRelationListCreateView,
     IssueSubtaskListCreateView,
+    IssueTemplateViewSet,
     IssueViewSet,
     IssueWatchToggleView,
+    TimeEntryDetailView,
+    TimeEntryListCreateView,
 )
 
 router = DefaultRouter()
 router.register("", IssueViewSet, basename="issue")
+
+template_router = DefaultRouter()
+template_router.register("", IssueTemplateViewSet, basename="issue-template")
 
 urlpatterns = [
     # Nested resources sob /issues/{issue_pk}/
@@ -70,6 +76,21 @@ urlpatterns = [
         IssueWatchToggleView.as_view(),
         name="issue-watch",
     ),
+    path(
+        "<uuid:issue_pk>/time-entries/",
+        TimeEntryListCreateView.as_view(),
+        name="time-entry-list",
+    ),
+    path(
+        "<uuid:issue_pk>/time-entries/<uuid:pk>/",
+        TimeEntryDetailView.as_view(),
+        name="time-entry-detail",
+    ),
     # Router do IssueViewSet (deve vir por último para não capturar os nested)
     path("", include(router.urls)),
+]
+
+# Templates URL patterns (registered separately in config/urls.py under /issue-templates/)
+template_urlpatterns = [
+    path("", include(template_router.urls)),
 ]

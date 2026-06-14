@@ -14,7 +14,6 @@ class Notification(models.Model):
         ISSUE_MENTIONED = "issue_mentioned", "Mencionado em issue"
         ISSUE_UPDATED = "issue_updated", "Issue atualizada (watcher)"
         WIKI_UPDATED = "wiki_updated", "Página wiki atualizada (watcher)"
-        ACCESS_REQUEST = "access_request", "Solicitação de acesso"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     recipient = models.ForeignKey(

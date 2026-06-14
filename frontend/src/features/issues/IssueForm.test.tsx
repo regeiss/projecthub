@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ButtonHTMLAttributes, ComponentProps, ReactNode, ChangeEvent } from 'react'
 import { IssueForm } from './IssueForm'
@@ -28,6 +29,10 @@ vi.mock('@/hooks/useIssues', () => ({
 
 vi.mock('@/hooks/useCycles', () => ({
   useCycles: vi.fn(() => ({ data: [] })),
+}))
+
+vi.mock('@/hooks/useIssueTemplates', () => ({
+  useIssueTemplates: vi.fn(() => ({ data: [] })),
 }))
 
 vi.mock('@/hooks/useMilestones', () => ({
@@ -86,6 +91,23 @@ vi.mock('@/components/editor/MiniEditor', () => ({
 
 vi.mock('@/features/epics/EpicColorPicker', () => ({
   EpicColorPicker: () => <div data-testid="epic-color-picker" />,
+}))
+
+vi.mock('@/components/ui/Dropdown', () => ({
+  Dropdown: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownTrigger: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownContent: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  DropdownItem: ({
+    children,
+    onSelect,
+  }: {
+    children: ReactNode
+    onSelect?: () => void
+  }) => (
+    <button type="button" onClick={onSelect}>
+      {children}
+    </button>
+  ),
 }))
 
 function renderForm(props: Partial<ComponentProps<typeof IssueForm>> = {}) {
@@ -176,6 +198,36 @@ describe('IssueForm', () => {
           title: 'Nova issue com data',
           startDate: '2026-04-30',
           dueDate: '2026-05-05',
+        }),
+      }),
+      expect.any(Object),
+    )
+  })
+
+  it('lets the user choose the issue type when no type override is provided', async () => {
+    const user = userEvent.setup()
+    mockLabelHook.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isError: false,
+    })
+
+    renderForm()
+
+    expect(screen.getAllByText('Tarefa').length).toBeGreaterThan(0)
+
+    await user.click(screen.getByRole('button', { name: 'Bug' }))
+    fireEvent.change(screen.getByLabelText('Título'), {
+      target: { value: 'Corrigir erro de login' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Criar' }))
+
+    expect(createMutate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: 'proj-1',
+        data: expect.objectContaining({
+          title: 'Corrigir erro de login',
+          type: 'bug',
         }),
       }),
       expect.any(Object),

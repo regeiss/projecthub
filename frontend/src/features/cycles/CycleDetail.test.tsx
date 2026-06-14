@@ -31,6 +31,7 @@ vi.mock('@/hooks/useCycles', () => ({
     isLoading: false,
   }),
   useCycleProgress: () => ({ data: undefined }),
+  useCycleBurndown: () => ({ data: undefined }),
   useUpdateCycle: () => ({ mutate: mockUpdateMutate, isPending: false }),
 }))
 
@@ -54,7 +55,7 @@ describe('CycleDetail', () => {
   it('updates the cycle status to active from the detail page', async () => {
     render(<CycleDetail />)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Ativo' }))
+    await userEvent.click(screen.getByRole('button', { name: 'ativar' }))
 
     expect(mockUpdateMutate).toHaveBeenCalledWith({
       projectId: 'project-1',

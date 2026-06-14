@@ -54,7 +54,7 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="relative flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-left w-full"
+      className="relative flex flex-col rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 text-left w-full h-full min-h-[7rem]"
       style={{
         transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
         transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
@@ -108,13 +108,64 @@ function ProjectCard({ project, onClick }: { project: Project; onClick: () => vo
 // ─── New project card ─────────────────────────────────────────────────────────
 
 function NewProjectCard({ onClick }: { onClick: () => void }) {
+  const [hovered, setHovered] = useState(false)
+  const { resolvedTheme } = useTheme()
+  const dark = resolvedTheme === 'dark'
   return (
     <button
       onClick={onClick}
-      className="w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-6 text-gray-400 dark:text-gray-500 hover:border-primary/50 hover:text-primary hover:-translate-y-1 hover:shadow-md transition-all duration-200 min-h-[140px]"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="relative flex flex-col rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 p-4 text-left w-full h-full min-h-[7rem]"
+      style={{
+        transition: 'box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease',
+        transform: hovered ? 'translateY(-5px)' : 'translateY(0)',
+        boxShadow: hovered
+          ? dark
+            ? `0 0 0 1.5px rgb(var(--color-primary) / 0.45), 0 8px 32px rgb(var(--color-primary) / 0.28)`
+            : `0 0 0 1.5px rgb(var(--color-primary) / 0.25), 0 8px 28px rgb(var(--color-primary) / 0.10)`
+          : dark ? '0 1px 3px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.06)',
+        borderColor: hovered ? `rgb(var(--color-primary) / ${dark ? '0.5' : '0.3'})` : undefined,
+      }}
     >
-      <Plus className="h-5 w-5" />
-      <span className="text-xs font-medium">novo projeto</span>
+      {/* Marching-ants border */}
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        style={{ opacity: hovered ? 1 : 0, transition: 'opacity 0.2s ease' }}
+      >
+        <rect
+          x="1" y="1"
+          width="calc(100% - 2px)" height="calc(100% - 2px)"
+          rx="11" ry="11"
+          fill="none"
+          strokeWidth="2"
+          strokeDasharray="8 5"
+          className="animate-border-march"
+          style={{ stroke: `rgb(var(--color-primary))` }}
+        />
+      </svg>
+      <div className="mb-3 flex items-start gap-2.5">
+        <Plus
+          className="mt-0.5 h-4 w-4 shrink-0"
+          style={{ color: hovered ? `rgb(var(--color-primary))` : 'rgb(156 163 175)' }}
+        />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold leading-snug"
+            style={{ color: hovered ? `rgb(var(--color-primary))` : 'rgb(156 163 175)' }}>
+            novo projeto
+          </p>
+          <p className="mt-0.5 text-xs"
+            style={{ color: hovered ? `rgb(var(--color-primary) / 0.6)` : 'rgb(209 213 219)' }}>
+            criar e configurar
+          </p>
+        </div>
+      </div>
+      <div className="flex-1" />
+      <div className="flex items-center pt-2 border-t border-gray-100 dark:border-gray-800">
+        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600">
+          criar
+        </span>
+      </div>
     </button>
   )
 }
@@ -290,14 +341,14 @@ export function ProjectsPage() {
           animate="visible"
         >
           {filtered.map((p) => (
-            <motion.div key={p.id} variants={cardVariants}>
+            <motion.div key={p.id} variants={cardVariants} className="flex flex-col">
               <ProjectCard
                 project={p}
                 onClick={() => navigate(`/projects/${p.id}/board`)}
               />
             </motion.div>
           ))}
-          <motion.div variants={cardVariants}>
+          <motion.div variants={cardVariants} className="flex flex-col">
             <NewProjectCard onClick={() => setCreating(true)} />
           </motion.div>
         </motion.div>

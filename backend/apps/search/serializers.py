@@ -27,6 +27,17 @@ class SpaceBriefSerializer(serializers.Serializer):
     name = serializers.CharField()
 
 
+class IdeaSearchResultSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    title = serializers.CharField()
+    summary = serializers.CharField(allow_null=True)
+    status = serializers.CharField()
+    headline = serializers.SerializerMethodField()
+
+    def get_headline(self, obj):
+        return getattr(obj, "headline", "") or ""
+
+
 class IssueSearchResultSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     sequence_id = serializers.IntegerField(allow_null=True)

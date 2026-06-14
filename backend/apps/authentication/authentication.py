@@ -174,38 +174,32 @@ class KeycloakJWTAuthentication(BaseAuthentication):
         if not workspace:
             raise AuthenticationFailed("Nenhum workspace configurado.")
 
-        # Only auto-create when no specific workspace was requested (fallback path).
-        # When X-Workspace-ID is present, the user must already be a member.
-        if workspace_id:
-            try:
-                member = WorkspaceMember.objects.get(keycloak_sub=sub, workspace=workspace)
-            except WorkspaceMember.DoesNotExist:
-                raise AuthenticationFailed("Usuário não é membro deste workspace.")
-        else:
-            defaults = {"email": email, "name": name}
-            if is_admin:
-                defaults["role"] = "admin"
-            member, _ = WorkspaceMember.objects.get_or_create(
-                keycloak_sub=sub,
-                workspace=workspace,
-                defaults=defaults,
-            )
+        defaults = {"email": email, "name": name}
+        if is_admin:
+            defaults["role"] = "admin"
+
+        member, created = WorkspaceMember.objects.get_or_create(
+            keycloak_sub=sub,
+            workspace=workspace,
+            defaults=defaults,
+        )
 
         if not member.is_active:
             raise AuthenticationFailed("Usuário inativo.")
 
-        update_fields = []
-        if member.email != email:
-            member.email = email
-            update_fields.append("email")
-        if member.name != name:
-            member.name = name
-            update_fields.append("name")
-        if is_admin and member.role != "admin":
-            member.role = "admin"
-            update_fields.append("role")
-        if update_fields:
-            update_fields.append("updated_at")
-            member.save(update_fields=update_fields)
+        if not created:
+            update_fields = []
+            if member.email != email:
+                member.email = email
+                update_fields.append("email")
+            if member.name != name:
+                member.name = name
+                update_fields.append("name")
+            if is_admin and member.role != "admin":
+                member.role = "admin"
+                update_fields.append("role")
+            if update_fields:
+                update_fields.append("updated_at")
+                member.save(update_fields=update_fields)
 
         return member

@@ -27,9 +27,9 @@ const overlayVariants = {
 }
 
 const contentVariants = {
-  hidden: { opacity: 0, scale: 0.96, x: '-50%', y: '-50%' },
-  visible: { opacity: 1, scale: 1, x: '-50%', y: '-50%', transition: { type: 'spring' as const, stiffness: 320, damping: 30 } },
-  exit:    { opacity: 0, scale: 0.97, x: '-50%', y: '-50%', transition: { duration: 0.15, ease: 'easeIn' as const } },
+  hidden: { opacity: 0, scale: 0.96, y: 8 },
+  visible: { opacity: 1, scale: 1, y: 0, transition: { type: 'spring' as const, stiffness: 320, damping: 30 } },
+  exit:    { opacity: 0, scale: 0.97, y: 4,  transition: { duration: 0.15, ease: 'easeIn' as const } },
 }
 
 export function Modal({
@@ -69,6 +69,9 @@ export function Modal({
                 initial="hidden"
                 animate="visible"
                 exit="exit"
+                transformTemplate={(_, generated) =>
+                  `translateX(-50%) translateY(-50%) ${generated}`
+                }
               >
                 {(title || description) && (
                   <div className="mb-4">

@@ -38,7 +38,7 @@ const LANGUAGES = [
 function CodeBlockView({ node, updateAttributes, editor }: NodeViewProps) {
   const language = (node.attrs.language as string | null) ?? ''
   const lines = (node.textContent ?? '').split('\n')
-  const lineCount = Math.max(lines.at(-1) === '' ? lines.length - 1 : lines.length, 1)
+  const lineCount = Math.max(lines[lines.length - 1] === '' ? lines.length - 1 : lines.length, 1)
 
   return (
     <NodeViewWrapper as="div" className="cb-root not-prose">

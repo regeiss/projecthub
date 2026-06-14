@@ -17,7 +17,8 @@ from rest_framework.viewsets import ModelViewSet
 from core.pagination import ActivityCursorPagination, StandardPagination
 
 from .filters import IssueFilter
-from .models import Issue, IssueActivity, IssueAttachment, IssueComment, IssueRelation, IssueWatcher
+from .models import Issue, IssueActivity, IssueAttachment, IssueComment, IssueRelation, IssueTemplate, IssueWatcher
+from apps.resources.models import TimeEntry
 from .permissions import IsIssueReporterOrProjectMember
 from .serializers import (
     EpicSerializer,
@@ -27,7 +28,9 @@ from .serializers import (
     IssueRelationSerializer,
     IssueSerializer,
     IssueStateUpdateSerializer,
+    IssueTemplateSerializer,
     SubtaskSerializer,
+    TimeEntrySerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -142,6 +145,41 @@ class IssueViewSet(ModelViewSet):
     def perform_update(self, serializer):
         serializer.instance._actor = self.request.user
         serializer.save()
+
+    @action(detail=False, methods=["post"], url_path="bulk-update")
+    def bulk_update(self, request):
+        """POST /issues/bulk-update/ — update state/assignee/priority for multiple issues at once."""
+        issue_ids = request.data.get("issue_ids", [])
+        updates = request.data.get("updates", {})
+
+        if not issue_ids:
+            raise ValidationError({"issue_ids": "Obrigatório."})
+        allowed_keys = {"state_id", "assignee_id", "priority"}
+        bad_keys = set(updates.keys()) - allowed_keys
+        if bad_keys:
+            raise ValidationError({"updates": f"Campos não permitidos: {bad_keys}"})
+        if not updates:
+            raise ValidationError({"updates": "Nenhum campo para atualizar."})
+        if len(issue_ids) > 100:
+            raise ValidationError({"issue_ids": "Máximo de 100 issues por vez."})
+
+        user = request.user
+        qs = Issue.objects.filter(pk__in=issue_ids)
+        if user.role != "admin":
+            from apps.projects.models import ProjectMember
+            accessible = ProjectMember.objects.filter(member=user).values_list("project_id", flat=True)
+            qs = qs.filter(project_id__in=accessible)
+
+        update_fields = {}
+        if "state_id" in updates:
+            update_fields["state_id"] = updates["state_id"]
+        if "assignee_id" in updates:
+            update_fields["assignee_id"] = updates["assignee_id"] or None
+        if "priority" in updates:
+            update_fields["priority"] = updates["priority"]
+
+        updated = qs.update(**update_fields)
+        return Response({"updated": updated})
 
     @action(detail=True, methods=["patch"], url_path="state")
     def update_state(self, request, pk=None):
@@ -477,3 +515,58 @@ class IssueWatchToggleView(generics.GenericAPIView):
         issue = _get_issue_for_user(issue_pk, request.user)
         watching = IssueWatcher.objects.filter(issue=issue, member=request.user).exists()
         return Response({"watching": watching})
+
+
+# ---------------------------------------------------------------------------
+# Issue Templates
+# ---------------------------------------------------------------------------
+
+class IssueTemplateViewSet(ModelViewSet):
+    """CRUD de templates de issue — escopo de workspace."""
+    serializer_class = IssueTemplateSerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "post", "patch", "delete"]
+
+    def get_queryset(self):
+        return IssueTemplate.objects.filter(workspace=self.request.user.workspace)
+
+    def perform_create(self, serializer):
+        serializer.save(
+            workspace=self.request.user.workspace,
+            created_by=self.request.user,
+        )
+
+
+# ---------------------------------------------------------------------------
+# Time Tracking
+# ---------------------------------------------------------------------------
+
+class TimeEntryListCreateView(generics.ListCreateAPIView):
+    """GET/POST /issues/{issue_pk}/time-entries/"""
+    serializer_class = TimeEntrySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        issue = _get_issue(self.kwargs["issue_pk"], self.request.user)
+        return TimeEntry.objects.filter(issue=issue).select_related("member")
+
+    def perform_create(self, serializer):
+        issue = _get_issue(self.kwargs["issue_pk"], self.request.user)
+        serializer.save(issue=issue, member=self.request.user)
+
+
+class TimeEntryDetailView(generics.DestroyAPIView):
+    """DELETE /issues/{issue_pk}/time-entries/{pk}/"""
+    serializer_class = TimeEntrySerializer
+    permission_classes = [IsAuthenticated]
+    http_method_names = ["delete"]
+
+    def get_queryset(self):
+        _get_issue(self.kwargs["issue_pk"], self.request.user)
+        return TimeEntry.objects.filter(issue_id=self.kwargs["issue_pk"])
+
+    def get_object(self):
+        obj = super().get_object()
+        if self.request.user.role != "admin" and obj.member != self.request.user:
+            raise PermissionDenied("Sem permissão para remover esta entrada.")
+        return obj

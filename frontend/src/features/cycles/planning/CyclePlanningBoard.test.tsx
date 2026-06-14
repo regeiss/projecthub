@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { CyclePlanningBoard } from './CyclePlanningBoard'
+import type { SprintPlanAllocation } from '@/types/planning'
 
 function buildPlanData() {
   return {
@@ -31,7 +32,7 @@ function buildPlanData() {
         rank: 0,
         note: null,
       },
-    ],
+    ] as SprintPlanAllocation[],
   }
 }
 

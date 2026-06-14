@@ -243,3 +243,40 @@ class IssueWatcher(models.Model):
         managed = True
         db_table = "issue_watchers"
         unique_together = [("issue", "member")]
+
+
+
+class IssueTemplate(models.Model):
+    class Priority(models.TextChoices):
+        URGENT = "urgent", "Urgente"
+        HIGH = "high", "Alta"
+        MEDIUM = "medium", "Média"
+        LOW = "low", "Baixa"
+        NONE = "none", "Nenhuma"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.ForeignKey(
+        "workspaces.Workspace",
+        on_delete=models.CASCADE,
+        related_name="issue_templates",
+    )
+    name = models.CharField(max_length=200)
+    title_template = models.CharField(max_length=500)
+    description = models.JSONField(blank=True, null=True)
+    priority = models.CharField(
+        max_length=20, choices=Priority.choices, default=Priority.NONE
+    )
+    size = models.CharField(max_length=20, blank=True, default="")
+    created_by = models.ForeignKey(
+        "workspaces.WorkspaceMember",
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="created_templates",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        managed = True
+        db_table = "issue_templates"
+        ordering = ["name"]

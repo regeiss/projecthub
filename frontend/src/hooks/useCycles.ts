@@ -26,6 +26,14 @@ export function useCycleProgress(projectId: string, cycleId: string) {
   })
 }
 
+export function useCycleBurndown(projectId: string, cycleId: string) {
+  return useQuery({
+    queryKey: ['cycle-burndown', cycleId],
+    queryFn: () => cycleService.burndown(projectId, cycleId),
+    enabled: !!projectId && !!cycleId,
+  })
+}
+
 export function useCreateCycle() {
   const qc = useQueryClient()
   return useMutation({

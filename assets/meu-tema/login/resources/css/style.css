@@ -43,8 +43,8 @@ body {
   --pf-v5-c-login--PaddingBottom: 0;
   /* Split background mirrors panel colours — hides any sub-pixel gaps */
   background: linear-gradient(to right,
-    oklch(0.18 0.06 264) 0% 52%,
-    #fdfdfb 52% 100%
+    oklch(0.18 0.06 264) 0% 58%,
+    #e8e4dc 58% 100%
   ) !important;
 }
 
@@ -64,8 +64,8 @@ body {
   gap: 0 !important;
   position: relative !important;
   background: linear-gradient(to right,
-    oklch(0.18 0.06 264) 0% 52%,
-    #fdfdfb 52% 100%
+    oklch(0.18 0.06 264) 0% 58%,
+    #e8e4dc 58% 100%
   ) !important;
 }
 
@@ -74,12 +74,12 @@ body {
   content: 'Ambiente único para acompanhar iniciativas, marcos\A e indicadores das secretarias do município.' !important;
   position: absolute !important;
   left: 56px !important;
-  right: calc(48% + 56px) !important;
-  top: calc(50% + 30px) !important;
+  right: calc(42% + 56px) !important;
+  top: calc(50% + 90px) !important;
   z-index: 3 !important;
   display: block !important;
   white-space: pre !important;
-  font-size: 14.5px !important;
+  font-size: 18px !important;
   font-family: 'Inter', system-ui, sans-serif !important;
   font-weight: 400 !important;
   line-height: 1.6 !important;
@@ -92,12 +92,12 @@ body {
   content: '184 projetos ativos  ·  10 secretarias  ·  R$ 412M sob gestão' !important;
   position: absolute !important;
   left: 56px !important;
-  right: calc(48% + 24px) !important;
+  right: calc(42% + 24px) !important;
   bottom: 48px !important;
   z-index: 3 !important;
   display: block !important;
   white-space: nowrap !important;
-  font-size: 12px !important;
+  font-size: 16px !important;
   font-family: 'JetBrains Mono', ui-monospace, monospace !important;
   font-weight: 400 !important;
   letter-spacing: .04em !important;
@@ -113,10 +113,10 @@ body {
   /* Force left side regardless of any PF order property */
   order: -1 !important;
   /* Size */
-  flex: 0 0 52% !important;
-  width: 52% !important;
-  min-width: 52% !important;
-  max-width: 52% !important;
+  flex: 0 0 58% !important;
+  width: 58% !important;
+  min-width: 58% !important;
+  max-width: 58% !important;
   align-self: stretch !important;
   height: 100% !important;
   margin: 0 !important;
@@ -137,13 +137,14 @@ body {
    */
   background-image:
     radial-gradient(circle at 88% -8%, oklch(0.55 0.18 250 / .50) 0%, transparent 48%),
+    radial-gradient(ellipse 85% 44% at 12% 54%, oklch(0.72 0.16 65 / .32) 0%, transparent 70%),
     radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
     linear-gradient(160deg,
       oklch(0.28 0.10 258) 0%,
       oklch(0.22 0.08 262) 55%,
       oklch(0.18 0.06 264) 100%) !important;
-  background-size: cover, 22px 22px, cover !important;
-  background-position: 0 0, 0 0, 0 0 !important;
+  background-size: cover, cover, 22px 22px, cover !important;
+  background-position: 0 0, 0 0, 0 0, 0 0 !important;
   border: none !important;
   box-shadow: none !important;
 }
@@ -179,7 +180,7 @@ body {
   color: oklch(0.28 0.10 258) !important;
   font-family: 'Fraunces', serif !important;
   font-weight: 800 !important;
-  font-size: 18px !important;
+  font-size: 20px !important;
   box-shadow: 0 6px 18px rgba(0,0,0,.25) !important;
   flex-shrink: 0 !important;
   line-height: 1 !important;
@@ -191,7 +192,7 @@ body {
   white-space: pre !important;
   display: block !important;
   line-height: 1.45 !important;
-  font-size: 13px !important;
+  font-size: 17px !important;
   letter-spacing: .01em !important;
   color: rgba(255,255,255,.75) !important;
   font-family: 'Inter', system-ui, sans-serif !important;
@@ -224,7 +225,7 @@ body {
     0 0 6px  oklch(0.72 0.22 145),
     0 0 14px oklch(0.72 0.22 145 / .55),
     0 0 28px oklch(0.55 0.18 145 / .35) !important;
-  font-size: 11.5px !important;
+  font-size: 14px !important;
   font-family: 'Inter', system-ui, sans-serif !important;
   letter-spacing: .07em !important;
   text-transform: uppercase !important;
@@ -247,28 +248,39 @@ body {
   display: block !important;
   font-family: 'Fraunces', serif !important;
   font-weight: 500 !important;
-  font-size: 52px !important;
+  font-size: 80px !important;
   line-height: 1.04 !important;
   letter-spacing: -0.02em !important;
-  padding-bottom: 20px !important;
   /* Gradient: white for line 1, gold/amber for "e projetos" on line 2.
      Line height = 52px × 1.04 ≈ 54px — colour breaks at that boundary. */
   background-image: linear-gradient(
     to bottom,
     #ffffff 0px,
-    #ffffff 58px,
-    oklch(0.82 0.12 70) 58px,
+    #ffffff 81px,
+    oklch(0.82 0.12 70) 81px,
     oklch(0.82 0.12 70) 100%
   ) !important;
+  padding-bottom: 20px !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
   color: transparent !important;
   -webkit-text-fill-color: transparent !important;
 }
 
-/* ── Top-right nav links — hidden ───────────────────────────────────────── */
+/* ── Top-right nav links: Suporte · Documentação · Status ───────────────── */
 main.pf-v5-c-login__main::before {
-  display: none !important;
+  content: 'Suporte\00A0\00A0\00A0\00A0\00A0\00A0 Documentação\00A0\00A0\00A0\00A0\00A0\00A0 Status' !important;
+  position: absolute !important;
+  top: 28px !important;
+  right: 72px !important;
+  z-index: 2 !important;
+  display: block !important;
+  font-size: 14px !important;
+  font-family: 'Inter', system-ui, sans-serif !important;
+  font-weight: 400 !important;
+  color: #9b9a95 !important;
+  letter-spacing: .01em !important;
+  white-space: nowrap !important;
 }
 
 /* ─── RIGHT PANEL — main.pf-v5-c-login__main ───────────────────────────── */
@@ -279,43 +291,107 @@ main.pf-v5-c-login__main,
   min-width: 0 !important;
   align-self: stretch !important;
   height: 100% !important;
-  background: #fdfdfb !important;
+  background: #e8e4dc !important;
   display: flex !important;
   flex-direction: column !important;
   justify-content: center !important;
-  overflow-y: auto !important;
-  padding: 56px 72px !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  padding: 56px 96px !important;
   max-width: none !important;
   position: relative !important;
   box-shadow: none !important;
   border: none !important;
 }
 
-/* No inner card — panel itself is the form surface */
-main.pf-v5-c-login__main::after {
-  display: none !important;
-}
-
-/* Constrain and centre form sections within the panel */
+/* ── Card — shared base ──────────────────────────────────────────────────── */
 .pf-v5-c-login__main-header,
 .pf-v5-c-login__main-body,
 .pf-v5-c-login__main-footer {
-  width: 100% !important;
-  max-width: 400px !important;
+  max-width: 520px !important;
+  width: calc(100% - 32px) !important;
   align-self: center !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  /* Kill PatternFly per-section background variables */
+  --pf-v5-c-login__main-header--BackgroundColor: #ffffff;
+  --pf-v5-c-login__main-body--BackgroundColor: #ffffff;
+  --pf-v5-c-login__main-footer--BackgroundColor: #ffffff;
+  border-left: 1.5px solid #dedad2 !important;
+  border-right: 1.5px solid #dedad2 !important;
 }
 
-/* ── "Acesso restrito · v3.2" eyebrow ──────────────────────────────────── */
+/* ── Card top ────────────────────────────────────────────────────────────── */
 .pf-v5-c-login__main-header {
-  padding: 0 0 24px 0 !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+  border-top: 1.5px solid #dedad2 !important;
+  border-left: 1.5px solid #dedad2 !important;
+  border-right: 1.5px solid #dedad2 !important;
+  border-radius: 16px 16px 0 0 !important;
+  padding-block-start: 56px !important;
+  padding-block-end: 0 !important;
   display: block !important;
 }
+
+/* ── Card body ───────────────────────────────────────────────────────────── */
+.pf-v5-c-login__main-body {
+  background-color: #ffffff !important;
+  background-image: none !important;
+  margin-top: -1px !important;
+  border-top: 1px solid #ffffff !important;
+  padding-block: 32px 56px !important;
+  border-bottom: 1.5px solid #dedad2 !important;
+  border-radius: 0 0 16px 16px !important;
+  box-shadow: none !important;
+}
+
+/* ── Card bottom — hidden (no social providers) ──────────────────────────── */
+.pf-v5-c-login__main-footer {
+  display: none !important;
+}
+
+/* ── Inner content margins — bypasses PatternFly padding overrides ───────── */
+#kc-header-wrapper,
+#kc-header::before,
+#kc-header::after {
+  /* left panel elements already use left:56px absolute positioning */
+}
+
+.pf-v5-c-login__main-header > *,
+#kc-page-title,
+.pf-v5-c-login__main-header-title {
+  margin-left: 28px !important;
+  margin-right: 28px !important;
+  margin-inline: 28px !important;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+#kc-form-login {
+  display: block !important;
+  width: calc(100% - 56px) !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  margin-inline: auto !important;
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
+#kc-content,
+#kc-content-wrapper,
+.pf-v5-c-form,
+.pf-v5-c-form__group {
+  background-color: #ffffff !important;
+  background-image: none !important;
+}
+
 
 .pf-v5-c-login__main-header::before {
   content: 'Acesso restrito · v0.3.2' !important;
   display: block !important;
   font-family: 'JetBrains Mono', ui-monospace, monospace !important;
-  font-size: 11.5px !important;
+  font-size: 13px !important;
   letter-spacing: .14em !important;
   text-transform: uppercase !important;
   color: #6b6c72 !important;
@@ -327,7 +403,7 @@ main.pf-v5-c-login__main::after {
 .pf-v5-c-login__main-header-title,
 h1.pf-v5-c-title {
   font-family: 'Fraunces', serif !important;
-  font-size: 36px !important;
+  font-size: 42px !important;
   font-weight: 500 !important;
   letter-spacing: -0.02em !important;
   line-height: 1.1 !important;
@@ -341,14 +417,17 @@ h1.pf-v5-c-title {
   content: 'Entre com suas credenciais institucionais para continuar.' !important;
   display: block !important;
   color: #6b6c72 !important;
-  font-size: 14.5px !important;
+  font-size: 16px !important;
   line-height: 1.5 !important;
   margin-top: 4px !important;
+  padding-bottom: 24px !important;
 }
 
 /* ── Main body ──────────────────────────────────────────────────────────── */
 .pf-v5-c-login__main-body {
   padding: 0 !important;
+  border-left: 1.5px solid #dedad2 !important;
+  border-right: 1.5px solid #dedad2 !important;
 }
 
 /* ── Form labels ────────────────────────────────────────────────────────── */
@@ -399,21 +478,33 @@ label[for="password"]::before {
 
 /* ── Form group spacing ─────────────────────────────────────────────────── */
 .pf-v5-c-form__group {
-  margin-bottom: 22px !important;
+  margin-bottom: 18px !important;
 }
 
 /* ── Inputs ─────────────────────────────────────────────────────────────── */
 .pf-v5-c-form-control,
 .pf-v5-c-input-group {
-  height: 54px !important;
-  border-radius: 12px !important;
+  height: 46px !important;
+  border-radius: 10px !important;
   border: 1.5px solid #e0dfd9 !important;
   background: #fff !important;
-  font-size: 15.5px !important;
+  background-image: none !important;
+  font-size: 14.5px !important;
   color: #0c1322 !important;
   outline: none !important;
   box-shadow: none !important;
   transition: border-color .15s, box-shadow .15s !important;
+}
+
+.pf-v5-c-form-control::before,
+.pf-v5-c-form-control::after,
+.pf-v5-c-input-group::before,
+.pf-v5-c-input-group::after {
+  display: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: none !important;
+  background-image: none !important;
 }
 
 /* ── Kill browser autofill gray/blue background ─────────────────────────── */
@@ -429,27 +520,19 @@ input:-webkit-autofill:active {
   caret-color: #0c1322 !important;
 }
 
-/* Focus on wrapper span OR when inner input has focus */
 .pf-v5-c-form-control:focus,
-.pf-v5-c-form-control:focus-within,
 .pf-v5-c-input-group:focus-within {
   border-color: oklch(0.52 0.16 255) !important;
-  box-shadow: 0 0 0 4px oklch(0.52 0.16 255 / .12) !important;
-  outline: none !important;
+  box-shadow: none !important;
 }
 
-/* Strip the inner <input> default focus ring — wrapper handles it */
-.pf-v5-c-form-control input,
-.pf-v5-c-form-control input:focus {
-  width: 100% !important;
-  height: 100% !important;
-  padding: 0 14px !important;
-  background: transparent !important;
-  border: none !important;
-  outline: none !important;
+.pf-v5-c-form-control:hover,
+.pf-v5-c-input-group:hover {
+  border-color: #e0dfd9 !important;
+  background: #fff !important;
+  background-image: none !important;
   box-shadow: none !important;
-  font-size: 15.5px !important;
-  color: #0c1322 !important;
+  outline: none !important;
 }
 
 .pf-v5-c-input-group {
@@ -465,18 +548,128 @@ input:-webkit-autofill:active {
   border: none !important;
   height: 100% !important;
   background: transparent !important;
+  background-image: none !important;
   box-shadow: none !important;
   padding: 0 14px !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-form-control:hover,
+.pf-v5-c-input-group input:hover {
+  border: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-form-control:focus,
+.pf-v5-c-input-group input:focus {
+  border: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 .pf-v5-c-input-group .pf-v5-c-button {
   border: none !important;
   background: transparent !important;
+  background-image: none !important;
   border-radius: 0 10px 10px 0 !important;
   height: 100% !important;
   padding: 0 14px !important;
   color: #6b6c72 !important;
   cursor: pointer !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button:hover,
+.pf-v5-c-input-group .pf-v5-c-button:focus,
+.pf-v5-c-input-group .pf-v5-c-button:focus-visible,
+.pf-v5-c-input-group .pf-v5-c-button:active {
+  border: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  text-decoration: none !important;
+}
+
+.pf-v5-c-input-group .pf-v5-c-button::before,
+.pf-v5-c-input-group .pf-v5-c-button::after {
+  display: none !important;
+  border: none !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Keycloak + PatternFly exact field overrides */
+#kc-form-login #username {
+  height: 46px !important;
+  border: 1.5px solid #e0dfd9 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  padding: 0 14px !important;
+}
+
+#kc-form-login #username:hover {
+  border-color: #e0dfd9 !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#kc-form-login #username:focus,
+#kc-form-login #username:focus-visible {
+  border-color: oklch(0.52 0.16 255) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#kc-form-login .pf-v5-c-input-group {
+  border: 1.5px solid #e0dfd9 !important;
+  border-radius: 10px !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#kc-form-login .pf-v5-c-input-group:hover {
+  border-color: #e0dfd9 !important;
+  background: #fff !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#kc-form-login .pf-v5-c-input-group:focus-within {
+  border-color: oklch(0.52 0.16 255) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#kc-form-login #password,
+#kc-form-login #password:hover,
+#kc-form-login #password:focus,
+#kc-form-login #password:focus-visible {
+  border: none !important;
+  border-radius: 10px 0 0 10px !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
 }
 
 /* ── Forgot password link ───────────────────────────────────────────────── */
@@ -498,14 +691,14 @@ input:-webkit-autofill:active {
 #kc-form-login input[type="submit"],
 .pf-v5-c-login__main-body .pf-v5-c-button.pf-m-primary {
   width: 100% !important;
-  height: 56px !important;
+  height: 52px !important;
   margin-top: 20px !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   border: none !important;
   background: #0c1322 !important;
   color: #fff !important;
   font-family: 'Inter', system-ui, sans-serif !important;
-  font-size: 16px !important;
+  font-size: 15px !important;
   font-weight: 600 !important;
   letter-spacing: .01em !important;
   cursor: pointer !important;
@@ -517,112 +710,11 @@ input:-webkit-autofill:active {
   background: #1a2540 !important;
 }
 
-/* ── Social providers — Gov.br IDP button ────────────────────────────────── */
-.pf-v5-c-login__main-footer {
-  display: block !important;
-  padding: 0 !important;
-}
-
-.pf-v5-c-login__main-footer-band {
-  display: none !important;
-}
-
-/* "ou" divider — centered text with horizontal rule via gradient */
-.pf-v5-c-login__main-footer::before {
-  content: 'ou' !important;
-  display: block !important;
-  text-align: center !important;
-  color: #9b9a95 !important;
-  font-size: 12px !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
-  margin: 20px 0 16px !important;
-  line-height: 1 !important;
-  padding: 6px 0 !important;
-  background-image:
-    linear-gradient(#e6e5e0, #e6e5e0),
-    linear-gradient(#fdfdfb, #fdfdfb) !important;
-  background-size: 100% 1px, 32px 100% !important;
-  background-repeat: no-repeat !important;
-  background-position: center center, center center !important;
-}
-
+/* ── Social providers — hidden ───────────────────────────────────────────── */
+.pf-v5-c-login__main-footer-band,
 #kc-social-providers,
 ul.pf-v5-c-login__main-footer-links {
-  display: flex !important;
-  flex-direction: column !important;
-  list-style: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  gap: 10px !important;
-}
-
-/* Individual social link items */
-.pf-v5-c-login__main-footer-links-item {
-  display: block !important;
-}
-
-/* Google-branded button — follows Google Identity sign-in button guidelines */
-#kc-social-providers a,
-.pf-v5-c-login__main-footer-links a,
-.pf-v5-c-login__main-footer-links-item a {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 12px !important;
-  width: 100% !important;
-  height: 44px !important;
-  border-radius: 4px !important;
-  border: 1px solid #dadce0 !important;
-  background: #ffffff !important;
-  color: #3c4043 !important;
-  font-family: 'Google Sans', Roboto, 'Inter', system-ui, sans-serif !important;
-  font-weight: 500 !important;
-  font-size: 14px !important;
-  letter-spacing: 0.25px !important;
-  text-decoration: none !important;
-  cursor: pointer !important;
-  box-shadow: 0 1px 2px rgba(60,64,67,.30), 0 1px 3px rgba(60,64,67,.15) !important;
-  transition: background-color .218s, box-shadow .218s !important;
-  box-sizing: border-box !important;
-}
-
-#kc-social-providers a:hover,
-.pf-v5-c-login__main-footer-links a:hover {
-  background: #f2f2f2 !important;
-  box-shadow: 0 1px 3px rgba(60,64,67,.40), 0 1px 4px rgba(60,64,67,.20) !important;
-  border-color: #dadce0 !important;
-}
-
-#kc-social-providers a:focus,
-.pf-v5-c-login__main-footer-links a:focus {
-  outline: none !important;
-  box-shadow: 0 0 0 3px rgba(66,133,244,.30) !important;
-  border-color: #4285f4 !important;
-}
-
-/* ── Constrain provider logo images to button height ────────────────────── */
-.kc-social-provider-logo,
-#kc-social-providers a img,
-#kc-social-providers a svg,
-.pf-v5-c-login__main-footer-links a img,
-.pf-v5-c-login__main-footer-links a svg {
-  width: 18px !important;
-  height: 18px !important;
-  max-width: 18px !important;
-  max-height: 18px !important;
-  object-fit: contain !important;
-  flex-shrink: 0 !important;
-  display: block !important;
-}
-
-/* The PF icon wrapper span inside social buttons */
-.pf-v5-c-button__icon {
-  display: inline-flex !important;
-  align-items: center !important;
-  width: 20px !important;
-  height: 20px !important;
-  overflow: hidden !important;
-  flex-shrink: 0 !important;
+  display: none !important;
 }
 
 /* ── Error / alert messages ─────────────────────────────────────────────── */
@@ -656,25 +748,6 @@ ul.pf-v5-c-login__main-footer-links {
   color: oklch(0.42 0.16 30) !important;
 }
 
-/* ── Security footnote ──────────────────────────────────────────────────── */
-.pf-v5-c-login__main-footer-links {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  list-style: none !important;
-  padding: 0 !important;
-  margin-top: 10px !important;
-  font-family: 'JetBrains Mono', ui-monospace, monospace !important;
-  font-size: 11.5px !important;
-  color: #6b6c72 !important;
-  letter-spacing: .02em !important;
-}
-
-.pf-v5-c-login__main-footer-links a {
-  color: #6b6c72 !important;
-  text-decoration: none !important;
-  font-size: 11.5px !important;
-}
 
 /* ── Hide unused elements ───────────────────────────────────────────────── */
 #kc-registration,
@@ -724,11 +797,5 @@ ul.pf-v5-c-login__main-footer-links {
     min-height: 0 !important;
     height: auto !important;
     padding: 40px 24px 60px !important;
-    background: #fdfdfb !important;
-  }
-
-  /* No card on mobile — flat layout */
-  main.pf-v5-c-login__main::after {
-    display: none !important;
   }
 }

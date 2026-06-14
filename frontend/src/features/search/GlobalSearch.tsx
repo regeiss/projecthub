@@ -33,8 +33,9 @@ export function GlobalSearch({ expanded = false }: Props) {
 
   const issues = data?.issues ?? []
   const wikiPages = data?.wiki_pages ?? []
-  const totalResults = issues.length + wikiPages.length
-  const resultIds = [...issues.map((i) => i.id), ...wikiPages.map((p) => p.id)]
+  const ideas = data?.ideas ?? []
+  const totalResults = issues.length + wikiPages.length + ideas.length
+  const resultIds = [...issues.map((i) => i.id), ...wikiPages.map((p) => p.id), ...ideas.map((d) => d.id)]
 
   const open = useCallback(() => {
     setIsOpen(true)

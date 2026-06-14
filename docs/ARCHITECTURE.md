@@ -153,3 +153,51 @@ Todas em `.env.example`. As mais críticas:
 - Conteúdo wiki sanitizado com `bleach` antes de salvar
 - SQL direto proibido — usar sempre o ORM ou queries parametrizadas
 - CORS restrito aos origins configurados no `.env`
+
+---
+
+## Discovery Module
+
+The Discovery module (`apps.discovery`) is workspace-scoped and intentionally separate from Issues. It models the full product discovery lifecycle without overloading the issue tracker.
+
+### Domain model
+
+| Model | Purpose |
+|-------|---------|
+| `Idea` | Core discovery record with title, summary, status, owner, creator, optional project link, and optional promoted-issue link |
+| `IdeaFieldDefinition` | Workspace-scoped custom field metadata (key, label, type, config, ordering) |
+| `IdeaFieldValue` | Per-idea typed value row (text, number, date, user, JSON) for each active field definition |
+| `IdeaView` | Saved view with name, type (`table`, `board`, `roadmap`), filters, visible columns, grouping, and ordering |
+| `IdeaScorecard` | One-to-one scoring row per idea with impact, effort, confidence, reach, and a computed score `(impact × confidence) / effort` |
+| `IdeaInsight` | Evidence items attached to an idea: kind `note`, `link`, or `feedback`, plus a title and JSON content blob |
+
+### API routes
+
+All routes are under `/api/v1/discovery/` and require workspace membership.
+
+| Endpoint | Method | Action |
+|----------|--------|--------|
+| `ideas/` | GET, POST | List / create ideas (workspace-scoped) |
+| `ideas/:id/` | GET, PATCH, DELETE | Retrieve / update / delete an idea |
+| `ideas/:id/scorecard/` | PATCH | Upsert scorecard inputs; returns computed score |
+| `ideas/:id/insights/` | GET, POST | List / add insights for an idea |
+| `ideas/:id/promote/` | POST | Promote idea → Issue in linked project; links `promoted_issue` |
+| `fields/` | GET, POST, PATCH, DELETE | Manage custom field definitions for the workspace |
+| `views/` | GET, POST, PATCH, DELETE | Manage saved views for the workspace |
+
+### Promotion flow
+
+Ideas can be promoted to issues via `POST /ideas/:id/promote/`. The idea must have a linked project with at least one `IssueState`. On success, an `Issue` is created with the idea's title and the project's default state. The idea's `promoted_issue` field is updated to reference the new issue, and the original idea is preserved in Discovery for historical context.
+
+### Frontend structure
+
+Discovery lives under `/discovery` (workspace-level route). The feature folder at `frontend/src/features/discovery/` contains:
+
+- `DiscoveryPage` — workspace overview with stats, view switcher, and idea list
+- `IdeaTableView` / `IdeaBoardView` — table and Kanban rendering of ideas with score column
+- `IdeaForm` — create/edit idea form (inline with FieldBuilder)
+- `FieldBuilder` — manage custom field definitions
+- `ScorecardPanel` — editable impact/effort/confidence/reach sliders with live score preview
+- `InsightPanel` — note, link, and feedback capture for an idea
+
+Custom fields, saved views, scoring, and insights remain native to discovery. Roadmap rendering and advanced scoring formulas are intentionally deferred to a follow-up plan after the core experience stabilises.

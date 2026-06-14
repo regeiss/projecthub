@@ -1,5 +1,5 @@
 # =============================================================================
-# ProjectHub – Docker Compose
+# ProjectHub — Docker Compose
 # Stack: Django + React + PostgreSQL + Redis + Celery + Nginx
 # =============================================================================
 
@@ -46,6 +46,7 @@ x-django-env: &django-env
 
 # =============================================================================
 services:
+
   # ---------------------------------------------------------------------------
   # Banco de dados PostgreSQL
   # ---------------------------------------------------------------------------
@@ -53,6 +54,8 @@ services:
     image: postgres:16-alpine
     container_name: projecthub_db
     restart: unless-stopped
+    # profiles:
+    # - local-db # Só sobe com: docker compose --profile local-db up
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-projecthub}
       POSTGRES_USER: ${POSTGRES_USER:-projecthub}
@@ -70,8 +73,9 @@ services:
       retries: 5
     networks:
       - projecthub_net
+
   # ---------------------------------------------------------------------------
-  # Redis – Cache, filas Celery, sessões, WebSocket channel layer
+  # Redis — Cache, filas Celery, sessões, WebSocket channel layer
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
@@ -82,7 +86,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6388:6379" # Remover em produção
+      - "6379:6379" # Remover em produção
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -92,7 +96,7 @@ services:
       - projecthub_net
 
   # ---------------------------------------------------------------------------
-  # Django – API REST + Django Channels (WebSocket)
+  # Django — API REST + Django Channels (WebSocket)
   # ---------------------------------------------------------------------------
   api:
     build:
@@ -101,27 +105,25 @@ services:
     container_name: projecthub_api
     restart: unless-stopped
     <<: *django-env
-
     command: >
       sh -c "
         python -c \"import os; url = os.environ.get('DATABASE_URL', ''); print('Using local database' if 'db' in url else 'Using remote database')\" &&
         python manage.py wait_for_db &&
         python manage.py migrate --noinput &&
         python manage.py collectstatic --noinput &&
-        python manage.py ensure_default_workspace &&
-        daphne -b 0.0.0.0 -p 8004 config.asgi:application
+        daphne -b 0.0.0.0 -p 8000 config.asgi:application
       "
     volumes:
       - ./backend:/app
       - static_files:/app/staticfiles
       - media_files:/app/media
     ports:
-      - "8004:8004" # Remover em produção (acessar via Nginx)
+      - "8000:8000" # Remover em produção (acessar via Nginx)
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8004/api/health/ || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/api/health/ || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -130,7 +132,7 @@ services:
       - projecthub_net
 
   # ---------------------------------------------------------------------------
-  # Celery Worker – Tarefas assíncronas (CPM, notificações, sync)
+  # Celery Worker — Tarefas assíncronas (CPM, notificações, sync)
   # ---------------------------------------------------------------------------
   celery_worker:
     build:
@@ -159,7 +161,7 @@ services:
       - projecthub_net
 
   # ---------------------------------------------------------------------------
-  # Celery Beat – Agendador de tarefas periódicas
+  # Celery Beat — Agendador de tarefas periódicas
   # ---------------------------------------------------------------------------
   celery_beat:
     build:
@@ -187,7 +189,7 @@ services:
       - projecthub_net
 
   # ---------------------------------------------------------------------------
-  # Flower – Monitoramento do Celery (opcional, desabilitar em produção)
+  # Flower — Monitoramento do Celery (opcional, desabilitar em produção)
   # ---------------------------------------------------------------------------
   flower:
     build:
@@ -208,74 +210,10 @@ services:
     depends_on:
       - redis
       - celery_worker
-    profiles:
-      - monitoring # Só sobe com: docker compose --profile monitoring up
+      # profiles:
+      # - monitoring # Só sobe com: docker compose --profile monitoring up
     networks:
       - projecthub_net
-
-  # ---------------------------------------------------------------------------
-  # Nginx — Reverse proxy, serve estáticos e roteamento
-  # ---------------------------------------------------------------------------
-  nginx:
-    image: nginx:1.25-alpine
-    container_name: projecthub_nginx
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      # HTTP → redireciona para HTTPS
-      - "traefik.http.routers.projecthub-http.rule=Host(`dev-projecthub.novohamburgo.rs.gov.br`)"
-      - "traefik.http.routers.projecthub-http.entrypoints=web"
-      - "traefik.http.routers.projecthub-http.middlewares=redirect-https@file"
-      # HTTPS
-      - "traefik.http.routers.projecthub.rule=Host(`dev-projecthub.novohamburgo.rs.gov.br`)"
-      - "traefik.http.routers.projecthub.entrypoints=websecure"
-      - "traefik.http.routers.projecthub.tls=true"
-      - "traefik.http.services.projecthub.loadbalancer.server.port=80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - static_files:/var/www/static:ro
-      - media_files:/var/www/media:ro
-      - frontend_build:/var/www/html:ro
-    depends_on:
-      - api
-      - frontend
-    networks:
-      # - traefik_net
-      - projecthub_net
-
-  # ---------------------------------------------------------------------------
-  # Keycloak — SSO / OIDC (se não tiver instância externa)
-  # Comentar este bloco se já tiver Keycloak rodando no OCI
-  # ---------------------------------------------------------------------------
-  keycloak:
-    image: quay.io/keycloak/keycloak:latest
-    container_name: projecthub_keycloak
-    restart: unless-stopped
-    environment:
-      KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-projecthub}
-      KC_DB_USERNAME: ${POSTGRES_USER:-projecthub}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-projecthub}
-      KC_DB_SCHEMA: keycloak
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-      KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME_STRICT: "false"
-      KC_PROXY_HEADERS: xforwarded
-    command: start-dev --import-realm
-    ports:
-      - "8080:8080"
-    depends_on:
-      db:
-        condition: service_healthy
-    #profiles:
-    #  - keycloak # Só sobe com: docker compose --profile keycloak up
-    networks:
-      - projecthub_net
-    volumes:
-      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema
-      - ./assets/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
 
   # ---------------------------------------------------------------------------
   # Frontend React (build estático servido pelo Nginx)
@@ -298,6 +236,71 @@ services:
     networks:
       - projecthub_net
 
+  # ---------------------------------------------------------------------------
+  # Nginx — Reverse proxy, serve estáticos e roteamento
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: projecthub_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8443:443" # Changed from 443 to 8443 to avoid port conflict
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - static_files:/var/www/static:ro
+      - media_files:/var/www/media:ro
+      - frontend_build:/var/www/html:ro
+      - ./nginx/certs:/etc/nginx/certs:ro # Certificados SSL
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - projecthub_net
+
+  # ---------------------------------------------------------------------------
+  # Keycloak — SSO / OIDC (se não tiver instância externa)
+  # Comentar este bloco se já tiver Keycloak rodando no OCI
+  # ---------------------------------------------------------------------------
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0
+    container_name: projecthub_keycloak
+    restart: unless-stopped
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-projecthub}
+      KC_DB_USERNAME: ${POSTGRES_USER:-projecthub}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-projecthub}
+      KC_DB_SCHEMA: keycloak
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HTTP_ENABLED: "true"
+      KC_HOSTNAME_STRICT: "false"
+      KC_PROXY: edge
+      KC_DB_URL_PROPERTIES: "?connectTimeout=10000&tcpKeepAlives=true"
+    entrypoint:
+      - sh
+      - -c
+      - |
+        for i in {1..30}; do
+          timeout 2 bash -c "</dev/tcp/db/5432" 2>/dev/null && exec /opt/keycloak/bin/kc.sh start-dev
+          [ $$i -lt 30 ] && echo "Waiting for database... (attempt $$i/30)" && sleep 2
+        done
+        echo "Database connection timeout"
+        exit 1
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      # profiles:
+      # - keycloak # Só sobe com: docker compose --profile keycloak up
+    networks:
+      - projecthub_net
+    volumes:
+      - ./assets/meu-tema:/opt/keycloak/themes/meu-tema
+
 # =============================================================================
 volumes:
   postgres_data:
@@ -310,6 +313,7 @@ volumes:
     driver: local
   frontend_build:
     driver: local
+
 networks:
   projecthub_net:
     driver: bridge

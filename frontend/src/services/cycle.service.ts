@@ -51,6 +51,11 @@ export const cycleService = {
       completedIssues: r.data.completed_issues ?? r.data.completedIssues ?? 0,
     })),
 
+  burndown: (projectId: string, cycleId: string) =>
+    api.get<{ total: number; days: { date: string; remaining: number; ideal: number }[] }>(
+      `/projects/${projectId}/cycles/${cycleId}/burndown/`,
+    ).then((r) => r.data),
+
   addIssue: (cycleId: string, issueId: string) =>
     api.post(`/cycles/${cycleId}/issues/`, { issue_id: issueId }).then((r) => r.data),
 

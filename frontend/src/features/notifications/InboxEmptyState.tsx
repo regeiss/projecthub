@@ -4,8 +4,8 @@ import { Inbox, AtSign, UserCheck, Eye, Archive, FolderKanban } from 'lucide-rea
 type FilterType = 'all' | 'unread' | 'mentions' | 'assigned' | 'watching' | 'archived' | 'project'
 
 const CONFIG: Record<FilterType, { icon: ComponentType<{ className?: string }>; message: string }> = {
-  all: { icon: Inbox, message: 'Você está em dia 👌' },
-  unread: { icon: Inbox, message: 'Você está em dia 👌' },
+  all: { icon: Inbox, message: 'Você está em dia' },
+  unread: { icon: Inbox, message: 'Você está em dia' },
   mentions: { icon: AtSign, message: 'Nenhuma menção recente' },
   assigned: { icon: UserCheck, message: 'Nenhuma atribuição nova' },
   watching: { icon: Eye, message: 'Nenhuma atividade nos itens que você observa' },

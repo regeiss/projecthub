@@ -2,7 +2,7 @@ from django.utils.text import slugify
 
 from rest_framework import serializers
 
-from .models import PersonalTask, Workspace, WorkspaceMember
+from .models import AccessRequest, PersonalTask, Workspace, WorkspaceMember
 
 
 class WorkspaceSerializer(serializers.ModelSerializer):
@@ -80,3 +80,58 @@ class PersonalTaskSerializer(serializers.ModelSerializer):
         model = PersonalTask
         fields = ["id", "title", "done", "sort_order", "created_at"]
         read_only_fields = ["id", "created_at"]
+
+
+class AccessRequestSerializer(serializers.ModelSerializer):
+    workspace_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AccessRequest
+        fields = [
+            "id",
+            "status",
+            "workspace",
+            "workspace_name",
+            "denial_reason",
+            "requested_at",
+            "resolved_at",
+            "keycloak_sub",
+            "email",
+            "name",
+            "secretaria",
+            "reason",
+            "resolved_by",
+            "previous_denial_count",
+        ]
+        read_only_fields = fields
+
+    def get_workspace_name(self, obj):
+        return obj.workspace.name if obj.workspace_id else obj.workspace_name
+
+
+class AccessRequestCreateSerializer(serializers.Serializer):
+    secretaria = serializers.CharField(max_length=255)
+    workspace_name = serializers.CharField(max_length=255)
+    reason = serializers.CharField(allow_blank=True)
+
+
+class AccessRequestResolveSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=["approve", "deny"])
+    extra_workspace_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+        allow_empty=True,
+    )
+    role = serializers.ChoiceField(
+        choices=WorkspaceMember.Role.choices,
+        required=False,
+    )
+    denial_reason = serializers.CharField(required=False, allow_blank=False)
+
+    def validate(self, attrs):
+        action = attrs["action"]
+        if action == "approve" and not attrs.get("role"):
+            raise serializers.ValidationError({"role": "Este campo é obrigatório para aprovar."})
+        if action == "deny" and not attrs.get("denial_reason"):
+            raise serializers.ValidationError({"denial_reason": "Este campo é obrigatório para negar."})
+        return attrs

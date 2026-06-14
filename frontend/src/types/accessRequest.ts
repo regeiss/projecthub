@@ -1,28 +1,32 @@
-export type AccessRequestStatus = 'pending' | 'approved' | 'denied'
+export type AccessRequest = AccessRequestDetail
 
-export interface AccessRequest {
+export interface AccessRequestDetail {
   id: string
-  status: AccessRequestStatus
+  status: 'pending' | 'approved' | 'denied'
   workspaceName: string
   denialReason: string | null
   requestedAt: string
   resolvedAt: string | null
-}
-
-export interface AccessRequestDetail extends AccessRequest {
   keycloakSub: string
   email: string
   name: string
-  workspace: string | null
+  workspace: string
   secretaria: string
   reason: string
   resolvedBy: string | null
   previousDenialCount: number
 }
 
-export interface AdminResolvePayload {
+export interface CreateAccessRequestInput {
+  secretaria: string
+  workspaceName: string
+  reason: string
+  workspaceId?: string
+}
+
+export interface ResolveAccessRequestInput {
   action: 'approve' | 'deny'
   extraWorkspaceIds?: string[]
-  denialReason?: string
   role?: 'admin' | 'member' | 'guest'
+  denialReason?: string
 }

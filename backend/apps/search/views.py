@@ -13,10 +13,11 @@ from rest_framework.views import APIView
 
 from core.permissions import IsWorkspaceMember
 
+from apps.discovery.models import Idea
 from apps.issues.models import Issue
 from apps.wiki.models import WikiPage
 
-from .serializers import IssueSearchResultSerializer, WikiPageSearchResultSerializer
+from .serializers import IdeaSearchResultSerializer, IssueSearchResultSerializer, WikiPageSearchResultSerializer
 
 
 class GlobalSearchView(APIView):
@@ -64,12 +65,14 @@ class GlobalSearchView(APIView):
         wiki_pages = self._search_wiki(
             request.user, q, project_id, author_id, parsed_date_from, parsed_date_to
         )
+        ideas = self._search_ideas(request.user, q, parsed_date_from, parsed_date_to)
 
         return Response(
             {
                 "issues": IssueSearchResultSerializer(issues, many=True).data,
                 "wiki_pages": WikiPageSearchResultSerializer(wiki_pages, many=True).data,
-                "total": len(issues) + len(wiki_pages),
+                "ideas": IdeaSearchResultSerializer(ideas, many=True).data,
+                "total": len(issues) + len(wiki_pages) + len(ideas),
             }
         )
 
@@ -163,5 +166,38 @@ class GlobalSearchView(APIView):
             qs = qs.filter(updated_at__date__gte=date_from)
         if date_to:
             qs = qs.filter(updated_at__date__lte=date_to)
+
+        return list(qs[:8])
+
+    def _search_ideas(self, user, q, date_from, date_to):
+        query = SearchQuery(q, config="portuguese")
+        vector = SearchVector("title", weight="A", config="portuguese") + SearchVector(
+            "summary", weight="B", config="portuguese"
+        )
+
+        qs = (
+            Idea.objects.filter(workspace=user.workspace)
+            .distinct()
+            .annotate(rank=SearchRank(vector, query))
+            .filter(rank__gt=0.01)
+            .annotate(
+                headline=SearchHeadline(
+                    "summary",
+                    query,
+                    config="portuguese",
+                    start_sel="<mark>",
+                    stop_sel="</mark>",
+                    max_words=20,
+                    min_words=10,
+                    highlight_all=False,
+                )
+            )
+            .order_by("-rank")
+        )
+
+        if date_from:
+            qs = qs.filter(created_at__date__gte=date_from)
+        if date_to:
+            qs = qs.filter(created_at__date__lte=date_to)
 
         return list(qs[:8])

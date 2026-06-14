@@ -13,7 +13,9 @@ from .models import (
     IssueAttachment,
     IssueComment,
     IssueRelation,
+    IssueTemplate,
 )
+from apps.resources.models import TimeEntry
 
 
 class SubtaskSerializer(serializers.ModelSerializer):
@@ -419,3 +421,28 @@ class IssueRelationSerializer(serializers.ModelSerializer):
 
   def create(self, validated_data):
     return super().create(validated_data)
+
+
+class IssueTemplateSerializer(serializers.ModelSerializer):
+  created_by_name = serializers.CharField(source='created_by.name', read_only=True, default=None)
+
+  class Meta:
+    model = IssueTemplate
+    fields = [
+      'id', 'name', 'title_template', 'description',
+      'priority', 'size', 'created_by', 'created_by_name', 'created_at', 'updated_at',
+    ]
+    read_only_fields = ['id', 'created_by', 'created_by_name', 'created_at', 'updated_at']
+
+
+class TimeEntrySerializer(serializers.ModelSerializer):
+  member_name = serializers.CharField(source='member.name', read_only=True)
+  member_avatar = serializers.CharField(source='member.avatar_url', read_only=True, default=None)
+
+  class Meta:
+    model = TimeEntry
+    fields = [
+      'id', 'issue', 'member', 'member_name', 'member_avatar',
+      'hours', 'description', 'date', 'created_at',
+    ]
+    read_only_fields = ['id', 'issue', 'member', 'member_name', 'member_avatar', 'created_at']

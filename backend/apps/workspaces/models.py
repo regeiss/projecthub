@@ -67,3 +67,39 @@ class PersonalTask(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class AccessRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pendente"
+        APPROVED = "approved", "Aprovado"
+        DENIED = "denied", "Negado"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    workspace = models.ForeignKey(
+        Workspace,
+        on_delete=models.SET_NULL,
+        related_name="access_requests",
+        null=True,
+        blank=True,
+    )
+    workspace_name = models.CharField(max_length=255)
+    keycloak_sub = models.CharField(max_length=255)
+    email = models.EmailField(max_length=255)
+    name = models.CharField(max_length=255)
+    secretaria = models.CharField(max_length=255)
+    reason = models.TextField(blank=True, default="")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    denial_reason = models.TextField(blank=True, null=True)
+    previous_denial_count = models.PositiveIntegerField(default=0)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+    resolved_by = models.CharField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = "access_requests"
+        ordering = ["-requested_at"]
+
+    def __str__(self):
+        return f"{self.name} -> {self.workspace_name} ({self.status})"

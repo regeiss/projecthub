@@ -29,6 +29,7 @@ vi.mock('@/hooks/useCycles', () => ({
     isLoading: false,
   }),
   useCycleProgress: () => ({ data: undefined }),
+  useCycleBurndown: () => ({ data: undefined }),
   useUpdateCycle: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 

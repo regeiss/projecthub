@@ -15,6 +15,7 @@ import { IssueActivity } from './IssueActivity'
 import { IssueForm } from './IssueForm'
 import { SubtaskList } from './SubtaskList'
 import { IssueRelationList } from './IssueRelationList'
+import { TimeTrackingPanel } from './TimeTrackingPanel'
 import { formatDate, priorityColor, priorityLabel, relativeTime } from '@/lib/utils'
 import { tiptapToHtml } from '@/lib/editor'
 
@@ -140,6 +141,9 @@ export function IssueDetailPage() {
 
           {/* Relations */}
           <IssueRelationList projectId={projectId} issueId={issueId} />
+
+          {/* Time Tracking */}
+          <TimeTrackingPanel issueId={issueId} />
 
           {/* Comments */}
           <div>
