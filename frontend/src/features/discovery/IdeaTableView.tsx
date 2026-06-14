@@ -70,7 +70,7 @@ export function IdeaTableView({
         <span>Impacto</span>
         <span>Esforço</span>
         <span>Importância</span>
-        <span>Score</span>
+        <span>Pontuação</span>
         <span />
       </div>
       <div className="divide-y divide-gray-100 bg-white dark:divide-gray-800 dark:bg-gray-900">

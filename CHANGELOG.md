@@ -79,6 +79,16 @@
   - Discovery Module section in `ARCHITECTURE.md` documenting domain model, API routes, promotion flow, and frontend structure
   - Migration `0004_ideainsight_ideascorecard`
 
+### Changed
+- **Product Discovery traduzido para pt-BR** — todos os textos da interface da seção de Descoberta de Produto agora estão em português:
+  - Título da página: "Product Discovery" → "Descoberta de Produto"
+  - Item do menu lateral: "Discovery" → "Descoberta"
+  - Botões de visão: "board" → "quadro", "roadmap" → "roteiro"
+  - Coluna de tabela: "Score" → "Pontuação"
+  - Painel de avaliação: "Scorecard" → "Avaliação", "Score:" → "Pontuação:"
+  - Botão de ação: "Salvar scorecard" → "Salvar avaliação"
+  - Painel de evidências: "Insights" → "Evidências"
+
 ### Fixed
 - **TypeScript errors** — resolved all type-check failures across the codebase:
   - `MemberWorkload.availableDays` (`number | null`) properly null-coalesced in `WorkloadHeatmap` and `CapacityTrendChart`

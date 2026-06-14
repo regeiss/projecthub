@@ -58,16 +58,16 @@ export function InsightPanel({ ideaId }: Props) {
   return (
     <section
       className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4"
-      aria-label="Painel de insights"
+      aria-label="Painel de evidências"
     >
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Insights</h2>
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Evidências</h2>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
           aria-expanded={open}
-          aria-label="Adicionar insight"
+          aria-label="Adicionar evidência"
         >
           <Plus className="h-3.5 w-3.5" />
           Adicionar
@@ -94,10 +94,10 @@ export function InsightPanel({ ideaId }: Props) {
           </div>
           <input
             type="text"
-            placeholder="Título do insight…"
+            placeholder="Título da evidência…"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            aria-label="Título do insight"
+            aria-label="Título da evidência"
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           />
           <button
@@ -115,10 +115,10 @@ export function InsightPanel({ ideaId }: Props) {
         <p className="text-xs text-gray-400 dark:text-gray-500">Carregando…</p>
       ) : insights.length === 0 ? (
         <p className="text-xs text-gray-400 dark:text-gray-500">
-          Nenhum insight registrado ainda. Adicione notas, links ou feedbacks de clientes.
+          Nenhuma evidência registrada ainda. Adicione notas, links ou feedbacks de clientes.
         </p>
       ) : (
-        <ul className="flex flex-col gap-2" aria-label="Lista de insights">
+        <ul className="flex flex-col gap-2" aria-label="Lista de evidências">
           {insights.map((insight) => (
             <InsightItem key={insight.id} insight={insight} />
           ))}

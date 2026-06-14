@@ -41,6 +41,6 @@ describe('DiscoveryPage route', () => {
   it('renders the discovery page route', async () => {
     renderApp()
 
-    expect(await screen.findByText('Product Discovery')).toBeInTheDocument()
+    expect(await screen.findByText('Descoberta de Produto')).toBeInTheDocument()
   })
 })

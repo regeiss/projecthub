@@ -28,7 +28,7 @@ export function DiscoveryPage() {
       {/* Page header */}
       <div className="mb-5 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Product Discovery</h1>
+          <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Descoberta de Produto</h1>
           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
             {ideas.length} {ideas.length === 1 ? 'ideia' : 'ideias'} no workspace
             {workspace?.name ? ` ${workspace.name}` : ''}
@@ -55,7 +55,7 @@ export function DiscoveryPage() {
             <button
               type="button"
               onClick={() => setViewType('board')}
-              aria-label="Visão de board"
+              aria-label="Visão de quadro"
               className={cn(
                 'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
                 viewType === 'board'
@@ -64,12 +64,12 @@ export function DiscoveryPage() {
               )}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
-              board
+              quadro
             </button>
             <button
               type="button"
               onClick={() => setViewType('roadmap')}
-              aria-label="Visão de roadmap"
+              aria-label="Visão de roteiro"
               className={cn(
                 'flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
                 viewType === 'roadmap'
@@ -78,7 +78,7 @@ export function DiscoveryPage() {
               )}
             >
               <GitBranch className="h-3.5 w-3.5" />
-              roadmap
+              roteiro
             </button>
           </div>
         </div>
